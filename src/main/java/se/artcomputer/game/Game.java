@@ -10,16 +10,16 @@ public class Game {
     private GameState gameState = GameState.INITIAL;
     private Random random = new Random();
     private String Z$ = "                      "; // 270
-    private float[][] G = new float[8][8]; // 330
-    private float[][] C = new float[9][2]; // 330
-    private float[][] K = new float[3][3]; // 330
-    private float[] N = new float[3]; // 330
-    private float[][] Z = new float[8][8]; // 330
-    private float[] D = new float[8]; // 330
+    private double[][] G = new double[8][8]; // 330
+    private double[][] C = new double[9][2]; // 330
+    private double[][] K = new double[3][3]; // 330
+    private double[] N = new double[3]; // 330
+    private double[][] Z = new double[8][8]; // 330
+    private double[] D = new double[8]; // 330
     private int T = Math.round(random.nextFloat() * 20 + 20) * 100; // 370
     private int T0 = T; // 370
     private int T9 = 25 + Math.round(random.nextFloat() * 10); // 370
-    private float D0 = 0.0F; // 370
+    private double D0 = 0.0F; // 370
     private int E = 3000; // 370
     private int E0 = E; // 370
 
@@ -29,15 +29,19 @@ public class Game {
     private int S = 0; // 440
     private int B9 = 0; // 440
     private int K9 = 0; // 440
+    private int K7 = 0; // 1200
     private String X$ = ""; // 440
     private String X0$ = " IS "; // 440
 
-    private float fnd() { // 470
+    private int I; // TODO: What is is this?
+
+    private double fnd() { // 470
         return Math.pow(Math.sqrt(K[I][0] - S1), 2) + Math.pow(K[I][1] - S2, 2);
     }
 
+
     private int fnr() { // 475
-        return Math.round(random.nextFloat());
+        return random.nextInt(8);
     }
 
     // 480 Initialize Enterprise's position.
@@ -82,6 +86,8 @@ public class Game {
     // 710 A1$="NAVSRSLRSPHATORSHEDAMCOMXXX"
     private String A1$ = "NAVSRSLRSPHATORSHEDAMCOMXXX";
 
+    private int Q1, Q2;  // TODO: figure these out
+
     // 810 REM Setup what exists in galaxy...
     private void setupGalaxy() {
         // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
@@ -91,14 +97,10 @@ public class Game {
         // 870 IFR1>.80 THEN K3=1:K9=K9+1
         // 980 B3=0:IF RND(1) > .96 THEN B3=1:B9=B9+1
         // 1040 G(I,J)=K3*100+B3*10+FNR(1):NEXTJ:NEXTI:IFK9>T9 THEN T9=K9+1
-        // 1100 IF B9 <> 0 THEN 1200
-        // 1150 IF G(Q1,Q2)<200 THEN G(Q1,Q2)=G(Q1,Q2)+120:K9=K9+1
-        // 1160 B9=1:G(Q1,Q2)=G(Q1,Q2)+10:Q1=FNR(1):Q2=FNR(1)
-        // 1200 K7=K9:IFB9<>1 THEN X$=" S": X0$=" ARE "
 
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                float r1 = fnr();
+                double r1 = random.nextDouble();
                 if (r1 > 0.98) {
                     K3 = 3;
                     K9 = K9 + 3;
@@ -114,16 +116,30 @@ public class Game {
                     B3 = 1;
                     B9 = B9 + 1;
                 }
-                G[i][j] = K3 * 100 + B3 * 10 + fnr();
+                G[i][j] = K3 * 100L + B3 * 10L + fnr();
             }
         }
         if (K9 > T9) {
             T9 = K9 + 1;
         }
+        // 1100 IF B9 <> 0 THEN 1200
         if (B9 == 0) {
-            if (G[Q1][Q2]<200 ){
-
-            }THEN G(Q1,Q2)=G(Q1,Q2)+120:K9=K9+1 // 1150 IF G(Q1,Q2)<200 THEN G(Q1,Q2)=G(Q1,Q2)+120:K9=K9+1
+            // 1150 IF G(Q1,Q2)<200 THEN G(Q1,Q2)=G(Q1,Q2)+120:K9=K9+1
+            if (G[Q1][Q2] < 200) {
+                G[Q1][Q2] = G[Q1][Q2] + 120;
+                K9 = K9 + 1;
+            }
+            // 1160 B9=1:G(Q1,Q2)=G(Q1,Q2)+10:Q1=FNR(1):Q2=FNR(1)
+            B9 = 1;
+            G[Q1][Q2] = G[Q1][Q2] + 10;
+            Q1 = fnr();  // TODO: fishy,used as index above.
+            Q2 = fnr();
+        }
+        // 1200 K7=K9:IFB9<>1 THEN X$=" S": X0$=" ARE "
+        K7 = K9;
+        if (B9 != 1) {
+            X$ = "s";
+            X0$ = " are ";
         }
     }
 
@@ -143,8 +159,19 @@ public class Game {
     private void initial() {
         initValues();
         setupGalaxy();
-        print("                                  ,-----*-----,");
+        print("                                  ,-----*-----,"); // 221
         print("                                   `---  ----´");
+        prompt(); // 1230
+    }
+
+    private void prompt() {
+        print("Your orders are as follows:"); //1230
+        print("\t Destroy the " + K9 + " Klingon warships which has invaded"); //1240
+        print("\t the galaxy before they can attack federation headquarters"); //1250
+        print("\t on stardate " + (T0 + T9) + ". This gives you " + T9 + " days. There" + X0$); //1260
+        print("\t " + B9 + " starbase" + X$ + " in the galaxy to resupply your ship."); //1270
+        print("");
+        print("Hit return when you are ready.");
     }
 
 
