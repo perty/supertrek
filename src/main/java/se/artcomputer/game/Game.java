@@ -46,6 +46,11 @@ public class Game {
     private int S1 = fnr(); // 490
     private int S2 = fnr(); // 490
 
+    // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
+    private int K3;
+    private int B3;
+    private int S3;
+
     private void initValues() {
         for (int i = 0; i < 9; i++) { // 530 (arrays in Java are zero based, not in BASIC).
             C[i][0] = 0; //Redundant
@@ -90,6 +95,36 @@ public class Game {
         // 1150 IF G(Q1,Q2)<200 THEN G(Q1,Q2)=G(Q1,Q2)+120:K9=K9+1
         // 1160 B9=1:G(Q1,Q2)=G(Q1,Q2)+10:Q1=FNR(1):Q2=FNR(1)
         // 1200 K7=K9:IFB9<>1 THEN X$=" S": X0$=" ARE "
+
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                float r1 = fnr();
+                if (r1 > 0.98) {
+                    K3 = 3;
+                    K9 = K9 + 3;
+                } else if (r1 > 0.95) {
+                    K3 = 2;
+                    K9 = K9 + 2;
+                } else {
+                    K3 = 1;
+                    K9 = K9 + 1;
+                }
+                B3 = 0;
+                if (fnr() > 0.96) {
+                    B3 = 1;
+                    B9 = B9 + 1;
+                }
+                G[i][j] = K3 * 100 + B3 * 10 + fnr();
+            }
+        }
+        if (K9 > T9) {
+            T9 = K9 + 1;
+        }
+        if (B9 == 0) {
+            if (G[Q1][Q2]<200 ){
+
+            }THEN G(Q1,Q2)=G(Q1,Q2)+120:K9=K9+1 // 1150 IF G(Q1,Q2)<200 THEN G(Q1,Q2)=G(Q1,Q2)+120:K9=K9+1
+        }
     }
 
     public GameResult command(String line) {
