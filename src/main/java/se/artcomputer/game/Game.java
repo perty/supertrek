@@ -2,12 +2,15 @@ package se.artcomputer.game;
 
 import java.util.Random;
 
+import static se.artcomputer.game.GameState.INITIAL;
+import static se.artcomputer.game.GameState.RUNNING;
+
 /**
  * Super Star Trek - May, 16 1978 - Requires 24k memory
  */
 public class Game {
 
-    private GameState gameState = GameState.INITIAL;
+    private GameState gameState = INITIAL;
     private Random random = new Random();
     private String Z$ = "                      "; // 270
     private double[][] G = new double[8][8]; // 330
@@ -34,12 +37,19 @@ public class Game {
     private String X0$ = " IS "; // 440
 
     private int I; // TODO: What is is this?
+    private int Z4;
+    private int Z5;
+    private int G5;
+    private double D4;
+
+    private String G2$;
 
     private double fnd() { // 470
         return Math.pow(Math.sqrt(K[I][0] - S1), 2) + Math.pow(K[I][1] - S2, 2);
     }
 
 
+    // Generate a random in 0-7
     private int fnr() { // 475
         return random.nextInt(8);
     }
@@ -53,7 +63,7 @@ public class Game {
     // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
     private int K3;
     private int B3;
-    private int S3;
+    private double S3;
 
     private void initValues() {
         for (int i = 0; i < 9; i++) { // 530 (arrays in Java are zero based, not in BASIC).
@@ -132,7 +142,7 @@ public class Game {
             // 1160 B9=1:G(Q1,Q2)=G(Q1,Q2)+10:Q1=FNR(1):Q2=FNR(1)
             B9 = 1;
             G[Q1][Q2] = G[Q1][Q2] + 10;
-            Q1 = fnr();  // TODO: fishy,used as index above.
+            Q1 = fnr();
             Q2 = fnr();
         }
         // 1200 K7=K9:IFB9<>1 THEN X$=" S": X0$=" ARE "
@@ -148,12 +158,108 @@ public class Game {
 
             case INITIAL -> {
                 initial();
+                gameState = RUNNING;
+            }
+            case RUNNING -> {
+                running();
             }
         }
         if (line.equals("end")) {
             return GameResult.END;
         }
         return GameResult.CONTINUE;
+    }
+
+    private void running() {
+        // 1310 REM Here any time a new quadrant entered.
+        // 1320 Z4=Q1:Z5=Q2:K3=0:B3=0:S3=0:G5=0:D4=0.5*RND(1):Z(Q1,Q2)=G(Q1,Q2)
+        Z4 = Q1;
+        Z5 = Q2;
+        K3 = 0;
+        S3 = 0;
+        G5 = 0;
+        D4 = 0.5 * random.nextDouble();
+        Z[Q1][Q2] = G[Q1][Q2];
+        // 1390 IF Q1<1 OR Q1>8 OR Q2<1 OR Q2>8 THEN 1600
+        if (Q1 >= 0 && Q1 < 8 && Q2 >= 0 && Q2 < 8) {
+            // 1430 GOSUB 9030:Print:IF T0<>T THEN 1490
+            goSub9030();
+            print("");
+            if (T0 == T) {
+                // 1460 Print "Your mission begins with your starship located"
+                print("Your mission begins with your starship located");
+                // 1470 Print "in the galactic quadrant," G2$ " quadrant ...": GOTO 1500
+                print("in the galactic quadrant," + G2$ + " quadrant ...");
+            } else {
+                // 1490 Print "Now entering " G2$ " quadrant ..."
+                print("Now entering " + G2$ + " quadrant ...");
+            }
+            // 1500 S3=G[Q1][Q2]-100 * K3 - 10 * B3: IF K3=0 THEN 1590
+            S3 = G[Q1][Q2] - 100 * K3 - 10 * B3;
+            if (K3 != 0) {
+                // 1560 Print "Combat area    condition red": IF S>200 THEN 1590
+                print("Combat area    condition red");
+                if (S <= 200) {
+                    // 1580 Print "     Shields dangerously low"
+                    print("     Shields dangerously low");
+                }
+            }
+            // 1590 FOR I=1TO3: K(I,1)=0:K(I,2)=0: NEXT I
+            for (int i = 0; i < 3; i++) {
+                K[i][0] = 0;
+                K[i][1] = 0;
+            }
+        }
+        // 1600
+        for (int i = 0; i < 3; i++) {
+            K[i][2] = 0;
+        }
+        Q$ = Z$ + Z$ + Z$ + Z$ + Z$ + Z$ + left(Z$, 17);
+        // 1660 REM Position Enterprise in quadrant, then place "K3" Klingons, &
+        // 1670 REM "B3" starbases, & "S3" stars elsewhere.
+    }
+
+    private static final String[] quadrantName1 =
+            new String[]{
+                    "ANTARES",
+                    "RIGEL",
+                    "PROCYON",
+                    "VEGA",
+                    "CANOPUS",
+                    "ALTAIR",
+                    "SAGITTARIUS",
+                    "POLLUX"
+            };
+    private static final String[] quadrantName2 =
+            new String[]{
+                    "SIRIUS",
+                    "DENEB",
+                    "CAPELLA",
+                    "BETELGEUSE",
+                    "ALDEBARAN",
+                    "REGULUS",
+                    "ARCTURUS",
+                    "SPICA"
+            };
+
+    private void goSub9030() {
+        // 9010 REM Quadrant name in G2$ from Z4,Z5 = G(Q1,Q2)
+        // 9030 IF Z5<=4 THEN ON Z4 GOTO 9040,9050,9060,9070,9070,9080,9100,9110
+        if (Z5 < 4) {
+            G2$ = quadrantName1[Z4];
+        } else {
+            G2$ = quadrantName2[Z4];
+        }
+
+        // 9210 IF G5 <> 1 ON Z5 GOTO ...
+        if (G5 != 1) {
+            switch (Z5) {
+                case 0 -> G2$ += " I";
+                case 1 -> G2$ += " II";
+                case 2 -> G2$ += " III";
+                case 3 -> G2$ += " IV";
+            }
+        }
     }
 
     private void initial() {
