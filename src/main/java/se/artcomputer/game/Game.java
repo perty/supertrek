@@ -1,6 +1,7 @@
 package se.artcomputer.game;
 
 import java.util.Random;
+import java.util.Scanner;
 
 import static se.artcomputer.game.GameState.INITIAL;
 import static se.artcomputer.game.GameState.RUNNING;
@@ -11,12 +12,15 @@ import static se.artcomputer.game.GameState.RUNNING;
 public class Game {
 
     private GameState gameState = INITIAL;
+
+    Scanner scanner = new Scanner(System.in);
+
     private Random random = new Random();
     private String Z$ = "                      "; // 270
     private double[][] G = new double[8][8]; // 330
-    private double[][] C = new double[9][2]; // 330
+    private float[][] C = new float[9][2]; // 330
     private double[][] K = new double[3][3]; // 330
-    private double[] N = new double[3]; // 330
+    //private double[] N = new double[3]; // 330
     private double[][] Z = new double[8][8]; // 330
     private double[] D = new double[8]; // 330
     private int T = Math.round(random.nextFloat() * 20 + 20) * 100; // 370
@@ -43,13 +47,21 @@ public class Game {
     private double D4;
 
     private String G2$;
+    private float W1; // 2360
+    private float D1, D6; // 2700
+    private float X1, X, C1, Y; // 3110
+    private float X2, Q4, Q5; // 3140
+    private int N; // 3170
+    private float T8; // 3370
 
     private double fnd() { // 470
         return Math.pow(Math.sqrt(K[I][0] - S1), 2) + Math.pow(K[I][1] - S2, 2);
     }
 
 
-    // Generate a random in 0-7
+    /**
+     * Generate a random in 0-7
+     */
     private int fnr() { // 475
         return random.nextInt(8);
     }
@@ -57,8 +69,8 @@ public class Game {
     // 480 Initialize Enterprise's position.
     private int O1 = fnr(); // 490
     private int O2 = fnr(); // 490
-    private int S1 = fnr(); // 490
-    private int S2 = fnr(); // 490
+    private float S1 = fnr(); // 490
+    private float S2 = fnr(); // 490
 
     // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
     private int K3;
@@ -103,7 +115,7 @@ public class Game {
 
     private int Q1, Q2;  // TODO: figure these out
 
-    private double R1, R2;
+    private float R1, R2;
 
     // 810 REM Setup what exists in galaxy...
     private void setupGalaxy() {
@@ -117,7 +129,7 @@ public class Game {
 
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                R1 = random.nextDouble();
+                R1 = random.nextFloat();
                 if (R1 > 0.98) {
                     K3 = 3;
                     K9 = K9 + 3;
@@ -221,7 +233,7 @@ public class Game {
         for (int i = 0; i < 3; i++) {
             K[i][2] = 0;
         }
-        Q$ = Z$ + Z$ + Z$ + Z$ + Z$ + Z$ + left(Z$, 17);
+        Q$ = Z$ + Z$ + Z$ + Z$ + Z$ + Z$ + left$(Z$, 17);
         // 1660 REM Position Enterprise in quadrant, then place "K3" Klingons, &
         // 1670 REM "B3" starbases, & "S3" stars elsewhere.
         // 1680 A$="<*>":Z1=S1:Z2=S2:GOSUB 8670:IF K3<1 THEN 1820
@@ -261,17 +273,272 @@ public class Game {
             Z2 = R2;
             goSub8670();
         }
+        // 1980 GOSUB 6430
+        goSub6430();
+        command();
+    }
+
+    private void command() {
+        // 1990 IF S+E > 10 THEN IF E>10 OR D[7]=0 THEN 2060
+        if (S + E <= 10) {
+            if (E <= 10 && D[6] != 0) {
+                // 2020 2030 2040 2050
+                print("");
+                print("** FATAL ERROR ** You've just stranded your ship in ");
+                print("space");
+                print("You have insufficient maneuvering energy,");
+                print(" and shield control");
+                print("Is presently incapable of cross");
+                print("-circuiting engine room");
+                // GOTO 6220
+            }
+        }
+        // 2060 INPUT "COMMAND"; A$
+        A$ = input$("Command");
+
+        // 2080 FOR I=1TO9:IF LEFT$(A$,3)<>MID$(A1$, 3*I-2,3) THEN 2160
+        // 2140 ON I GOTO 2300,1980,4000,4260,4700,5530,5690,7290,6270
+        // 2160 NEXT I: PRINT "ENTER ONE OF THE FOLLOWING"
+        switch (A$.toUpperCase()) {
+            case "NAV" -> gotoNAV2300();
+            case "SRS" -> goSub6430(); // GOTO 1980
+            case "LRS" -> gotoLSR4000();
+            case "PHA" -> gotoPHA4260();
+            case "TOR" -> gotoTOR4700();
+            case "SHE" -> gotoSHE5530();
+            case "DAM" -> gotoDAM5690();
+            case "COM" -> gotoCOM7290();
+            case "XXX" -> gotoXXX6270();
+            default -> help();
+        }
+    }
+
+
+    private void gotoNAV2300() {
+        // 2290 REM Course control begins here
+        // 2300
+        int C1 = input("Course (0-9)");
+        if (C1 == 9) {
+            C1 = 1;
+        }
+        if (C1 < 1 || C1 > 9) {
+            print("\tLt. Sulu reports 'Incorrect course data, sir!'");
+        } else {
+            X$ = "8"; // 2350
+            if (D[0] < 0) {
+                X$ = "0.2";
+            }
+            // 2360
+            W1 = inputF("Warp factor (0 -" + X$ + "):");
+            if (W1 != 0) {
+                if (D[0] < 0 && W1 > 0.2) {
+                    // 2470
+                    print("Warp engines are damaged, maximum speed = warp 0.2");
+                } else {
+                    if (W1 > 0 && W1 <= 8) {
+                        // 2490
+                        long N = Math.round(W1 * 8 + 0.5);
+                        if (E - N < 0) {
+                            print("Engineering reports 'insufficient energy available");
+                            print("\t for maneuvering at warp " + W1 + "!");
+                            // 2530
+                            if (S >= N - E && D[6] > 0) {
+                                print("Deflector control room acknowledges " + S + " units of energy");
+                                print("\t presently deployed to shields.");
+                            }
+                        }
+                        klingons();
+                        moveStarShip();
+                    }
+                }
+
+            }
+        }
+    }
+
+    // 2580 REM KLINGONS MOVE/FIRE ON MOVING STARSHIP ...
+
+    private void klingons() {
+        // 2590 FOR I=1TOK3: IF K(I,3) = 0 THEN 2700
+        for (int i = 0; i < K3; i++) {
+            if (K[i][2] != 0) {
+                // 2610
+                A$ = "   ";
+                Z1 = K[i][0];
+                Z2 = K[i][1];
+                goSub8670();
+                goSub8590();
+                K[i][0] = Z1;
+                K[i][1] = Z2;
+                A$ = "+K+";
+                goSub8670();
+            }
+        } // 2700 NEXT I: GOSUB 6000
+        goSub6000();
+        D1 = 0;
+        D6 = W1;
+        if (W1 >= 1) {
+            D6 = 1;
+        }
+        for (int i = 0; i < 8; i++) {
+            if (D[i] < 0) {
+                D[i] = D[i] + D6;
+                if (D[i] > -0.1 && D[i] < 0) {
+                    D[i] = -0.1;
+                } else {
+                    if (D[i] >= 0) {
+                        if (D1 != 1) {
+                            D1 = 1;
+                        }
+                        print("Damage control report:  ");
+                        print("\t\t\t\t\t\t\t");
+                        R1 = i;
+                        goSub8790();
+                        print(G2$);
+                        print("\t repair completed.");
+                    }
+                }
+            }
+        }// 2880 NEXT I: IF RND(1) > 0.2 THEN 3070
+        if (random.nextFloat() <= 0.2) {
+            R1 = fnr(); // 2910
+            if (random.nextFloat() < 0.6) {
+                int index = Math.round(R1);
+                D[index] = D[index] - (random.nextFloat() * 5 + 1);
+                print("Damage control report:  ");
+                goSub8790();
+                print(G2$);
+                print("damaged");
+                print("");
+            } else {
+                // 3000
+                int index = Math.round(R1);
+                D[index] = D[index] + (random.nextFloat() * 3 + 1);
+                print("Damage control report:  ");
+                goSub8790();
+                print(G2$);
+                print("\t state of repair improved.");
+            }
+        } // 3070
+    }
+
+    // 3060
+
+    private void moveStarShip() {
+        // 3070 A$ = "   " ...
+        A$ = "   ";
+        Z1 = S1;
+        Z2 = S2;
+        goSub8670();
+        // 3110
+        int C1int = Math.round(C1);
+        X1 = C[C1int][0] + (C[C1int + 1][0] - C[C1int][0]) * (C1 - C1int);
+        X = S1;
+        Y = S2;
+        X2 = C[C1int][1] + (C[C1int + 1][1] - C[C1int][1]) * (C1 - C1int);
+        Q4 = Q1;
+        Q5 = Q2;
+        // 3170
+        boolean shutdown = false;
+        for (int i = 0; i < N; i++) {
+            S1 = S1 + X1;
+            S2 = S2 + X2;
+            if (S1 < 1 || S1 >= 9 || S2 < 1 || S2 >= 9) {
+                exceededQuadrantLimits3500();
+            } else {
+                int S8 = Math.round(S1) * 24 + Math.round(S2) * 3 - 26;
+                if (!mid$(Q$, S8, 2).equals("  ")) {
+                    S1 = Math.round(S1 - X1);
+                    S2 = Math.round(S2 - X2);
+                    print("Warp engines shut down at");
+                    print("sector " + S1 + "," + S2 + " due to bad navigation.");
+                    shutdown = true;
+                    break;
+                }
+            }
+        } // 3360
+        if (!shutdown) {
+            S1 = Math.round(S1);
+            S2 = Math.round(S2);
+        }
+        // 3370
+        A$ = "<*>";
+        Z1 = Math.round(S1);
+        Z2 = Math.round(S2);
+        goSub8670();
+        goSub3910();
+        T8 = 1;
+        if (W1 < 1) {
+            T8 = 0.1F * Math.round(10 * W1);
+        }
+        // 3470 REM See if docked, then command
+        // 3480 GOTO 1980
+        goSub6430();
+    }
+
+    private void exceededQuadrantLimits3500() {
+
+    }
+
+    private void gotoLSR4000() {
+    }
+
+    private void gotoPHA4260() {
+    }
+
+    private void gotoTOR4700() {
+    }
+
+    private void gotoSHE5530() {
+    }
+
+    private void gotoDAM5690() {
+    }
+
+    private void gotoXXX6270() {
+    }
+
+    private void gotoCOM7290() {
+    }
+    private void help() {
+        // 2160
+        print("Enter one of the following:");
+        print("\tNAV (to set course)");
+        print("\tSRS (for short range sensor scan)");
+        print("\tLRS (for long range sensor scan)");
+        print("\tPHA (to fire phasers)");
+        print("\tTOR (to fire photon torpedoes)");
+        print("\tSHE (to raise or lower shields)");
+        print("\tDAM (for damage control report)");
+        print("\tCOM (to call on library-computer)");
+        print("\tNAV (to resign your command)");
+        print("");
+        // 2260 GOTO 1990
+    }
+
+    private void goSub3910() {
+
+    }
+
+    private void goSub6000() {
+    }
+
+    private void goSub6430() {
+
     }
 
     private void goSub8590() {
     }
 
     private void goSub8670() {
-
     }
 
-    private String left(String input, int i) {
+    private String left$(String input, int i) {
         return input.substring(0, i);
+    }
+
+    private String mid$(String string, int start, int end) {
+        return string.substring(start end);
     }
 
     private static final String[] quadrantName1 =
@@ -335,6 +602,20 @@ public class Game {
         print("Hit return when you are ready.");
     }
 
+    private String input$(String prompt) {
+        System.out.print(prompt);
+        return scanner.nextLine();
+    }
+
+    private int input(String prompt) {
+        System.out.print(prompt);
+        return scanner.nextInt();
+    }
+
+    private float inputF(String prompt) {
+        System.out.print(prompt);
+        return scanner.nextFloat();
+    }
 
     private void print(String s) {
         System.out.println(s);
