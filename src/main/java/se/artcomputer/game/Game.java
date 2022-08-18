@@ -64,6 +64,11 @@ public class Game {
     private int K3;
     private int B3;
     private double S3;
+    private String Q$; // 1600
+    private String A$; // 1680
+
+    private double Z1, Z2; // 1680
+    private double B4, B5; // 1880
 
     private void initValues() {
         for (int i = 0; i < 9; i++) { // 530 (arrays in Java are zero based, not in BASIC).
@@ -98,6 +103,8 @@ public class Game {
 
     private int Q1, Q2;  // TODO: figure these out
 
+    private double R1, R2;
+
     // 810 REM Setup what exists in galaxy...
     private void setupGalaxy() {
         // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
@@ -110,11 +117,11 @@ public class Game {
 
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                double r1 = random.nextDouble();
-                if (r1 > 0.98) {
+                R1 = random.nextDouble();
+                if (R1 > 0.98) {
                     K3 = 3;
                     K9 = K9 + 3;
-                } else if (r1 > 0.95) {
+                } else if (R1 > 0.95) {
                     K3 = 2;
                     K9 = K9 + 2;
                 } else {
@@ -217,6 +224,54 @@ public class Game {
         Q$ = Z$ + Z$ + Z$ + Z$ + Z$ + Z$ + left(Z$, 17);
         // 1660 REM Position Enterprise in quadrant, then place "K3" Klingons, &
         // 1670 REM "B3" starbases, & "S3" stars elsewhere.
+        // 1680 A$="<*>":Z1=S1:Z2=S2:GOSUB 8670:IF K3<1 THEN 1820
+        A$ = "<*>";
+        Z1 = S1;
+        Z2 = S2;
+        goSub8670();
+        if (K3 >= 1) {
+            // 1720 FOR I=1TOK3: GOSUB 8590: A$="+K+":Z1=R1:Z2=R2
+            for (int i = 0; i < K3; i++) {
+                goSub8590();
+                A$ = "+K+";
+                Z1 = R1;
+                Z2 = R2;
+                // 1780 GOSUB 8670: K(I,1)=R1:K(I,2)=R2;K(I,3)=S9*0.5+RND(1):NEXTI
+                goSub8670();
+                K[i][0] = R1;
+                K[i][1] = R2;
+                K[i][2] = S9 * 0.5 + random.nextDouble();
+            }
+        }
+        // 1820 IF B3<1 THEN 1910
+        if (B3 >= 1) {
+            // 1880 GOSUB 8590: A$=">!<":Z1=R1:B4=R1:Z2=R2:B5=R2:GOSUB 8670
+            goSub8590();
+            A$ = ">!<";
+            Z1 = R1;
+            B4 = R1;
+            Z2 = R2;
+            B5 = R2;
+            goSub8670();
+        }
+        // 1910 FOR I=1TOS3:GOSUB 8590:A$=" * ":Z1=R1:Z2=R2:GOSUB 8670:NEXTI
+        for (int i = 0; i < 3; i++) {
+            goSub8590();
+            Z1 = R1;
+            Z2 = R2;
+            goSub8670();
+        }
+    }
+
+    private void goSub8590() {
+    }
+
+    private void goSub8670() {
+
+    }
+
+    private String left(String input, int i) {
+        return input.substring(0, i);
     }
 
     private static final String[] quadrantName1 =
