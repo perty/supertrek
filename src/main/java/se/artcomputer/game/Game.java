@@ -23,10 +23,14 @@ public class Game {
     //private double[] N = new double[3]; // 330
     private double[][] Z = new double[8][8]; // 330
     private double[] D = new double[8]; // 330
+    /** Current day */
     private int T = Math.round(random.nextFloat() * 20 + 20) * 100; // 370
+    /** Start day */
     private int T0 = T; // 370
+    /** Days for mission */
     private int T9 = 25 + Math.round(random.nextFloat() * 10); // 370
     private double D0 = 0.0F; // 370
+    /** Energy? */
     private int E = 3000; // 370
     private int E0 = E; // 370
 
@@ -46,6 +50,7 @@ public class Game {
     private int G5;
     private double D4;
 
+    /** Name of quadrant */
     private String G2$;
     private float W1; // 2360
     private float D1, D6; // 2700
@@ -172,7 +177,7 @@ public class Game {
         }
     }
 
-    public GameResult command(String line) {
+    public GameResult run(String line) {
         switch (gameState) {
 
             case INITIAL -> {

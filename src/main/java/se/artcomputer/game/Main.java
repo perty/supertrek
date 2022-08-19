@@ -13,7 +13,7 @@ public class Main {
         while (gameResult == CONTINUE) {
             System.out.print(">");
             String line = scanner.nextLine();
-            gameResult = game.command(line);
+            gameResult = game.run(line);
         }
     }
 }
