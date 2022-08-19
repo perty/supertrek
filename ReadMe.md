@@ -37,6 +37,8 @@ Variable names can not be so descriptive names are not possible. Added to that, 
 
 The flow of the program can be hard to follow at times. There are no boundaries between parts of the program other than the sparse comments the author provided. Sometimes the flow jumps back to a line earlier in the program. Is it a loop? 
 
+Many calculations are hard to understand partly to naming of variables and partly lack of documentation. It is also core of the game logic so it is essential to get right.
+
 Correctness will also be a challenge, if I have the stamina to type it all in. If it seems to work, is it as intended?
 
 ### Ultimate goal

@@ -23,14 +23,22 @@ public class Game {
     //private double[] N = new double[3]; // 330
     private double[][] Z = new double[8][8]; // 330
     private double[] D = new double[8]; // 330
-    /** Current day */
+    /**
+     * Current day
+     */
     private int T = Math.round(random.nextFloat() * 20 + 20) * 100; // 370
-    /** Start day */
+    /**
+     * Start day
+     */
     private int T0 = T; // 370
-    /** Days for mission */
+    /**
+     * Days for mission
+     */
     private int T9 = 25 + Math.round(random.nextFloat() * 10); // 370
     private double D0 = 0.0F; // 370
-    /** Energy? */
+    /**
+     * Energy?
+     */
     private int E = 3000; // 370
     private int E0 = E; // 370
 
@@ -50,7 +58,9 @@ public class Game {
     private int G5;
     private double D4;
 
-    /** Name of quadrant */
+    /**
+     * Name of quadrant
+     */
     private String G2$;
     private float W1; // 2360
     private float D1, D6; // 2700
@@ -481,8 +491,45 @@ public class Game {
         goSub6430();
     }
 
+    // 3498 REM EXCEEDED QUADRANT LIMITS
     private void exceededQuadrantLimits3500() {
-
+        // 3500 X=8*Q1+X+N*X1:Y=8*Q2+Y+N*X2:Q1=INT(X/8):Q2=INT(Y/8):S1=INT(X-Q1*8)
+        X = 8 * Q1 + X + N * X1;
+        Y = 8 * Q2 + Y + N * X2;
+        Q1 = Math.round(X / 8);
+        Q2 = Math.round(Y / 8);
+        S1 = Math.round(X - Q1 * 8);
+        // 3556 S2=INT(Y-Q2*8): IF S1=0 THEN Q1=Q1-1:S1=8
+        S2 = Math.round(Y - Q2 * 8);
+        if (S1 == 0) {
+            Q1 = Q1 - 1;
+        }
+        S1 = 8;
+        // 3590 IF S2=0 THEN Q2=Q2-1:S2=8
+        if (S2 == 0) {
+            Q2 = Q2 - 1;
+        }
+        S2 = 8;
+        // 3620 XSP"Ol<@LTHE2NKS1=1:@1=2Siel
+        //        3678 LFQ1>8 THENX S=
+        //                37168
+        //        3756 LFGQ2>8 THENX S= 1:
+        //        379G 1 Fi S= STHENS 66
+        //        3896PRINT"LT-UHURAREPORTSMESSAGEFROMSTARFLEETCONMAND:" 6276PRINT"THEREWERKOES"'KLISNGONBATTLECRUISERSLEFTAT"
+        //        3810 PRINT’ "PERMISSION TO ATTEMPT CROSSING OF GALACTIC PERIMETER" 38 26 PRINT’ IS HEREBY *DENIEDt. SHUT DOWN YOUR ENGINES.'"
+        //        38368 PRINT"CHLEF ENGINEER SCOTT REPORTS ‘WARP ENGINES SHUT DOWN" 38 40 PRINT" AT SECTOR'S Si3'2"3 523 "GF QUADRANT"3 O13". "3 Qa3".'" 3856IFT>T@+19THEN6226
+        //        38 6G IF6+01+02=8%*C4+tQSTHEN3379
+        //        3873 T= T+ 1:GOSUB39 lo: GOTOI323
+        //        396 REM MANEUVER ENERGY S/hk **
+        //        3916E=E-N~16:1FE>=@THENRETURN
+        //        3936 PRINT"SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER." 39 43 S=St+E: Ee@:1 FS<=GTHENS=G
+        //        6235 PRINT"THE END OF YOUR MISSION."
+        //        629 PRINT: PRINT: IFE9= 0TH EN6365
+        //        6316 PRINT" THE FEDERATION IS IN NEED OF A NEV STARSHIP COMMANDER" 6326 PRINT'FOR A SIMILAN MISSION -- IF THERE 1S A VOLUNTEER" 6330INPUT"LETHIMSTEPFORVARDANDENTER‘'AYE'FA"S=3"AAYES"T?HE1NIG 6368 END
+        //        6370 PRINT"CONGRULATOIN» CAPTAIN! THE LAST KLINGON BATTLE CRUISER" 6388 PRINT"MENACING THE FEDERATION HAS BEEN DESTROYED.": PRINT 648EPRINT"YOUR EFFICLENCY RATINGI15"319G@*I~1(92)K127:GO/TO0(6E9G 6426 REM SHORT RANGE SENSOR SCAN & STARTUP SUBROUTINE
+        //                6438 FORI=Si~!TOS1+1: FORU=S2-1TOS2t1
+        //        6458 T F I N T C L ++. .5) >58 OR)IN T<C U+1- 5)G < LOORIRN TIC J+.W 5)T>3 CTHELNG54G
+        //        3986 RETURN
     }
 
     private void gotoLSR4000() {
@@ -505,6 +552,7 @@ public class Game {
 
     private void gotoCOM7290() {
     }
+
     private void help() {
         // 2160
         print("Enter one of the following:");
