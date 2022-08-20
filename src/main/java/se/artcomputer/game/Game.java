@@ -39,8 +39,8 @@ public class Game {
     /**
      * Energy available
      */
-    private int E = 3000; // 370
-    private int E0 = E; // 370
+    private float E = 3000; // 370
+    private float E0 = E; // 370
 
     private int P = 10; // 440
     private int P0 = P; // 440
@@ -72,7 +72,8 @@ public class Game {
     private int N; // 3170
     private float T8; // 3370
     private int X5; // 3620
-    private String O1$; //4040
+    private String O1$; // 4040
+    private int H1; // 4450
 
     private double fnd() { // 470
         return Math.pow(Math.sqrt(K[I][0] - S1), 2) + Math.pow(K[I][1] - S2, 2);
@@ -333,8 +334,8 @@ public class Game {
             case "NAV" -> gotoNAV2300();
             case "SRS" -> goSub6430(); // GOTO 1980
             case "LRS" -> longRangeSensors();
-            case "PHA" -> gotoPHA4260();
-            case "TOR" -> gotoTOR4700();
+            case "PHA" -> phaserControl();
+            case "TOR" -> photonTorpedo();
             case "SHE" -> gotoSHE5530();
             case "DAM" -> gotoDAM5690();
             case "COM" -> gotoCOM7290();
@@ -600,7 +601,7 @@ public class Game {
                 N[1] = -1;
                 N[2] = -2;
                 N[3] = -3;
-                for (int j = Q2 - 1; j <=Q2 + 1; j++) {
+                for (int j = Q2 - 1; j <= Q2 + 1; j++) {
                     //  4120 IF I>0 AND I<9 AND J>D AND J<9 THEN N(J-Q2+2)=G(I,J):Z(I,J)=G(I,J)
                     if (i > 0 && i < 9 && j > 0 && j < 9) {
                         N[j - Q2 + 2] = G[i][j];
@@ -622,10 +623,59 @@ public class Game {
         }
     }
 
-    private void gotoPHA4260() {
+    /**
+     * 4260 REM PHASER CONTROL CODE BEGINS HERE
+     */
+    private void phaserControl() {
+        // 4260 IFDC 4)<@THENPRINT'PHASERS INOPERATI VE":GOTO1996
+        if (D[4] < 0) {
+            print("PHASERS INOPERATIVE");
+            return;
+        }
+        // 4265 TFK3>8 THEN 4330
+        if (K3 <= 8) {
+            // 4270 PRINT'SCI ENCE OFFICER SPOCK REPORTS ‘SENSORS SHOW NG ENEMY SHIPS"
+            // 4280 PRINT" IN THIS QUADRAN "'3G0TO1996
+            print("SCIENCE OFFICER SPOCK REPORTS ‘SENSORS SHOWING ENEMY SHIPS");
+            print(" IN THIS QUADRANT'");
+            return;
+        }
+
+        // 4330 IFDCS)<@THEN PRINT "COMPUTER FAILURE HANPERS ACCURACY"
+        if (D[8] < 0) {
+            print("COMPUTER FAILURE HAMPERS ACCURACY");
+        }
+        // 4350 PRINT"PHASERS LOCKED ON TARGETS "3
+        print("PHASERS LOCKED ON TARGETS ");
+        do {
+            // 4360 PRINT" ENERGY AVAILABLE =";E; "UNITS"
+            print(" ENERGY AVAILABLE =" + E + "UNITS");
+            // 4370 INPUT'NUMBER OF UNITS TO FIRE";X:IF X<=0 THEN 1990
+            X = input("NUMBER OF UNITS TO FIRE");
+            if (X <= 0) {
+                return;
+            }
+            // 4400 IFE-X<0THEN 4360
+        } while (E - X < 0);
+        // 4410 E=E-X:1FDC7)<6THEN K=XRN*DC1)
+        E = E - X;
+        // 4450 HI=INT(X/K3) :FORI= 1T03: IFK(I,3)<=0 THEN 4670
+        H1 = Math.round(X / K3);
+        for (int i = 0; i < 3; i++) {
+
+        }
+        // 4480 H=INT((H1/FND(0)))*CRN2D1FCH>.11S*)KC+Ls23)THEN 4530
+        // 4500 PRINT"SENSORS SHOW NO DAMAGE TO ENEMY AT";K(I,1);",";K(I,2):GOTO 4670
+        // 4530 K(I,3)=K(I,3)-H:PRINT H;" UNIT HIT ON KLINGON IN SECTOR";K(I,1);",";K(I,2)
+        // 4550 PRINTK(C I+ 2)s1 FKCLs 3)<=@THENPRINT"*** KLINGON DESTROYED ***"':GOTO 4580
+        // 4560 PRINT" (SENSORSSHOW'SKCI303."UNITSREMAINING)":GOTO 4670
+        // 4580 K3=K3-1:K9=K9-1:Z1=K(I,1):Z2=K(I,2):A$="   ":GOSUB 8670
+        // 4650 K(I,3)=0:G(Q1,Q2)=G(Q1,Q2)-100:Z(Q1,Q2)=G(Q1,Q2):IF K9<=0 THEN 6370
+        // 4670 NEXT I: GOSUB 6000: GOTO 1990
     }
 
-    private void gotoTOR4700() {
+    private void photonTorpedo() {
+        // 4690 REM PHOTON TORPEDO CODE BEGINS HERE
     }
 
     private void gotoSHE5530() {
