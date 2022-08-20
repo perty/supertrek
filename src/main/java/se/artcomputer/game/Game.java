@@ -48,7 +48,7 @@ public class Game {
     /**
      * Shield energy
      */
-    private int S = 0; // 440
+    private float S = 0; // 440
     private int B9 = 0; // 440
     private int K9 = 0; // 440
     private int K7 = 0; // 1200
@@ -74,6 +74,7 @@ public class Game {
     private int X5; // 3620
     private String O1$; // 4040
     private int H1; // 4450
+    private float H; // 4480
 
     private double fnd() { // 470
         return Math.pow(Math.sqrt(K[I][0] - S1), 2) + Math.pow(K[I][1] - S2, 2);
@@ -106,7 +107,13 @@ public class Game {
     private float S2 = fnr(); // 490
 
     // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
+    /**
+     * No of Klingons
+     */
     private int K3;
+    /**
+     * Starbases
+     */
     private int B3;
     private double S3;
     private String Q$; // 1600
@@ -220,7 +227,7 @@ public class Game {
         return GameResult.CONTINUE;
     }
 
-    private void running() {
+    private void newQuadrant1320() {
         // 1310 REM Here any time a new quadrant entered.
         // 1320 Z4=Q1:Z5=Q2:K3=0:B3=0:S3=0:G5=0:D4=0.5*RND(1):Z(Q1,Q2)=G(Q1,Q2)
         Z4 = Q1;
@@ -237,21 +244,21 @@ public class Game {
             print("");
             if (T0 == T) {
                 // 1460 Print "Your mission begins with your starship located"
-                print("Your mission begins with your starship located");
-                // 1470 Print "in the galactic quadrant," G2$ " quadrant ...": GOTO 1500
-                print("in the galactic quadrant," + G2$ + " quadrant ...");
+                print("YOUR MISSION BEGINS WITH YOUR STARSHIP LOCATED");
+                // 1470 PRINT "IN THE GALACTIC QUADRANT," G2$ " QUADRANT ...": GOTO 1500
+                print("IN THE GALACTIC QUADRANT," + G2$ + " QUADRANT ...");
             } else {
                 // 1490 Print "Now entering " G2$ " quadrant ..."
-                print("Now entering " + G2$ + " quadrant ...");
+                print("NOW ENTERING " + G2$ + " QUADRANT ...");
             }
             // 1500 S3=G[Q1][Q2]-100 * K3 - 10 * B3: IF K3=0 THEN 1590
             S3 = G[Q1][Q2] - 100 * K3 - 10 * B3;
             if (K3 != 0) {
-                // 1560 Print "Combat area    condition red": IF S>200 THEN 1590
-                print("Combat area    condition red");
+                // 1560 Print "COMBAT AREA    CONDITION RED": IF S>200 THEN 1590
+                print("COMBAT AREA CONDITION RED");
                 if (S <= 200) {
                     // 1580 Print "     Shields dangerously low"
-                    print("     Shields dangerously low");
+                    print("     SHIELDS DANGEROUSLY LOW");
                 }
             }
             // 1590 FOR I=1TO3: K(I,1)=0:K(I,2)=0: NEXT I
@@ -306,7 +313,12 @@ public class Game {
         }
         // 1980 GOSUB 6430
         goSub6430();
-        command();
+    }
+
+    private void running() {
+        do {
+            command();
+        } while (true);
     }
 
     private void command() {
@@ -315,17 +327,18 @@ public class Game {
             if (E <= 10 && D[6] != 0) {
                 // 2020 2030 2040 2050
                 print("");
-                print("** FATAL ERROR ** You've just stranded your ship in ");
-                print("space");
-                print("You have insufficient maneuvering energy,");
-                print(" and shield control");
-                print("Is presently incapable of cross");
-                print("-circuiting engine room");
+                print("** FATAL ERROR ** YOU'VE JUST STRANDED YOUR SHIP IN ");
+                print("SPACE");
+                print("YOU HAVE INSUFFICIENT MANEUVERING ENERGY,");
+                print(" AND SHIELD CONTROL");
+                print("IS PRESENTLY INCAPABLE OF CROSS");
+                print("-CIRCUITING ENGINE ROOM");
                 // GOTO 6220
+                goto6220();
             }
         }
         // 2060 INPUT "COMMAND"; A$
-        A$ = input$("Command");
+        A$ = input$("COMMAND");
 
         // 2080 FOR I=1TO9:IF LEFT$(A$,3)<>MID$(A1$, 3*I-2,3) THEN 2160
         // 2140 ON I GOTO 2300,1980,4000,4260,4700,5530,5690,7290,6270
@@ -387,8 +400,9 @@ public class Game {
         }
     }
 
-    // 2580 REM KLINGONS MOVE/FIRE ON MOVING STARSHIP ...
-
+    /**
+     * 2580 REM KLINGONS MOVE/FIRE ON MOVING STARSHIP ...
+     */
     private void klingons() {
         // 2590 FOR I=1TOK3: IF K(I,3) = 0 THEN 2700
         for (int i = 0; i < K3; i++) {
@@ -453,6 +467,7 @@ public class Game {
         } // 3070
     }
 
+
     // 3060
 
     private void moveStarShip() {
@@ -512,6 +527,7 @@ public class Game {
     }
 
     // 3498 REM EXCEEDED QUADRANT LIMITS
+
     private void exceededQuadrantLimits() {
         // 3500 X=8*Q1+X+N*X1:Y=8*Q2+Y+N*X2:Q1=INT(X/8):Q2=INT(Y/8):S1=INT(X-Q1*8)
         X = 8 * Q1 + X + N * X1;
@@ -558,13 +574,13 @@ public class Game {
         // 3790 IF X5=0 THEN 3860
         if (X5 != 0) {
             // 3800 PRINT"LT-UHURA REPORTS MESSAGE FROM STARFLEET COMMAND:"
-            print("LT-UHURA REPORTS MESSAGE FROM STARFLEET COMMAND:");
             // 3810 PRINT"’ PERMISSION TO ATTEMPT CROSSING OF GALACTIC PERIMETER"
-            print("’ PERMISSION TO ATTEMPT CROSSING OF GALACTIC PERIMETER");
             // 3820 PRINT" IS HEREBY *DENIED*. SHUT DOWN YOUR ENGINES.'"
-            print(" IS HEREBY *DENIED*. SHUT DOWN YOUR ENGINES.'");
             // 3830 PRINT"CHIEF ENGINEER SCOTT REPORTS ‘WARP ENGINES SHUT DOWN"
-            print("CHIEF ENGINEER SCOTT REPORTS ‘WARP ENGINES SHUT DOWN");
+            print("LT-UHURA REPORTS MESSAGE FROM STARFLEET COMMAND:");
+            print("’ PERMISSION TO ATTEMPT CROSSING OF GALACTIC PERIMETER");
+            print(" IS HEREBY *DENIED*. SHUT DOWN YOUR ENGINES.'");
+            print("CHIEF ENGINEER SCOTT REPORTS ‘WARP ENGINES SHUT DOWN'");
             // 3840 PRINT" AT SECTOR";S1;",";S2;"OF QUADRANT";Q1;",";Q2;"-'"
             print(" AT SECTOR" + S1 + "," + S2 + "OF QUADRANT" + Q1 + "," + Q2 + "-'");
             // 3850 IF T>T0+T9 THEN 6220
@@ -580,7 +596,7 @@ public class Game {
             T = T + 1;
             goSub3910();
             // goto 1320 is entering a new quadrant.
-            goto1320();
+            newQuadrant1320();
         }
     }
 
@@ -609,12 +625,12 @@ public class Game {
                     }
                 }
                 // 4180 NEXTJ: FOR L=1TO3:PRINT": “;:IFN(L)<0 THEN PRINT"*** ";: GOTO4230
-                for (int l = 0; l <= 3; l++) {
+                for (int l = 0; l < 3; l++) {
                     if (N[l] < 0) {
                         print("*** ");
                     } else {
                         // 4210 PRINT RIGHT$(STR$(N(L)+1000),3);" “;
-                        print("todo");
+                        print("todo" + (N[l] + 1000));
                     }
                     // 4230 NEXTL: PRINT":": PRINT O1$:NEXT1: GOTO 1990
                     print(":");
@@ -662,32 +678,81 @@ public class Game {
         // 4450 HI=INT(X/K3) :FORI= 1T03: IFK(I,3)<=0 THEN 4670
         H1 = Math.round(X / K3);
         for (int i = 0; i < 3; i++) {
+            if (K[i][2] > 0) {
+                // 4480 H=INT((H1/FND(0)))*CRN2D1FCH>.11S*)KC+Ls23)THEN 4530
+                H = Math.round((H1 / fnd()) * (random.nextFloat() + 2));
+                if (H <= 0.15 * K[i][2]) {
 
+                    // 4500 PRINT"SENSORS SHOW NO DAMAGE TO ENEMY AT";K(I,1);",";K(I,2):GOTO 4670
+                    print("SENSORS SHOW NO DAMAGE TO ENEMY AT" + K[i][0] + "," + K[i][1]);
+                } else {
+                    // 4530 K(I,3)=K(I,3)-H:PRINT H;" UNIT HIT ON KLINGON IN SECTOR";K(I,1);",";K(I,2)
+                    K[i][2] = K[i][2] - H;
+                    print(H + " UNIT HIT ON KLINGON IN SECTOR" + K[i][0] + "," + K[i][1]);
+                    // 4550 PRINTK(C I+ 2)s1 FKCLs 3)<=@THENPRINT"*** KLINGON DESTROYED ***"':GOTO 4580
+                    if (K[i][2] > 0) {
+                        // 4560 PRINT" (SENSORS SHOW'SKCI303."UNITS REMAINING)":GOTO 4670
+                        print("  (SENSORS SHOW " + K[i][2] + " UNITS REMAINING)");
+                    } else {
+                        print("*** KLINGON DESTROYED ***");
+                        // 4580 K3=K3-1:K9=K9-1:Z1=K(I,1):Z2=K(I,2):A$="   ":GOSUB 8670
+                        K3 = K3 - 1;
+                        K9 = K9 - 1;
+                        Z1 = K[i][0];
+                        Z2 = K[i][1];
+                        A$ = "   ";
+                        goSub8670();
+                        // 4650 K(I,3)=0:G(Q1,Q2)=G(Q1,Q2)-100:Z(Q1,Q2)=G(Q1,Q2):IF K9<=0 THEN 6370
+                        K[i][2] = 0;
+                        G[Q1][Q2] = G[Q1][Q2] - 100;
+                        Z[Q1][Q2] = G[Q1][Q2];
+                        if (K9 < 0) {
+                            goto6370();
+                        }
+                    }
+                }
+            }
         }
-        // 4480 H=INT((H1/FND(0)))*CRN2D1FCH>.11S*)KC+Ls23)THEN 4530
-        // 4500 PRINT"SENSORS SHOW NO DAMAGE TO ENEMY AT";K(I,1);",";K(I,2):GOTO 4670
-        // 4530 K(I,3)=K(I,3)-H:PRINT H;" UNIT HIT ON KLINGON IN SECTOR";K(I,1);",";K(I,2)
-        // 4550 PRINTK(C I+ 2)s1 FKCLs 3)<=@THENPRINT"*** KLINGON DESTROYED ***"':GOTO 4580
-        // 4560 PRINT" (SENSORSSHOW'SKCI303."UNITSREMAINING)":GOTO 4670
-        // 4580 K3=K3-1:K9=K9-1:Z1=K(I,1):Z2=K(I,2):A$="   ":GOSUB 8670
-        // 4650 K(I,3)=0:G(Q1,Q2)=G(Q1,Q2)-100:Z(Q1,Q2)=G(Q1,Q2):IF K9<=0 THEN 6370
         // 4670 NEXT I: GOSUB 6000: GOTO 1990
+        goSub6000();
+    }
+
+
+    private void goSub3910() {
+        print("goSub3910");
     }
 
     private void photonTorpedo() {
         // 4690 REM PHOTON TORPEDO CODE BEGINS HERE
+        print("photonTorpedo");
     }
 
     private void gotoSHE5530() {
+        print("gotoSHE5530");
     }
 
     private void gotoDAM5690() {
+        print("gotoDAM5690");
     }
 
     private void gotoXXX6270() {
+        print("gotoXXX6270");
+    }
+
+    private void goto6370() {
+        print("goto6370");
+    }
+
+    private void goto6220() {
+        print("goto6220");
     }
 
     private void gotoCOM7290() {
+        print("gotoCOM7290");
+    }
+
+    private void goSub8790() {
+        print("goSub8790");
     }
 
     private void help() {
@@ -701,7 +766,7 @@ public class Game {
         print("\tSHE (to raise or lower shields)");
         print("\tDAM (for damage control report)");
         print("\tCOM (to call on library-computer)");
-        print("\tNAV (to resign your command)");
+        print("\tXXX (to resign your command)");
         print("");
         // 2260 GOTO 1990
     }
@@ -714,7 +779,7 @@ public class Game {
         //        3980 RETURN
         E = E - N - 10;
         if (E < 0) {
-            print("Shield control supplies energy to complete the maneuver.");
+            print("SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER.");
             S = S + E;
             E = 0;
             if (S <= 0) {
@@ -724,16 +789,19 @@ public class Game {
     }
 
     private void goSub6000() {
+        print("goSub6000");
     }
 
     private void goSub6430() {
-
+        print("goSub6430");
     }
 
     private void goSub8590() {
+        print("goSub8590");
     }
 
     private void goSub8670() {
+        print("goSub8670");
     }
 
     private String left$(String input, int i) {
@@ -741,7 +809,7 @@ public class Game {
     }
 
     private String mid$(String string, int start, int end) {
-        return string.substring(start end);
+        return string.substring(start, end);
     }
 
     private static final String[] quadrantName1 =
@@ -793,16 +861,17 @@ public class Game {
         print("                                  ,-----*-----,"); // 221
         print("                                   `---  ----´");
         prompt(); // 1230
+        newQuadrant1320();
     }
 
     private void prompt() {
-        print("Your orders are as follows:"); //1230
-        print("\t Destroy the " + K9 + " Klingon warships which has invaded"); //1240
-        print("\t the galaxy before they can attack federation headquarters"); //1250
-        print("\t on stardate " + (T0 + T9) + ". This gives you " + T9 + " days. There" + X0$); //1260
-        print("\t " + B9 + " starbase" + X$ + " in the galaxy to resupply your ship."); //1270
+        print("YOUR ORDERS ARE AS FOLLOWS:"); //1230
+        print("  DESTROY THE " + K9 + " KLINGON WARSHIPS WHICH HAS INVADED"); //1240
+        print("  THE GALAXY BEFORE THEY CAN ATTACK FEDERATION HEADQUARTERS"); //1250
+        print("  ON STARDATE " + (T0 + T9) + ". THIS GIVES YOU " + T9 + " DAYS. THERE" + X0$); //1260
+        print("  " + B9 + " STARBASE" + X$ + " IN THE GALAXY TO RESUPPLY YOUR SHIP."); //1270
         print("");
-        print("Hit return when you are ready.");
+        print("HIT RETURN WHEN YOU ARE READY.");
     }
 
     private String input$(String prompt) {
