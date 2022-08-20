@@ -17,12 +17,13 @@ public class Game {
 
     private Random random = new Random();
     private String Z$ = "                      "; // 270
-    private double[][] G = new double[8][8]; // 330
+    /** Galaxy? In the LRS format. */
+    private float[][] G = new float[8][8]; // 330
     private float[][] C = new float[9][2]; // 330
-    private double[][] K = new double[3][3]; // 330
-    //private double[] N = new double[3]; // 330
-    private double[][] Z = new double[8][8]; // 330
-    private double[] D = new double[8]; // 330
+    private float[][] K = new float[3][3]; // 330
+    //private float[] N = new float[3]; // 330
+    private float[][] Z = new float[8][8]; // 330
+    private float[] D = new float[8]; // 330
     /**
      * Current day
      */
@@ -108,19 +109,22 @@ public class Game {
 
     // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
     /**
-     * No of Klingons
+     * No of Klingons in the galaxy
      */
     private int K3;
     /**
-     * Starbases
+     * Starbases in the galaxy
      */
     private int B3;
+    /**
+     * Stars in the galaxy
+     */
     private double S3;
     private String Q$; // 1600
     private String A$; // 1680
 
-    private double Z1, Z2; // 1680
-    private double B4, B5; // 1880
+    private float Z1, Z2; // 1680
+    private float B4, B5; // 1880
 
     private void initValues() {
         for (int i = 0; i < 9; i++) { // 530 (arrays in Java are zero based, not in BASIC).
@@ -241,24 +245,24 @@ public class Game {
         if (Q1 >= 0 && Q1 < 8 && Q2 >= 0 && Q2 < 8) {
             // 1430 GOSUB 9030:Print:IF T0<>T THEN 1490
             goSub9030();
-            print("");
+            println("");
             if (T0 == T) {
                 // 1460 Print "Your mission begins with your starship located"
-                print("YOUR MISSION BEGINS WITH YOUR STARSHIP LOCATED");
+                println("YOUR MISSION BEGINS WITH YOUR STARSHIP LOCATED");
                 // 1470 PRINT "IN THE GALACTIC QUADRANT," G2$ " QUADRANT ...": GOTO 1500
-                print("IN THE GALACTIC QUADRANT," + G2$ + " QUADRANT ...");
+                println("IN THE GALACTIC QUADRANT," + G2$ + " QUADRANT ...");
             } else {
                 // 1490 Print "Now entering " G2$ " quadrant ..."
-                print("NOW ENTERING " + G2$ + " QUADRANT ...");
+                println("NOW ENTERING " + G2$ + " QUADRANT ...");
             }
             // 1500 S3=G[Q1][Q2]-100 * K3 - 10 * B3: IF K3=0 THEN 1590
             S3 = G[Q1][Q2] - 100 * K3 - 10 * B3;
             if (K3 != 0) {
                 // 1560 Print "COMBAT AREA    CONDITION RED": IF S>200 THEN 1590
-                print("COMBAT AREA CONDITION RED");
+                println("COMBAT AREA CONDITION RED");
                 if (S <= 200) {
                     // 1580 Print "     Shields dangerously low"
-                    print("     SHIELDS DANGEROUSLY LOW");
+                    println("     SHIELDS DANGEROUSLY LOW");
                 }
             }
             // 1590 FOR I=1TO3: K(I,1)=0:K(I,2)=0: NEXT I
@@ -290,7 +294,7 @@ public class Game {
                 goSub8670();
                 K[i][0] = R1;
                 K[i][1] = R2;
-                K[i][2] = S9 * 0.5 + random.nextDouble();
+                K[i][2] = S9 * 0.5F + random.nextFloat();
             }
         }
         // 1820 IF B3<1 THEN 1910
@@ -326,13 +330,13 @@ public class Game {
         if (S + E <= 10) {
             if (E <= 10 && D[6] != 0) {
                 // 2020 2030 2040 2050
-                print("");
-                print("** FATAL ERROR ** YOU'VE JUST STRANDED YOUR SHIP IN ");
-                print("SPACE");
-                print("YOU HAVE INSUFFICIENT MANEUVERING ENERGY,");
-                print(" AND SHIELD CONTROL");
-                print("IS PRESENTLY INCAPABLE OF CROSS");
-                print("-CIRCUITING ENGINE ROOM");
+                println("");
+                println("** FATAL ERROR ** YOU'VE JUST STRANDED YOUR SHIP IN ");
+                println("SPACE");
+                println("YOU HAVE INSUFFICIENT MANEUVERING ENERGY,");
+                println(" AND SHIELD CONTROL");
+                println("IS PRESENTLY INCAPABLE OF CROSS");
+                println("-CIRCUITING ENGINE ROOM");
                 // GOTO 6220
                 goto6220();
             }
@@ -366,7 +370,7 @@ public class Game {
             C1 = 1;
         }
         if (C1 < 1 || C1 > 9) {
-            print("\tLt. Sulu reports 'Incorrect course data, sir!'");
+            println("\tLt. Sulu reports 'Incorrect course data, sir!'");
         } else {
             X$ = "8"; // 2350
             if (D[0] < 0) {
@@ -377,18 +381,18 @@ public class Game {
             if (W1 != 0) {
                 if (D[0] < 0 && W1 > 0.2) {
                     // 2470
-                    print("Warp engines are damaged, maximum speed = warp 0.2");
+                    println("Warp engines are damaged, maximum speed = warp 0.2");
                 } else {
                     if (W1 > 0 && W1 <= 8) {
                         // 2490
                         long N = Math.round(W1 * 8 + 0.5);
                         if (E - N < 0) {
-                            print("Engineering reports 'insufficient energy available");
-                            print("\t for maneuvering at warp " + W1 + "!");
+                            println("Engineering reports 'insufficient energy available");
+                            println("\t for maneuvering at warp " + W1 + "!");
                             // 2530
                             if (S >= N - E && D[6] > 0) {
-                                print("Deflector control room acknowledges " + S + " units of energy");
-                                print("\t presently deployed to shields.");
+                                println("Deflector control room acknowledges " + S + " units of energy");
+                                println("\t presently deployed to shields.");
                             }
                         }
                         klingons();
@@ -429,18 +433,18 @@ public class Game {
             if (D[i] < 0) {
                 D[i] = D[i] + D6;
                 if (D[i] > -0.1 && D[i] < 0) {
-                    D[i] = -0.1;
+                    D[i] = -0.1F;
                 } else {
                     if (D[i] >= 0) {
                         if (D1 != 1) {
                             D1 = 1;
                         }
-                        print("Damage control report:  ");
-                        print("\t\t\t\t\t\t\t");
+                        println("Damage control report:  ");
+                        println("\t\t\t\t\t\t\t");
                         R1 = i;
                         goSub8790();
-                        print(G2$);
-                        print("\t repair completed.");
+                        println(G2$);
+                        println("\t repair completed.");
                     }
                 }
             }
@@ -450,19 +454,19 @@ public class Game {
             if (random.nextFloat() < 0.6) {
                 int index = Math.round(R1);
                 D[index] = D[index] - (random.nextFloat() * 5 + 1);
-                print("Damage control report:  ");
+                println("Damage control report:  ");
                 goSub8790();
-                print(G2$);
-                print("damaged");
-                print("");
+                println(G2$);
+                println("damaged");
+                println("");
             } else {
                 // 3000
                 int index = Math.round(R1);
                 D[index] = D[index] + (random.nextFloat() * 3 + 1);
-                print("Damage control report:  ");
+                println("Damage control report:  ");
                 goSub8790();
-                print(G2$);
-                print("\t state of repair improved.");
+                println(G2$);
+                println("\t state of repair improved.");
             }
         } // 3070
     }
@@ -496,8 +500,8 @@ public class Game {
                 if (!mid$(Q$, S8, 2).equals("  ")) {
                     S1 = Math.round(S1 - X1);
                     S2 = Math.round(S2 - X2);
-                    print("Warp engines shut down at");
-                    print("sector " + S1 + "," + S2 + " due to bad navigation.");
+                    println("Warp engines shut down at");
+                    println("sector " + S1 + "," + S2 + " due to bad navigation.");
                     shutdown = true;
                     break;
                 }
@@ -577,12 +581,12 @@ public class Game {
             // 3810 PRINT"’ PERMISSION TO ATTEMPT CROSSING OF GALACTIC PERIMETER"
             // 3820 PRINT" IS HEREBY *DENIED*. SHUT DOWN YOUR ENGINES.'"
             // 3830 PRINT"CHIEF ENGINEER SCOTT REPORTS ‘WARP ENGINES SHUT DOWN"
-            print("LT-UHURA REPORTS MESSAGE FROM STARFLEET COMMAND:");
-            print("’ PERMISSION TO ATTEMPT CROSSING OF GALACTIC PERIMETER");
-            print(" IS HEREBY *DENIED*. SHUT DOWN YOUR ENGINES.'");
-            print("CHIEF ENGINEER SCOTT REPORTS ‘WARP ENGINES SHUT DOWN'");
+            println("LT-UHURA REPORTS MESSAGE FROM STARFLEET COMMAND:");
+            println("’ PERMISSION TO ATTEMPT CROSSING OF GALACTIC PERIMETER");
+            println(" IS HEREBY *DENIED*. SHUT DOWN YOUR ENGINES.'");
+            println("CHIEF ENGINEER SCOTT REPORTS ‘WARP ENGINES SHUT DOWN'");
             // 3840 PRINT" AT SECTOR";S1;",";S2;"OF QUADRANT";Q1;",";Q2;"-'"
-            print(" AT SECTOR" + S1 + "," + S2 + "OF QUADRANT" + Q1 + "," + Q2 + "-'");
+            println(" AT SECTOR" + S1 + "," + S2 + "OF QUADRANT" + Q1 + "," + Q2 + "-'");
             // 3850 IF T>T0+T9 THEN 6220
             if (T > T0 + T9) {
                 goto6220();
@@ -604,37 +608,40 @@ public class Game {
         //  3990 REM LONG RANGE SENSOR SCAN CODE
         //  4000 IFD(3)<0 THEN PRINT "LONG RANGE SENSORS ARE INOPERABLE'":GOT0 1990
         if (D[3] < 0) {
-            print("LONG RANGE SENSORS ARE INOPERABLE'");
+            println("LONG RANGE SENSORS ARE INOPERABLE'");
         } else {
             //  4030 PRINT"LONG RANGE SCAN FOR QUADRANT";Q1;",";Q2
             //  4040 O1$="-------------------":PRINT O1$
-            print("LONG RANGE SCAN FOR QUADRANT" + Q1 + "," + Q2);
+            println("LONG RANGE SCAN FOR QUADRANT" + Q1 + "," + Q2);
             O1$ = "-------------------";
-            print(O1$);
+            println(O1$);
             //  4060 FORI=Q1-1TOQ1+1:N(1)=-1:N(2)=-2:N(3)=-3:FOR J=Q2-1T0Q2+1
-            double[] N = new double[8]; // TODO Why an array with same name as a single?
+            float[] N = new float[3]; // TODO Why an array with same name as a single?
             for (int i = Q1 - 1; i <= Q1 + 1; i++) {
-                N[1] = -1;
-                N[2] = -2;
-                N[3] = -3;
+                N[0] = -1;
+                N[1] = -2;
+                N[2] = -3;
                 for (int j = Q2 - 1; j <= Q2 + 1; j++) {
                     //  4120 IF I>0 AND I<9 AND J>D AND J<9 THEN N(J-Q2+2)=G(I,J):Z(I,J)=G(I,J)
                     if (i > 0 && i < 9 && j > 0 && j < 9) {
-                        N[j - Q2 + 2] = G[i][j];
+                        N[(j - Q2) + 1] = G[i][j];
                         Z[i][j] = G[i][j];
                     }
                 }
                 // 4180 NEXTJ: FOR L=1TO3:PRINT": “;:IFN(L)<0 THEN PRINT"*** ";: GOTO4230
                 for (int l = 0; l < 3; l++) {
+                    print(":");
                     if (N[l] < 0) {
-                        print("*** ");
+                        print(" *** ");
                     } else {
                         // 4210 PRINT RIGHT$(STR$(N(L)+1000),3);" “;
-                        print("todo" + (N[l] + 1000));
+                        print(String.format(" %03.0f ", N[l]));
                     }
                     // 4230 NEXTL: PRINT":": PRINT O1$:NEXT1: GOTO 1990
-                    print(":");
+
                 }
+                println(":");
+                println(O1$);
             }
         }
     }
@@ -645,27 +652,27 @@ public class Game {
     private void phaserControl() {
         // 4260 IFDC 4)<@THENPRINT'PHASERS INOPERATI VE":GOTO1996
         if (D[4] < 0) {
-            print("PHASERS INOPERATIVE");
+            println("PHASERS INOPERATIVE");
             return;
         }
         // 4265 TFK3>8 THEN 4330
         if (K3 <= 8) {
             // 4270 PRINT'SCI ENCE OFFICER SPOCK REPORTS ‘SENSORS SHOW NG ENEMY SHIPS"
             // 4280 PRINT" IN THIS QUADRAN "'3G0TO1996
-            print("SCIENCE OFFICER SPOCK REPORTS ‘SENSORS SHOWING ENEMY SHIPS");
-            print(" IN THIS QUADRANT'");
+            println("SCIENCE OFFICER SPOCK REPORTS ‘SENSORS SHOWING ENEMY SHIPS");
+            println(" IN THIS QUADRANT'");
             return;
         }
 
         // 4330 IFDCS)<@THEN PRINT "COMPUTER FAILURE HANPERS ACCURACY"
         if (D[8] < 0) {
-            print("COMPUTER FAILURE HAMPERS ACCURACY");
+            println("COMPUTER FAILURE HAMPERS ACCURACY");
         }
         // 4350 PRINT"PHASERS LOCKED ON TARGETS "3
-        print("PHASERS LOCKED ON TARGETS ");
+        println("PHASERS LOCKED ON TARGETS ");
         do {
             // 4360 PRINT" ENERGY AVAILABLE =";E; "UNITS"
-            print(" ENERGY AVAILABLE =" + E + "UNITS");
+            println(" ENERGY AVAILABLE =" + E + "UNITS");
             // 4370 INPUT'NUMBER OF UNITS TO FIRE";X:IF X<=0 THEN 1990
             X = input("NUMBER OF UNITS TO FIRE");
             if (X <= 0) {
@@ -684,17 +691,17 @@ public class Game {
                 if (H <= 0.15 * K[i][2]) {
 
                     // 4500 PRINT"SENSORS SHOW NO DAMAGE TO ENEMY AT";K(I,1);",";K(I,2):GOTO 4670
-                    print("SENSORS SHOW NO DAMAGE TO ENEMY AT" + K[i][0] + "," + K[i][1]);
+                    println("SENSORS SHOW NO DAMAGE TO ENEMY AT" + K[i][0] + "," + K[i][1]);
                 } else {
                     // 4530 K(I,3)=K(I,3)-H:PRINT H;" UNIT HIT ON KLINGON IN SECTOR";K(I,1);",";K(I,2)
                     K[i][2] = K[i][2] - H;
-                    print(H + " UNIT HIT ON KLINGON IN SECTOR" + K[i][0] + "," + K[i][1]);
+                    println(H + " UNIT HIT ON KLINGON IN SECTOR" + K[i][0] + "," + K[i][1]);
                     // 4550 PRINTK(C I+ 2)s1 FKCLs 3)<=@THENPRINT"*** KLINGON DESTROYED ***"':GOTO 4580
                     if (K[i][2] > 0) {
                         // 4560 PRINT" (SENSORS SHOW'SKCI303."UNITS REMAINING)":GOTO 4670
-                        print("  (SENSORS SHOW " + K[i][2] + " UNITS REMAINING)");
+                        println("  (SENSORS SHOW " + K[i][2] + " UNITS REMAINING)");
                     } else {
-                        print("*** KLINGON DESTROYED ***");
+                        println("*** KLINGON DESTROYED ***");
                         // 4580 K3=K3-1:K9=K9-1:Z1=K(I,1):Z2=K(I,2):A$="   ":GOSUB 8670
                         K3 = K3 - 1;
                         K9 = K9 - 1;
@@ -719,55 +726,55 @@ public class Game {
 
 
     private void goSub3910() {
-        print("goSub3910");
+        println("goSub3910");
     }
 
     private void photonTorpedo() {
         // 4690 REM PHOTON TORPEDO CODE BEGINS HERE
-        print("photonTorpedo");
+        println("photonTorpedo");
     }
 
     private void gotoSHE5530() {
-        print("gotoSHE5530");
+        println("gotoSHE5530");
     }
 
     private void gotoDAM5690() {
-        print("gotoDAM5690");
+        println("gotoDAM5690");
     }
 
     private void gotoXXX6270() {
-        print("gotoXXX6270");
+        println("gotoXXX6270");
     }
 
     private void goto6370() {
-        print("goto6370");
+        println("goto6370");
     }
 
     private void goto6220() {
-        print("goto6220");
+        println("goto6220");
     }
 
     private void gotoCOM7290() {
-        print("gotoCOM7290");
+        println("gotoCOM7290");
     }
 
     private void goSub8790() {
-        print("goSub8790");
+        println("goSub8790");
     }
 
     private void help() {
         // 2160
-        print("Enter one of the following:");
-        print("\tNAV (to set course)");
-        print("\tSRS (for short range sensor scan)");
-        print("\tLRS (for long range sensor scan)");
-        print("\tPHA (to fire phasers)");
-        print("\tTOR (to fire photon torpedoes)");
-        print("\tSHE (to raise or lower shields)");
-        print("\tDAM (for damage control report)");
-        print("\tCOM (to call on library-computer)");
-        print("\tXXX (to resign your command)");
-        print("");
+        println("Enter one of the following:");
+        println("\tNAV (to set course)");
+        println("\tSRS (for short range sensor scan)");
+        println("\tLRS (for long range sensor scan)");
+        println("\tPHA (to fire phasers)");
+        println("\tTOR (to fire photon torpedoes)");
+        println("\tSHE (to raise or lower shields)");
+        println("\tDAM (for damage control report)");
+        println("\tCOM (to call on library-computer)");
+        println("\tXXX (to resign your command)");
+        println("");
         // 2260 GOTO 1990
     }
 
@@ -779,7 +786,7 @@ public class Game {
         //        3980 RETURN
         E = E - N - 10;
         if (E < 0) {
-            print("SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER.");
+            println("SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER.");
             S = S + E;
             E = 0;
             if (S <= 0) {
@@ -789,19 +796,19 @@ public class Game {
     }
 
     private void goSub6000() {
-        print("goSub6000");
+        println("goSub6000");
     }
 
     private void goSub6430() {
-        print("goSub6430");
+        println("goSub6430");
     }
 
     private void goSub8590() {
-        print("goSub8590");
+        println("goSub8590");
     }
 
     private void goSub8670() {
-        print("goSub8670");
+        println("goSub8670");
     }
 
     private String left$(String input, int i) {
@@ -858,20 +865,20 @@ public class Game {
     private void initial() {
         initValues();
         setupGalaxy();
-        print("                                  ,-----*-----,"); // 221
-        print("                                   `---  ----´");
+        println("                                  ,-----*-----,"); // 221
+        println("                                   `---  ----´");
         prompt(); // 1230
         newQuadrant1320();
     }
 
     private void prompt() {
-        print("YOUR ORDERS ARE AS FOLLOWS:"); //1230
-        print("  DESTROY THE " + K9 + " KLINGON WARSHIPS WHICH HAS INVADED"); //1240
-        print("  THE GALAXY BEFORE THEY CAN ATTACK FEDERATION HEADQUARTERS"); //1250
-        print("  ON STARDATE " + (T0 + T9) + ". THIS GIVES YOU " + T9 + " DAYS. THERE" + X0$); //1260
-        print("  " + B9 + " STARBASE" + X$ + " IN THE GALAXY TO RESUPPLY YOUR SHIP."); //1270
-        print("");
-        print("HIT RETURN WHEN YOU ARE READY.");
+        println("YOUR ORDERS ARE AS FOLLOWS:"); //1230
+        println("  DESTROY THE " + K9 + " KLINGON WARSHIPS WHICH HAS INVADED"); //1240
+        println("  THE GALAXY BEFORE THEY CAN ATTACK FEDERATION HEADQUARTERS"); //1250
+        println("  ON STARDATE " + (T0 + T9) + ". THIS GIVES YOU " + T9 + " DAYS. THERE" + X0$); //1260
+        println("  " + B9 + " STARBASE" + X$ + " IN THE GALAXY TO RESUPPLY YOUR SHIP."); //1270
+        println("");
+        println("HIT RETURN WHEN YOU ARE READY.");
     }
 
     private String input$(String prompt) {
@@ -889,8 +896,11 @@ public class Game {
         return scanner.nextFloat();
     }
 
-    private void print(String s) {
+    private void println(String s) {
         System.out.println(s);
     }
 
+    private void print(String s) {
+        System.out.print(s);
+    }
 }
