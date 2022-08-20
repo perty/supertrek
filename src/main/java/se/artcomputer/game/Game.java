@@ -37,7 +37,7 @@ public class Game {
     private int T9 = 25 + Math.round(random.nextFloat() * 10); // 370
     private double D0 = 0.0F; // 370
     /**
-     * Energy?
+     * Energy available
      */
     private int E = 3000; // 370
     private int E0 = E; // 370
@@ -45,6 +45,9 @@ public class Game {
     private int P = 10; // 440
     private int P0 = P; // 440
     private int S9 = 200; // 440
+    /**
+     * Shield energy
+     */
     private int S = 0; // 440
     private int B9 = 0; // 440
     private int K9 = 0; // 440
@@ -68,6 +71,8 @@ public class Game {
     private float X2, Q4, Q5; // 3140
     private int N; // 3170
     private float T8; // 3370
+    private int X5; // 3620
+    private String O1$; //4040
 
     private double fnd() { // 470
         return Math.pow(Math.sqrt(K[I][0] - S1), 2) + Math.pow(K[I][1] - S2, 2);
@@ -82,9 +87,21 @@ public class Game {
     }
 
     // 480 Initialize Enterprise's position.
-    private int O1 = fnr(); // 490
-    private int O2 = fnr(); // 490
+    /**
+     * Quadrant position
+     */
+    private int Q1 = fnr(); // 490
+    /**
+     * Quadrant position
+     */
+    private int Q2 = fnr(); // 490
+    /**
+     * Sector position
+     */
     private float S1 = fnr(); // 490
+    /**
+     * Sector position
+     */
     private float S2 = fnr(); // 490
 
     // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
@@ -127,8 +144,6 @@ public class Game {
 
     // 710 A1$="NAVSRSLRSPHATORSHEDAMCOMXXX"
     private String A1$ = "NAVSRSLRSPHATORSHEDAMCOMXXX";
-
-    private int Q1, Q2;  // TODO: figure these out
 
     private float R1, R2;
 
@@ -317,7 +332,7 @@ public class Game {
         switch (A$.toUpperCase()) {
             case "NAV" -> gotoNAV2300();
             case "SRS" -> goSub6430(); // GOTO 1980
-            case "LRS" -> gotoLSR4000();
+            case "LRS" -> longRangeSensors();
             case "PHA" -> gotoPHA4260();
             case "TOR" -> gotoTOR4700();
             case "SHE" -> gotoSHE5530();
@@ -459,7 +474,7 @@ public class Game {
             S1 = S1 + X1;
             S2 = S2 + X2;
             if (S1 < 1 || S1 >= 9 || S2 < 1 || S2 >= 9) {
-                exceededQuadrantLimits3500();
+                exceededQuadrantLimits();
             } else {
                 int S8 = Math.round(S1) * 24 + Math.round(S2) * 3 - 26;
                 if (!mid$(Q$, S8, 2).equals("  ")) {
@@ -476,12 +491,16 @@ public class Game {
             S1 = Math.round(S1);
             S2 = Math.round(S2);
         }
+        goto3370();
+    }
+
+    private void goto3370() {
         // 3370
         A$ = "<*>";
         Z1 = Math.round(S1);
         Z2 = Math.round(S2);
         goSub8670();
-        goSub3910();
+        maneuverEnergy();
         T8 = 1;
         if (W1 < 1) {
             T8 = 0.1F * Math.round(10 * W1);
@@ -492,7 +511,7 @@ public class Game {
     }
 
     // 3498 REM EXCEEDED QUADRANT LIMITS
-    private void exceededQuadrantLimits3500() {
+    private void exceededQuadrantLimits() {
         // 3500 X=8*Q1+X+N*X1:Y=8*Q2+Y+N*X2:Q1=INT(X/8):Q2=INT(Y/8):S1=INT(X-Q1*8)
         X = 8 * Q1 + X + N * X1;
         Y = 8 * Q2 + Y + N * X2;
@@ -503,27 +522,104 @@ public class Game {
         S2 = Math.round(Y - Q2 * 8);
         if (S1 == 0) {
             Q1 = Q1 - 1;
+            S1 = 8;
         }
-        S1 = 8;
         // 3590 IF S2=0 THEN Q2=Q2-1:S2=8
         if (S2 == 0) {
             Q2 = Q2 - 1;
+            S2 = 8;
         }
-        S2 = 8;
-        // 3620 XSP"Ol<@LTHE2NKS1=1:@1=2Siel
-        //        3678 LFQ1>8 THENX S=
-        //                37168
-        //        3756 LFGQ2>8 THENX S= 1:
-        //        379G 1 Fi S= STHENS 66
-        //        3896PRINT"LT-UHURAREPORTSMESSAGEFROMSTARFLEETCONMAND:" 6276PRINT"THEREWERKOES"'KLISNGONBATTLECRUISERSLEFTAT"
-        //        3810 PRINT’ "PERMISSION TO ATTEMPT CROSSING OF GALACTIC PERIMETER" 38 26 PRINT’ IS HEREBY *DENIEDt. SHUT DOWN YOUR ENGINES.'"
-        //        38368 PRINT"CHLEF ENGINEER SCOTT REPORTS ‘WARP ENGINES SHUT DOWN" 38 40 PRINT" AT SECTOR'S Si3'2"3 523 "GF QUADRANT"3 O13". "3 Qa3".'" 3856IFT>T@+19THEN6226
-        //        38 6G IF6+01+02=8%*C4+tQSTHEN3379
-        //        3873 T= T+ 1:GOSUB39 lo: GOTOI323
-
+        // 3620 X5=0:IF Q1<1 THEN X5=1:Q1=1:S1=1
+        X5 = 0;
+        if (Q1 < 1) {
+            X5 = 1;
+            Q1 = 1;
+            S1 = 1;
+        }
+        // 3670 IF Q1>8 THEN X5=1:Q1=8:S1=8
+        if (Q1 > 8) {
+            X5 = 1;
+            Q1 = 8;
+            S1 = 8;
+        }
+        // 3710 IF Q2<1 THEN X5=1:Q2=1:S2=1
+        if (Q2 < 1) {
+            X5 = 1;
+            Q2 = 1;
+            S2 = 1;
+        }
+        // 3750 IF Q2>8 THEN X5=1:Q2=8:S2=8
+        if (Q2 > 8) {
+            X5 = 1;
+            Q2 = 8;
+            S2 = 8;
+        }
+        // 3790 IF X5=0 THEN 3860
+        if (X5 != 0) {
+            // 3800 PRINT"LT-UHURA REPORTS MESSAGE FROM STARFLEET COMMAND:"
+            print("LT-UHURA REPORTS MESSAGE FROM STARFLEET COMMAND:");
+            // 3810 PRINT"’ PERMISSION TO ATTEMPT CROSSING OF GALACTIC PERIMETER"
+            print("’ PERMISSION TO ATTEMPT CROSSING OF GALACTIC PERIMETER");
+            // 3820 PRINT" IS HEREBY *DENIED*. SHUT DOWN YOUR ENGINES.'"
+            print(" IS HEREBY *DENIED*. SHUT DOWN YOUR ENGINES.'");
+            // 3830 PRINT"CHIEF ENGINEER SCOTT REPORTS ‘WARP ENGINES SHUT DOWN"
+            print("CHIEF ENGINEER SCOTT REPORTS ‘WARP ENGINES SHUT DOWN");
+            // 3840 PRINT" AT SECTOR";S1;",";S2;"OF QUADRANT";Q1;",";Q2;"-'"
+            print(" AT SECTOR" + S1 + "," + S2 + "OF QUADRANT" + Q1 + "," + Q2 + "-'");
+            // 3850 IF T>T0+T9 THEN 6220
+            if (T > T0 + T9) {
+                goto6220();
+            }
+        }
+        // 3860 IF8*Q1+Q2=8*Q4+Q5 THEN 3370
+        if (8 * Q1 + Q2 == 8 * Q4 + Q5) {
+            goto3370();
+        } else {
+            // 3870 T=T+1:GOSUB 3910: GOTO 1320
+            T = T + 1;
+            goSub3910();
+            // goto 1320 is entering a new quadrant.
+            goto1320();
+        }
     }
 
-    private void gotoLSR4000() {
+    private void longRangeSensors() {
+        //  3990 REM LONG RANGE SENSOR SCAN CODE
+        //  4000 IFD(3)<0 THEN PRINT "LONG RANGE SENSORS ARE INOPERABLE'":GOT0 1990
+        if (D[3] < 0) {
+            print("LONG RANGE SENSORS ARE INOPERABLE'");
+        } else {
+            //  4030 PRINT"LONG RANGE SCAN FOR QUADRANT";Q1;",";Q2
+            //  4040 O1$="-------------------":PRINT O1$
+            print("LONG RANGE SCAN FOR QUADRANT" + Q1 + "," + Q2);
+            O1$ = "-------------------";
+            print(O1$);
+            //  4060 FORI=Q1-1TOQ1+1:N(1)=-1:N(2)=-2:N(3)=-3:FOR J=Q2-1T0Q2+1
+            double[] N = new double[8]; // TODO Why an array with same name as a single?
+            for (int i = Q1 - 1; i <= Q1 + 1; i++) {
+                N[1] = -1;
+                N[2] = -2;
+                N[3] = -3;
+                for (int j = Q2 - 1; j <=Q2 + 1; j++) {
+                    //  4120 IF I>0 AND I<9 AND J>D AND J<9 THEN N(J-Q2+2)=G(I,J):Z(I,J)=G(I,J)
+                    if (i > 0 && i < 9 && j > 0 && j < 9) {
+                        N[j - Q2 + 2] = G[i][j];
+                        Z[i][j] = G[i][j];
+                    }
+                }
+                // 4180 NEXTJ: FOR L=1TO3:PRINT": “;:IFN(L)<0 THEN PRINT"*** ";: GOTO4230
+                for (int l = 0; l <= 3; l++) {
+                    if (N[l] < 0) {
+                        print("*** ");
+                    } else {
+                        // 4210 PRINT RIGHT$(STR$(N(L)+1000),3);" “;
+                        print("todo");
+                    }
+                    // 4230 NEXTL: PRINT":": PRINT O1$:NEXT1: GOTO 1990
+                    print(":");
+                }
+            }
+        }
     }
 
     private void gotoPHA4260() {
@@ -560,17 +656,21 @@ public class Game {
         // 2260 GOTO 1990
     }
 
-    private void goSub3910() {
-        //        3900 REM MANEUVER ENERGY S/hk **
-        //        3910E=E-N~16:1FE>=@THENRETURN
-        //        3936 PRINT"SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER." 39 43 S=St+E: Ee@:1 FS<=GTHENS=G
-        //        6235 PRINT"THE END OF YOUR MISSION."
-        //        629 PRINT: PRINT: IFE9= 0TH EN6365
-        //        6316 PRINT" THE FEDERATION IS IN NEED OF A NEV STARSHIP COMMANDER" 6326 PRINT'FOR A SIMILAN MISSION -- IF THERE 1S A VOLUNTEER" 6330INPUT"LETHIMSTEPFORVARDANDENTER‘'AYE'FA"S=3"AAYES"T?HE1NIG 6368 END
-        //        6370 PRINT"CONGRULATOIN» CAPTAIN! THE LAST KLINGON BATTLE CRUISER" 6388 PRINT"MENACING THE FEDERATION HAS BEEN DESTROYED.": PRINT 648EPRINT"YOUR EFFICLENCY RATINGI15"319G@*I~1(92)K127:GO/TO0(6E9G 6426 REM SHORT RANGE SENSOR SCAN & STARTUP SUBROUTINE
-        //                6438 FORI=Si~!TOS1+1: FORU=S2-1TOS2t1
-        //        6458 T F I N T C L ++. .5) >58 OR)IN T<C U+1- 5)G < LOORIRN TIC J+.W 5)T>3 CTHELNG54G
-        //        3986 RETURN
+    private void maneuverEnergy() {
+        //        3900 REM MANEUVER ENERGY S/R **
+        //        3910 E=E-N-10:IFE>=0THEN RETURN
+        //        3930 PRINT"SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER."
+        //        3940 S=S+E: E=0: IFS<=0THEN S=0
+        //        3980 RETURN
+        E = E - N - 10;
+        if (E < 0) {
+            print("Shield control supplies energy to complete the maneuver.");
+            S = S + E;
+            E = 0;
+            if (S <= 0) {
+                S = 0;
+            }
+        }
     }
 
     private void goSub6000() {

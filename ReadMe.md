@@ -30,8 +30,9 @@ A common pattern with conditional statement is using a goto statement to skip th
 ### Challenges
 
 The code was printed using some printer terminal and then somehow put in the book. So the reading was not straight forward. It was hard to see the difference between an "1" and a "I", for example.
+The "Q" character I have mistaken for "O" sometimes.
 
-I have tried using OCR, we'll see how that plays out.
+I have tried using OCR, it helps for messages but not for code.
 
 Variable names can not be so descriptive names are not possible. Added to that, the author did not write comments on what they are used for. 
 
