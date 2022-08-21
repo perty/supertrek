@@ -1,5 +1,6 @@
 package se.artcomputer.game;
 
+import java.util.Collections;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -11,13 +12,21 @@ import static se.artcomputer.game.GameState.RUNNING;
  */
 public class Game {
 
+    public static final String STARSHIP_ICON = "<*>";
+    public static final String KLINGON_ICON = "+K+";
+    public static final String STARBASE_ICON = ">!<";
+    public static final String STAR_ICON = " * ";
+    public static final String EMPTY_ICON = "   ";
     private GameState gameState = INITIAL;
 
     Scanner scanner = new Scanner(System.in);
 
     private Random random = new Random();
-    private String Z$ = "                      "; // 270
-    /** Galaxy? In the LRS format. */
+    private String Z$ = String.join("", Collections.nCopies(25, " "));  // 270
+
+    /**
+     * Galaxy? In the LRS format.
+     */
     private float[][] G = new float[8][8]; // 330
     private float[][] C = new float[9][2]; // 330
     private float[][] K = new float[3][3]; // 330
@@ -76,6 +85,8 @@ public class Game {
     private String O1$; // 4040
     private int H1; // 4450
     private float H; // 4480
+    private int S8; // 8670
+    private int Z3; // 8590
 
     private double fnd() { // 470
         return Math.pow(Math.sqrt(K[I][0] - S1), 2) + Math.pow(K[I][1] - S2, 2);
@@ -120,6 +131,9 @@ public class Game {
      * Stars in the galaxy
      */
     private double S3;
+    /**
+     * String representation of the current quadrant
+     */
     private String Q$; // 1600
     private String A$; // 1680
 
@@ -155,7 +169,7 @@ public class Game {
     }
 
     // 710 A1$="NAVSRSLRSPHATORSHEDAMCOMXXX"
-    private String A1$ = "NAVSRSLRSPHATORSHEDAMCOMXXX";
+    private final String A1$ = "NAVSRSLRSPHATORSHEDAMCOMXXX";
 
     private float R1, R2;
 
@@ -279,19 +293,19 @@ public class Game {
         // 1660 REM Position Enterprise in quadrant, then place "K3" Klingons, &
         // 1670 REM "B3" starbases, & "S3" stars elsewhere.
         // 1680 A$="<*>":Z1=S1:Z2=S2:GOSUB 8670:IF K3<1 THEN 1820
-        A$ = "<*>";
+        A$ = STARSHIP_ICON;
         Z1 = S1;
         Z2 = S2;
-        goSub8670();
+        insertIconInString();
         if (K3 >= 1) {
             // 1720 FOR I=1TOK3: GOSUB 8590: A$="+K+":Z1=R1:Z2=R2
             for (int i = 0; i < K3; i++) {
-                goSub8590();
-                A$ = "+K+";
+                findEmptyPlaceInQuadrant();
+                A$ = KLINGON_ICON;
                 Z1 = R1;
                 Z2 = R2;
                 // 1780 GOSUB 8670: K(I,1)=R1:K(I,2)=R2;K(I,3)=S9*0.5+RND(1):NEXTI
-                goSub8670();
+                insertIconInString();
                 K[i][0] = R1;
                 K[i][1] = R2;
                 K[i][2] = S9 * 0.5F + random.nextFloat();
@@ -300,20 +314,21 @@ public class Game {
         // 1820 IF B3<1 THEN 1910
         if (B3 >= 1) {
             // 1880 GOSUB 8590: A$=">!<":Z1=R1:B4=R1:Z2=R2:B5=R2:GOSUB 8670
-            goSub8590();
-            A$ = ">!<";
+            findEmptyPlaceInQuadrant();
+            A$ = STARBASE_ICON;
             Z1 = R1;
             B4 = R1;
             Z2 = R2;
             B5 = R2;
-            goSub8670();
+            insertIconInString();
         }
         // 1910 FOR I=1TOS3:GOSUB 8590:A$=" * ":Z1=R1:Z2=R2:GOSUB 8670:NEXTI
         for (int i = 0; i < 3; i++) {
-            goSub8590();
+            findEmptyPlaceInQuadrant();
+            A$ = STAR_ICON;
             Z1 = R1;
             Z2 = R2;
-            goSub8670();
+            insertIconInString();
         }
         // 1980 GOSUB 6430
         goSub6430();
@@ -412,15 +427,15 @@ public class Game {
         for (int i = 0; i < K3; i++) {
             if (K[i][2] != 0) {
                 // 2610
-                A$ = "   ";
+                A$ = EMPTY_ICON;
                 Z1 = K[i][0];
                 Z2 = K[i][1];
-                goSub8670();
-                goSub8590();
+                insertIconInString();
+                findEmptyPlaceInQuadrant();
                 K[i][0] = Z1;
                 K[i][1] = Z2;
-                A$ = "+K+";
-                goSub8670();
+                A$ = KLINGON_ICON;
+                insertIconInString();
             }
         } // 2700 NEXT I: GOSUB 6000
         goSub6000();
@@ -479,7 +494,7 @@ public class Game {
         A$ = "   ";
         Z1 = S1;
         Z2 = S2;
-        goSub8670();
+        insertIconInString();
         // 3110
         int C1int = Math.round(C1);
         X1 = C[C1int][0] + (C[C1int + 1][0] - C[C1int][0]) * (C1 - C1int);
@@ -519,7 +534,7 @@ public class Game {
         A$ = "<*>";
         Z1 = Math.round(S1);
         Z2 = Math.round(S2);
-        goSub8670();
+        insertIconInString();
         maneuverEnergy();
         T8 = 1;
         if (W1 < 1) {
@@ -617,14 +632,14 @@ public class Game {
             println(O1$);
             //  4060 FORI=Q1-1TOQ1+1:N(1)=-1:N(2)=-2:N(3)=-3:FOR J=Q2-1T0Q2+1
             float[] N = new float[3]; // TODO Why an array with same name as a single?
-            for (int i = Q1 - 1; i <= Q1 + 1; i++) {
+            for (int i = Q1 - 2; i <= Q1; i++) {  // Q1,Q2 is 1 based.
                 N[0] = -1;
                 N[1] = -2;
                 N[2] = -3;
-                for (int j = Q2 - 1; j <= Q2 + 1; j++) {
+                for (int j = Q2 - 2; j <= Q2; j++) {
                     //  4120 IF I>0 AND I<9 AND J>D AND J<9 THEN N(J-Q2+2)=G(I,J):Z(I,J)=G(I,J)
                     if (i > 0 && i < 9 && j > 0 && j < 9) {
-                        N[(j - Q2) + 1] = G[i][j];
+                        N[j - (Q2 - 1)] = G[i][j];
                         Z[i][j] = G[i][j];
                     }
                 }
@@ -708,7 +723,7 @@ public class Game {
                         Z1 = K[i][0];
                         Z2 = K[i][1];
                         A$ = "   ";
-                        goSub8670();
+                        insertIconInString();
                         // 4650 K(I,3)=0:G(Q1,Q2)=G(Q1,Q2)-100:Z(Q1,Q2)=G(Q1,Q2):IF K9<=0 THEN 6370
                         K[i][2] = 0;
                         G[Q1][Q2] = G[Q1][Q2] - 100;
@@ -803,20 +818,72 @@ public class Game {
         println("goSub6430");
     }
 
-    private void goSub8590() {
+    private void findEmptyPlaceInQuadrant() {
+        // 8580 REM FIND EMPTY PLACE IN QUADRANT (FOR THINGS)
         println("goSub8590");
+        // 8590 RI= FNC 1): R2=FNRC 1) :Aas=" ":Z1=R12Z2= R2: GOSUBBE 38:1 FZ3=OTHEN B590
+        do {
+            R1 = fnr();
+            R2 = fnr();
+            A$ = EMPTY_ICON;
+            Z1 = R1;
+            Z2 = R2;
+            goSub8830();
+        } while (Z3 == 0);
     }
 
-    private void goSub8670() {
-        println("goSub8670");
+    private void insertIconInString() {
+        // 8660 REM INSERT IN STRING ARRAY FOR QUADRANT
+        // 8670 S8=INT(Z2-.5)*3+INT(Z1-.5)*24+1
+        S8 = Math.toIntExact(Math.round(Z2 - 0.5) * 3 + Math.round(Z1 - 0.5) * 24 + 1);
+        println("insert " + A$ + " in string " + Q$ + " at " + S8);
+        // 8675 IF LEN(AS)<>3 THEN PRINT "ERROR": STOP
+        if (A$.length() != 3) {
+            print("ERROR");
+            stop();
+        }
+        // 8680 IFS8= 1 THEN QS=A$+RIGHTS( QS 189): RETURN
+        if (S8 == 1) {
+            Q$ = A$ + right$(Q$, 189);
+        }
+        // 8690 IFS8= 196TH ENQS=LEFTS( @$s 189) +AS: RETURN
+        else if (S8 == 190) {
+            Q$ = left$(Q$, 189) + A$;
+        } else
+            // 8700 QS=LEFTSC0 Ss S6- 1) +AS+RIGHTSC OSs 199-S8): RETURN
+            Q$ = left$(Q$, S8 - 1) + A$ + right$(Q$, 190 - S8);
+    }
+
+    private void goSub8830() {
+        // 8820 REM STRING COMPARISON IN QUADRANT ARRAY
+        // Z3 is used to indicate success.
+        // 8830 ZASINTCZ 14.5) sZO=INTCZO+.5) 2S8=(ZO=1) e340 Z1=1)*Bat 12:Z3=0
+        Z1 = Math.round(Z1 + 0.5);
+        Z2 = Math.round(Z2 + 0.5);
+        S8 = Math.round((Z2 - 1) * 3 + (Z1 - 1) * 24 + 1);
+        // 8890 1FMI D&C QS, $8. 3)<>ASTHENRETURN
+        if (mid$(Q$, S8, 3).equals(A$)) {
+            Z3 = 1;
+        } else {
+            Z3 = 0;
+        }
+        // 8900 Z3=1:RETURN
+    }
+
+    private void stop() {
+        print("STOP");
     }
 
     private String left$(String input, int i) {
         return input.substring(0, i);
     }
 
-    private String mid$(String string, int start, int end) {
-        return string.substring(start, end);
+    private String right$(String input, int i) {
+        return input.substring(input.length() - i);
+    }
+
+    private String mid$(String string, int start, int length) {
+        return string.substring(start, start + length);
     }
 
     private static final String[] quadrantName1 =
