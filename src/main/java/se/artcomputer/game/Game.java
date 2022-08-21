@@ -24,15 +24,17 @@ public class Game {
     private Random random = new Random();
     private String Z$ = String.join("", Collections.nCopies(25, " "));  // 270
 
+    // Try adding one to the size of each array and use 1 based index, as in Basic.
+    // 338 DIM G(8,8),C(9,2),K(3.3),N(3),Z(8,8),D(8)
     /**
      * Galaxy? In the LRS format.
      */
-    private float[][] G = new float[8][8]; // 330
-    private float[][] C = new float[9][2]; // 330
-    private float[][] K = new float[3][3]; // 330
-    //private float[] N = new float[3]; // 330
-    private float[][] Z = new float[8][8]; // 330
-    private float[] D = new float[8]; // 330
+    private float[][] G = new float[9][9]; // 330
+    private float[][] C = new float[10][3]; // 330
+    private float[][] K = new float[4][4]; // 330
+    private float[] N = new float[4]; // 330
+    private float[][] Z = new float[9][9]; // 330
+    private float[] D = new float[9]; // 330
     /**
      * Current day
      */
@@ -59,6 +61,9 @@ public class Game {
      * Shield energy
      */
     private float S = 0; // 440
+    /**
+     * Number of starbases
+     */
     private int B9 = 0; // 440
     private int K9 = 0; // 440
     private int K7 = 0; // 1200
@@ -89,15 +94,15 @@ public class Game {
     private int Z3; // 8590
 
     private double fnd() { // 470
-        return Math.pow(Math.sqrt(K[I][0] - S1), 2) + Math.pow(K[I][1] - S2, 2);
+        return Math.pow(Math.sqrt(K[I][1] - S1), 2) + Math.pow(K[I][2] - S2, 2);
     }
 
 
     /**
-     * Generate a random in 0-7
+     * Generate a random in 1-8
      */
     private int fnr() { // 475
-        return random.nextInt(8);
+        return random.nextInt(8) + 1;
     }
 
     // 480 Initialize Enterprise's position.
@@ -141,31 +146,30 @@ public class Game {
     private float B4, B5; // 1880
 
     private void initValues() {
-        for (int i = 0; i < 9; i++) { // 530 (arrays in Java are zero based, not in BASIC).
-            C[i][0] = 0; //Redundant
-            C[i][1] = 0; //Redundant
+        for (int I = 1; I <= 9; I++) { // 530 FOR I=1TO9
+            C[I][1] = 0;
+            C[I][2] = 0;
         }
-        C[2][0] = -1; // 540
-        C[1][0] = -1; // 540
-        C[3][0] = -1; // 540
         C[3][1] = -1; // 540
-        C[4][1] = -1; // 540 C(5,2)=-1
-        C[5][1] = -1; // 540 C(6,2)=-1
+        C[2][1] = -1; // 540
+        C[4][1] = -1; // 540
+        C[4][2] = -1; // 540
+        C[5][2] = -1; // 540 C(5,2)=-1
+        C[6][2] = -1; // 540 C(6,2)=-1
 
         // 600 C(1,2)=1:C(2,2)=1:C(6,1)=1:C(7,1)=1:C(8,1)=1:C(8,2)=1:C(9,2)=1
-        C[0][1] = 1;
-        C[1][1] = 1;
-        C[5][0] = 1;
-        C[6][0] = 1;
-        C[7][0] = 1;
+        C[1][2] = 1;
+        C[2][2] = 1;
+        C[6][1] = 1;
         C[7][1] = 1;
         C[8][1] = 1;
+        C[8][2] = 1;
+        C[9][2] = 1;
 
-        // 670 FORI=1TO8:D(I)=0:NEXTI
-        for (int i = 0; i < 8; i++) {
-            D[i] = 0; //Redundant
+        // 670 FOR I=1TO8:D(I)=0:NEXT I
+        for (int I = 1; I <= 8; I++) {
+            D[I] = 0; //Redundant
         }
-
     }
 
     // 710 A1$="NAVSRSLRSPHATORSHEDAMCOMXXX"
@@ -176,32 +180,32 @@ public class Game {
     // 810 REM Setup what exists in galaxy...
     private void setupGalaxy() {
         // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
-        // 820 FOR I=1TO8: FOR J=1TO8:K3=0:Z(I,J)=0:R1=RND(1)
-        // 850 IFR1>.98 THEN K3=3:K9=K9+3:GOTO 980
-        // 860 IFR1>.95 THEN K3=2:K9=K9+2:GOTO 980
-        // 870 IFR1>.80 THEN K3=1:K9=K9+1
-        // 980 B3=0:IF RND(1) > .96 THEN B3=1:B9=B9+1
-        // 1040 G(I,J)=K3*100+B3*10+FNR(1):NEXTJ:NEXTI:IFK9>T9 THEN T9=K9+1
 
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
+        for (int I = 1; I <= 8; I++) {
+            // 820 FOR I=1TO8: FOR J=1TO8:K3=0:Z(I,J)=0:R1=RND(1)
+            for (int J = 0; J < 8; J++) {
                 R1 = random.nextFloat();
                 if (R1 > 0.98) {
+                    // 850 IFR1>.98 THEN K3=3:K9=K9+3:GOTO 980
                     K3 = 3;
                     K9 = K9 + 3;
                 } else if (R1 > 0.95) {
+                    // 860 IFR1>.95 THEN K3=2:K9=K9+2:GOTO 980
                     K3 = 2;
                     K9 = K9 + 2;
                 } else {
+                    // 870 IFR1>.80 THEN K3=1:K9=K9+1
                     K3 = 1;
                     K9 = K9 + 1;
                 }
+                // 980 B3=0:IF RND(1) > .96 THEN B3=1:B9=B9+1
                 B3 = 0;
                 if (fnr() > 0.96) {
                     B3 = 1;
                     B9 = B9 + 1;
                 }
-                G[i][j] = K3 * 100L + B3 * 10L + fnr();
+                // 1040 G(I,J)=K3*100+B3*10+FNR(1):NEXTJ:NEXTI:IFK9>T9 THEN T9=K9+1
+                G[I][J] = K3 * 100 + B3 * 10 + fnr();
             }
         }
         if (K9 > T9) {
@@ -256,7 +260,7 @@ public class Game {
         D4 = 0.5 * random.nextDouble();
         Z[Q1][Q2] = G[Q1][Q2];
         // 1390 IF Q1<1 OR Q1>8 OR Q2<1 OR Q2>8 THEN 1600
-        if (Q1 >= 0 && Q1 < 8 && Q2 >= 0 && Q2 < 8) {
+        if (! (Q1<1 || Q1 > 8 || Q2 < 1 || Q2 > 8)) {
             // 1430 GOSUB 9030:Print:IF T0<>T THEN 1490
             goSub9030();
             println("");
@@ -280,14 +284,14 @@ public class Game {
                 }
             }
             // 1590 FOR I=1TO3: K(I,1)=0:K(I,2)=0: NEXT I
-            for (int i = 0; i < 3; i++) {
-                K[i][0] = 0;
-                K[i][1] = 0;
+            for (int I = 1; I <= 3; I++) {
+                K[I][1] = 0;
+                K[I][2] = 0;
             }
         }
         // 1600
-        for (int i = 0; i < 3; i++) {
-            K[i][2] = 0;
+        for (int I = 0; I <= 3; I++) {
+            K[I][3] = 0;
         }
         Q$ = Z$ + Z$ + Z$ + Z$ + Z$ + Z$ + left$(Z$, 17);
         // 1660 REM Position Enterprise in quadrant, then place "K3" Klingons, &
@@ -296,19 +300,19 @@ public class Game {
         A$ = STARSHIP_ICON;
         Z1 = S1;
         Z2 = S2;
-        insertIconInString();
+        insertIconInString8670();
         if (K3 >= 1) {
             // 1720 FOR I=1TOK3: GOSUB 8590: A$="+K+":Z1=R1:Z2=R2
-            for (int i = 0; i < K3; i++) {
+            for (int I = 1; I <= K3; I++) {
                 findEmptyPlaceInQuadrant();
                 A$ = KLINGON_ICON;
                 Z1 = R1;
                 Z2 = R2;
                 // 1780 GOSUB 8670: K(I,1)=R1:K(I,2)=R2;K(I,3)=S9*0.5+RND(1):NEXTI
-                insertIconInString();
-                K[i][0] = R1;
-                K[i][1] = R2;
-                K[i][2] = S9 * 0.5F + random.nextFloat();
+                insertIconInString8670();
+                K[I][1] = R1;
+                K[I][2] = R2;
+                K[I][3] = S9 * 0.5F + random.nextFloat();
             }
         }
         // 1820 IF B3<1 THEN 1910
@@ -320,15 +324,15 @@ public class Game {
             B4 = R1;
             Z2 = R2;
             B5 = R2;
-            insertIconInString();
+            insertIconInString8670();
         }
         // 1910 FOR I=1TOS3:GOSUB 8590:A$=" * ":Z1=R1:Z2=R2:GOSUB 8670:NEXTI
-        for (int i = 0; i < 3; i++) {
+        for (int I = 1; I <= 3; I++) {
             findEmptyPlaceInQuadrant();
             A$ = STAR_ICON;
             Z1 = R1;
             Z2 = R2;
-            insertIconInString();
+            insertIconInString8670();
         }
         // 1980 GOSUB 6430
         goSub6430();
@@ -343,7 +347,7 @@ public class Game {
     private void command() {
         // 1990 IF S+E > 10 THEN IF E>10 OR D[7]=0 THEN 2060
         if (S + E <= 10) {
-            if (E <= 10 && D[6] != 0) {
+            if (E <= 10 && D[7] != 0) {
                 // 2020 2030 2040 2050
                 println("");
                 println("** FATAL ERROR ** YOU'VE JUST STRANDED YOUR SHIP IN ");
@@ -385,29 +389,29 @@ public class Game {
             C1 = 1;
         }
         if (C1 < 1 || C1 > 9) {
-            println("\tLt. Sulu reports 'Incorrect course data, sir!'");
+            println(" LT. SULU REPORTS 'INCORRECT COURSE DATA, SIR!'");
         } else {
-            X$ = "8"; // 2350
-            if (D[0] < 0) {
+            X$ = "8"; // 2350 NSeF"DCG1)<8OTH"ENX:S=L"ge2"
+            if (D[1] < 0) {
                 X$ = "0.2";
             }
             // 2360
             W1 = inputF("Warp factor (0 -" + X$ + "):");
             if (W1 != 0) {
-                if (D[0] < 0 && W1 > 0.2) {
+                if (D[1] < 0 && W1 > 0.2) {
                     // 2470
-                    println("Warp engines are damaged, maximum speed = warp 0.2");
+                    println("WARP ENGINES ARE DAMAGED, MAXIMUM SPEED = WARP 0.2");
                 } else {
                     if (W1 > 0 && W1 <= 8) {
                         // 2490
                         long N = Math.round(W1 * 8 + 0.5);
                         if (E - N < 0) {
-                            println("Engineering reports 'insufficient energy available");
-                            println("\t for maneuvering at warp " + W1 + "!");
+                            println("ENGINEERING REPORTS 'INSUFFICIENT ENERGY AVAILABLE");
+                            println("  FOR MANEUVERING AT WARP " + W1 + "!");
                             // 2530
-                            if (S >= N - E && D[6] > 0) {
-                                println("Deflector control room acknowledges " + S + " units of energy");
-                                println("\t presently deployed to shields.");
+                            if (S >= N - E && D[7] > 0) {
+                                println("DEFLECTOR CONTROL ROOM ACKNOWLEDGES " + S + " UNITS OF ENERGY");
+                                println("  PRESENTLY DEPLOYED TO SHIELDS.");
                             }
                         }
                         klingons();
@@ -424,18 +428,18 @@ public class Game {
      */
     private void klingons() {
         // 2590 FOR I=1TOK3: IF K(I,3) = 0 THEN 2700
-        for (int i = 0; i < K3; i++) {
-            if (K[i][2] != 0) {
+        for (int I = 1; I <= K3; I++) {
+            if (K[I][3] != 0) {
                 // 2610
                 A$ = EMPTY_ICON;
-                Z1 = K[i][0];
-                Z2 = K[i][1];
-                insertIconInString();
+                Z1 = K[I][1];
+                Z2 = K[I][2];
+                insertIconInString8670();
                 findEmptyPlaceInQuadrant();
-                K[i][0] = Z1;
-                K[i][1] = Z2;
+                K[I][1] = Z1;
+                K[I][2] = Z2;
                 A$ = KLINGON_ICON;
-                insertIconInString();
+                insertIconInString8670();
             }
         } // 2700 NEXT I: GOSUB 6000
         goSub6000();
@@ -494,7 +498,7 @@ public class Game {
         A$ = "   ";
         Z1 = S1;
         Z2 = S2;
-        insertIconInString();
+        insertIconInString8670();
         // 3110
         int C1int = Math.round(C1);
         X1 = C[C1int][0] + (C[C1int + 1][0] - C[C1int][0]) * (C1 - C1int);
@@ -534,7 +538,7 @@ public class Game {
         A$ = "<*>";
         Z1 = Math.round(S1);
         Z2 = Math.round(S2);
-        insertIconInString();
+        insertIconInString8670();
         maneuverEnergy();
         T8 = 1;
         if (W1 < 1) {
@@ -627,16 +631,16 @@ public class Game {
         } else {
             //  4030 PRINT"LONG RANGE SCAN FOR QUADRANT";Q1;",";Q2
             //  4040 O1$="-------------------":PRINT O1$
-            println("LONG RANGE SCAN FOR QUADRANT" + Q1 + "," + Q2);
+            println("LONG RANGE SCAN FOR QUADRANT " + Q1 + "," + Q2);
             O1$ = "-------------------";
             println(O1$);
-            //  4060 FORI=Q1-1TOQ1+1:N(1)=-1:N(2)=-2:N(3)=-3:FOR J=Q2-1T0Q2+1
+            //  4060 FOR I=Q1-1 TO Q1+1:N(1)=-1:N(2)=-2:N(3)=-3:FOR J=Q2-1T0Q2+1
             float[] N = new float[3]; // TODO Why an array with same name as a single?
-            for (int i = Q1 - 2; i <= Q1; i++) {  // Q1,Q2 is 1 based.
+            for (int i = Q1 - 2; i < Q1; i++) {  // Q1,Q2 is 1 based.
                 N[0] = -1;
                 N[1] = -2;
                 N[2] = -3;
-                for (int j = Q2 - 2; j <= Q2; j++) {
+                for (int j = Q2 - 2; j < Q2; j++) {
                     //  4120 IF I>0 AND I<9 AND J>D AND J<9 THEN N(J-Q2+2)=G(I,J):Z(I,J)=G(I,J)
                     if (i > 0 && i < 9 && j > 0 && j < 9) {
                         N[j - (Q2 - 1)] = G[i][j];
@@ -723,7 +727,7 @@ public class Game {
                         Z1 = K[i][0];
                         Z2 = K[i][1];
                         A$ = "   ";
-                        insertIconInString();
+                        insertIconInString8670();
                         // 4650 K(I,3)=0:G(Q1,Q2)=G(Q1,Q2)-100:Z(Q1,Q2)=G(Q1,Q2):IF K9<=0 THEN 6370
                         K[i][2] = 0;
                         G[Q1][Q2] = G[Q1][Q2] - 100;
@@ -832,7 +836,7 @@ public class Game {
         } while (Z3 == 0);
     }
 
-    private void insertIconInString() {
+    private void insertIconInString8670() {
         // 8660 REM INSERT IN STRING ARRAY FOR QUADRANT
         // 8670 S8=INT(Z2-.5)*3+INT(Z1-.5)*24+1
         S8 = Math.toIntExact(Math.round(Z2 - 0.5) * 3 + Math.round(Z1 - 0.5) * 24 + 1);
