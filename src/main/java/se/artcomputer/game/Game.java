@@ -31,9 +31,22 @@ public class Game {
      */
     private float[][] G = new float[9][9]; // 330
     private float[][] C = new float[10][3]; // 330
+    /**
+     * Klingon position.
+     * [1][2] : position
+     * [3] : hit points
+     */
     private float[][] K = new float[4][4]; // 330
-    private float[] N = new float[4]; // 330
+    //private float[] NA = new float[4]; // 330
+    private float N; // 3170
     private float[][] Z = new float[9][9]; // 330
+    /**
+     * Damage
+     * 1 = Warp engines
+     * 3 = lrs
+     * 4 = phasers
+     * 8 = computer
+     */
     private float[] D = new float[9]; // 330
     /**
      * Current day
@@ -84,7 +97,6 @@ public class Game {
     private float D1, D6; // 2700
     private float X1, X, C1, Y; // 3110
     private float X2, Q4, Q5; // 3140
-    private int N; // 3170
     private float T8; // 3370
     private int X5; // 3620
     private String O1$; // 4040
@@ -260,7 +272,7 @@ public class Game {
         D4 = 0.5 * random.nextDouble();
         Z[Q1][Q2] = G[Q1][Q2];
         // 1390 IF Q1<1 OR Q1>8 OR Q2<1 OR Q2>8 THEN 1600
-        if (! (Q1<1 || Q1 > 8 || Q2 < 1 || Q2 > 8)) {
+        if (!(Q1 < 1 || Q1 > 8 || Q2 < 1 || Q2 > 8)) {
             // 1430 GOSUB 9030:Print:IF T0<>T THEN 1490
             goSub9030();
             println("");
@@ -304,7 +316,7 @@ public class Game {
         if (K3 >= 1) {
             // 1720 FOR I=1TOK3: GOSUB 8590: A$="+K+":Z1=R1:Z2=R2
             for (int I = 1; I <= K3; I++) {
-                findEmptyPlaceInQuadrant();
+                findEmptyPlaceInQuadrant8590();
                 A$ = KLINGON_ICON;
                 Z1 = R1;
                 Z2 = R2;
@@ -318,7 +330,7 @@ public class Game {
         // 1820 IF B3<1 THEN 1910
         if (B3 >= 1) {
             // 1880 GOSUB 8590: A$=">!<":Z1=R1:B4=R1:Z2=R2:B5=R2:GOSUB 8670
-            findEmptyPlaceInQuadrant();
+            findEmptyPlaceInQuadrant8590();
             A$ = STARBASE_ICON;
             Z1 = R1;
             B4 = R1;
@@ -328,7 +340,7 @@ public class Game {
         }
         // 1910 FOR I=1TOS3:GOSUB 8590:A$=" * ":Z1=R1:Z2=R2:GOSUB 8670:NEXTI
         for (int I = 1; I <= 3; I++) {
-            findEmptyPlaceInQuadrant();
+            findEmptyPlaceInQuadrant8590();
             A$ = STAR_ICON;
             Z1 = R1;
             Z2 = R2;
@@ -396,7 +408,7 @@ public class Game {
                 X$ = "0.2";
             }
             // 2360
-            W1 = inputF("Warp factor (0 -" + X$ + "):");
+            W1 = inputF("WARP FACTOR (0 -" + X$ + "):");
             if (W1 != 0) {
                 if (D[1] < 0 && W1 > 0.2) {
                     // 2470
@@ -435,7 +447,7 @@ public class Game {
                 Z1 = K[I][1];
                 Z2 = K[I][2];
                 insertIconInString8670();
-                findEmptyPlaceInQuadrant();
+                findEmptyPlaceInQuadrant8590();
                 K[I][1] = Z1;
                 K[I][2] = Z2;
                 A$ = KLINGON_ICON;
@@ -448,44 +460,45 @@ public class Game {
         if (W1 >= 1) {
             D6 = 1;
         }
-        for (int i = 0; i < 8; i++) {
-            if (D[i] < 0) {
-                D[i] = D[i] + D6;
-                if (D[i] > -0.1 && D[i] < 0) {
-                    D[i] = -0.1F;
+        // 2770 FORI=1TO8:IFD(I)>=0THEN2880
+        for (int I = 1; I <= 8; I++) {
+            if (D[I] < 0) {
+                // 2790 D(I)=D(I)+D6:IFD(I)>-.1 AND D(I)<0 THEN D(I)=.1 : GOTO 2880
+                D[I] = D[I] + D6;
+                if (D[I] > -0.1 && D[I] < 0) {
+                    D[I] = -0.1F;
                 } else {
-                    if (D[i] >= 0) {
+                    if (D[I] >= 0) {
                         if (D1 != 1) {
                             D1 = 1;
                         }
-                        println("Damage control report:  ");
+                        println("DAMAGE CONTROL REPORT:  ");
                         println("\t\t\t\t\t\t\t");
-                        R1 = i;
+                        R1 = I;
                         goSub8790();
                         println(G2$);
-                        println("\t repair completed.");
+                        println(" REPAIR COMPLETED.");
                     }
                 }
             }
         }// 2880 NEXT I: IF RND(1) > 0.2 THEN 3070
         if (random.nextFloat() <= 0.2) {
             R1 = fnr(); // 2910
+            int index = Math.round(R1);
             if (random.nextFloat() < 0.6) {
-                int index = Math.round(R1);
                 D[index] = D[index] - (random.nextFloat() * 5 + 1);
-                println("Damage control report:  ");
+                println("DAMAGE CONTROL REPORT:  ");
                 goSub8790();
                 println(G2$);
-                println("damaged");
+                println("DAMAGED");
                 println("");
             } else {
                 // 3000
-                int index = Math.round(R1);
                 D[index] = D[index] + (random.nextFloat() * 3 + 1);
-                println("Damage control report:  ");
+                println("DAMAGE CONTROL REPORT:  ");
                 goSub8790();
                 println(G2$);
-                println("\t state of repair improved.");
+                println(" STATE OF REPAIR IMPROVED.");
             }
         } // 3070
     }
@@ -495,32 +508,32 @@ public class Game {
 
     private void moveStarShip() {
         // 3070 A$ = "   " ...
-        A$ = "   ";
+        A$ = EMPTY_ICON;
         Z1 = S1;
         Z2 = S2;
         insertIconInString8670();
         // 3110
         int C1int = Math.round(C1);
-        X1 = C[C1int][0] + (C[C1int + 1][0] - C[C1int][0]) * (C1 - C1int);
+        X1 = C[C1int][1] + (C[C1int + 1][1] - C[C1int][1]) * (C1 - C1int);
         X = S1;
         Y = S2;
-        X2 = C[C1int][1] + (C[C1int + 1][1] - C[C1int][1]) * (C1 - C1int);
+        X2 = C[C1int][2] + (C[C1int + 1][2] - C[C1int][2]) * (C1 - C1int);
         Q4 = Q1;
         Q5 = Q2;
-        // 3170
+        // 3170 FORI=1TON:Si=Si+X1:S2=S2+X2:1FSI<LORS1>=9ORS2<1ORS2>=9THEN 3500
         boolean shutdown = false;
         for (int i = 0; i < N; i++) {
             S1 = S1 + X1;
             S2 = S2 + X2;
             if (S1 < 1 || S1 >= 9 || S2 < 1 || S2 >= 9) {
-                exceededQuadrantLimits();
+                exceededQuadrantLimits3500();
             } else {
                 int S8 = Math.round(S1) * 24 + Math.round(S2) * 3 - 26;
-                if (!mid$(Q$, S8, 2).equals("  ")) {
+                if (!mid$(Q$, S8, 3).equals(EMPTY_ICON)) {
                     S1 = Math.round(S1 - X1);
                     S2 = Math.round(S2 - X2);
-                    println("Warp engines shut down at");
-                    println("sector " + S1 + "," + S2 + " due to bad navigation.");
+                    println("WARP ENGINES SHUT DOWN AT");
+                    println("SECTOR " + S1 + "," + S2 + " DUE TO BAD NAVIGATION.");
                     shutdown = true;
                     break;
                 }
@@ -535,7 +548,7 @@ public class Game {
 
     private void goto3370() {
         // 3370
-        A$ = "<*>";
+        A$ = STARSHIP_ICON;
         Z1 = Math.round(S1);
         Z2 = Math.round(S2);
         insertIconInString8670();
@@ -551,7 +564,7 @@ public class Game {
 
     // 3498 REM EXCEEDED QUADRANT LIMITS
 
-    private void exceededQuadrantLimits() {
+    private void exceededQuadrantLimits3500() {
         // 3500 X=8*Q1+X+N*X1:Y=8*Q2+Y+N*X2:Q1=INT(X/8):Q2=INT(Y/8):S1=INT(X-Q1*8)
         X = 8 * Q1 + X + N * X1;
         Y = 8 * Q2 + Y + N * X2;
@@ -635,26 +648,26 @@ public class Game {
             O1$ = "-------------------";
             println(O1$);
             //  4060 FOR I=Q1-1 TO Q1+1:N(1)=-1:N(2)=-2:N(3)=-3:FOR J=Q2-1T0Q2+1
-            float[] N = new float[3]; // TODO Why an array with same name as a single?
-            for (int i = Q1 - 2; i < Q1; i++) {  // Q1,Q2 is 1 based.
-                N[0] = -1;
-                N[1] = -2;
-                N[2] = -3;
-                for (int j = Q2 - 2; j < Q2; j++) {
+            float[] N = new float[4]; // Why an array with same name as a single?
+            for (int I = Q1 - 1; I <= Q1 + 1; I++) {
+                N[1] = -1;
+                N[2] = -2;
+                N[3] = -3;
+                for (int J = Q2 - 1; J <= Q2 + 1; J++) {
                     //  4120 IF I>0 AND I<9 AND J>D AND J<9 THEN N(J-Q2+2)=G(I,J):Z(I,J)=G(I,J)
-                    if (i > 0 && i < 9 && j > 0 && j < 9) {
-                        N[j - (Q2 - 1)] = G[i][j];
-                        Z[i][j] = G[i][j];
+                    if (I > 0 && I < 9 && J > 0 && J < 9) {
+                        N[J - Q2 + 1] = G[I][J];
+                        Z[I][J] = G[I][J];
                     }
                 }
                 // 4180 NEXTJ: FOR L=1TO3:PRINT": “;:IFN(L)<0 THEN PRINT"*** ";: GOTO4230
-                for (int l = 0; l < 3; l++) {
+                for (int L = 1; L <= 3; L++) {
                     print(":");
-                    if (N[l] < 0) {
+                    if (N[L] < 0) {
                         print(" *** ");
                     } else {
                         // 4210 PRINT RIGHT$(STR$(N(L)+1000),3);" “;
-                        print(String.format(" %03.0f ", N[l]));
+                        print(String.format(" %03.0f ", N[L]));
                     }
                     // 4230 NEXTL: PRINT":": PRINT O1$:NEXT1: GOTO 1990
 
@@ -669,7 +682,7 @@ public class Game {
      * 4260 REM PHASER CONTROL CODE BEGINS HERE
      */
     private void phaserControl() {
-        // 4260 IFDC 4)<@THENPRINT'PHASERS INOPERATI VE":GOTO1996
+        // 4260 IFD(4)<@THENPRINT'PHASERS INOPERATI VE":GOTO1996
         if (D[4] < 0) {
             println("PHASERS INOPERATIVE");
             return;
@@ -703,34 +716,33 @@ public class Game {
         E = E - X;
         // 4450 HI=INT(X/K3) :FORI= 1T03: IFK(I,3)<=0 THEN 4670
         H1 = Math.round(X / K3);
-        for (int i = 0; i < 3; i++) {
-            if (K[i][2] > 0) {
+        for (int I = 1; I <= 3; I++) {
+            if (K[I][3] > 0) {
                 // 4480 H=INT((H1/FND(0)))*CRN2D1FCH>.11S*)KC+Ls23)THEN 4530
                 H = Math.round((H1 / fnd()) * (random.nextFloat() + 2));
-                if (H <= 0.15 * K[i][2]) {
-
+                if (H <= 0.15 * K[I][3]) {
                     // 4500 PRINT"SENSORS SHOW NO DAMAGE TO ENEMY AT";K(I,1);",";K(I,2):GOTO 4670
-                    println("SENSORS SHOW NO DAMAGE TO ENEMY AT" + K[i][0] + "," + K[i][1]);
+                    println("SENSORS SHOW NO DAMAGE TO ENEMY AT" + K[I][1] + "," + K[I][2]);
                 } else {
                     // 4530 K(I,3)=K(I,3)-H:PRINT H;" UNIT HIT ON KLINGON IN SECTOR";K(I,1);",";K(I,2)
-                    K[i][2] = K[i][2] - H;
-                    println(H + " UNIT HIT ON KLINGON IN SECTOR" + K[i][0] + "," + K[i][1]);
+                    K[I][3] = K[I][3] - H;
+                    println(H + " UNIT HIT ON KLINGON IN SECTOR" + K[I][1] + "," + K[I][2]);
                     // 4550 PRINTK(C I+ 2)s1 FKCLs 3)<=@THENPRINT"*** KLINGON DESTROYED ***"':GOTO 4580
-                    if (K[i][2] > 0) {
+                    if (K[I][3] > 0) {
                         // 4560 PRINT" (SENSORS SHOW'SKCI303."UNITS REMAINING)":GOTO 4670
-                        println("  (SENSORS SHOW " + K[i][2] + " UNITS REMAINING)");
+                        println("  (SENSORS SHOW " + K[I][3] + " UNITS REMAINING)");
                     } else {
                         println("*** KLINGON DESTROYED ***");
                         // 4580 K3=K3-1:K9=K9-1:Z1=K(I,1):Z2=K(I,2):A$="   ":GOSUB 8670
                         K3 = K3 - 1;
                         K9 = K9 - 1;
-                        Z1 = K[i][0];
-                        Z2 = K[i][1];
-                        A$ = "   ";
+                        Z1 = K[I][1];
+                        Z2 = K[I][2];
+                        A$ = EMPTY_ICON;
                         insertIconInString8670();
                         // 4650 K(I,3)=0:G(Q1,Q2)=G(Q1,Q2)-100:Z(Q1,Q2)=G(Q1,Q2):IF K9<=0 THEN 6370
-                        K[i][2] = 0;
-                        G[Q1][Q2] = G[Q1][Q2] - 100;
+                        K[I][3] = 0;
+                        G[Q1][Q2] = G[Q1][Q2] - 100; // Count down on Klingons in this sector
                         Z[Q1][Q2] = G[Q1][Q2];
                         if (K9 < 0) {
                             goto6370();
@@ -783,16 +795,16 @@ public class Game {
 
     private void help() {
         // 2160
-        println("Enter one of the following:");
-        println("\tNAV (to set course)");
-        println("\tSRS (for short range sensor scan)");
-        println("\tLRS (for long range sensor scan)");
-        println("\tPHA (to fire phasers)");
-        println("\tTOR (to fire photon torpedoes)");
-        println("\tSHE (to raise or lower shields)");
-        println("\tDAM (for damage control report)");
-        println("\tCOM (to call on library-computer)");
-        println("\tXXX (to resign your command)");
+        println("ENTER ONE OF THE FOLLOWING:");
+        println("  NAV (TO SET COURSE)");
+        println("  SRS (FOR SHORT RANGE SENSOR SCAN)");
+        println("  LRS (FOR LONG RANGE SENSOR SCAN)");
+        println("  PHA (TO FIRE PHASERS)");
+        println("  TOR (TO FIRE PHOTON TORPEDOES)");
+        println("  SHE (TO RAISE OR LOWER SHIELDS)");
+        println("  DAM (FOR DAMAGE CONTROL REPORT)");
+        println("  COM (TO CALL ON LIBRARY-COMPUTER)");
+        println("  XXX (TO RESIGN YOUR COMMAND)");
         println("");
         // 2260 GOTO 1990
     }
@@ -822,9 +834,8 @@ public class Game {
         println("goSub6430");
     }
 
-    private void findEmptyPlaceInQuadrant() {
+    private void findEmptyPlaceInQuadrant8590() {
         // 8580 REM FIND EMPTY PLACE IN QUADRANT (FOR THINGS)
-        println("goSub8590");
         // 8590 RI= FNC 1): R2=FNRC 1) :Aas=" ":Z1=R12Z2= R2: GOSUBBE 38:1 FZ3=OTHEN B590
         do {
             R1 = fnr();
@@ -832,7 +843,7 @@ public class Game {
             A$ = EMPTY_ICON;
             Z1 = R1;
             Z2 = R2;
-            goSub8830();
+            checkForIcon8830();
         } while (Z3 == 0);
     }
 
@@ -850,7 +861,7 @@ public class Game {
         if (S8 == 1) {
             Q$ = A$ + right$(Q$, 189);
         }
-        // 8690 IFS8= 196TH ENQS=LEFTS( @$s 189) +AS: RETURN
+        // 8690 IFS8= 196THEN QS=LEFTS( @$s 189) +AS: RETURN
         else if (S8 == 190) {
             Q$ = left$(Q$, 189) + A$;
         } else
@@ -858,7 +869,7 @@ public class Game {
             Q$ = left$(Q$, S8 - 1) + A$ + right$(Q$, 190 - S8);
     }
 
-    private void goSub8830() {
+    private void checkForIcon8830() {
         // 8820 REM STRING COMPARISON IN QUADRANT ARRAY
         // Z3 is used to indicate success.
         // 8830 ZASINTCZ 14.5) sZO=INTCZO+.5) 2S8=(ZO=1) e340 Z1=1)*Bat 12:Z3=0
@@ -879,19 +890,20 @@ public class Game {
     }
 
     private String left$(String input, int i) {
-        return input.substring(0, i);
+        return input.substring(0, i - 1);
     }
 
     private String right$(String input, int i) {
-        return input.substring(input.length() - i);
+        return input.substring(input.length() - i - 1);
     }
 
     private String mid$(String string, int start, int length) {
-        return string.substring(start, start + length);
+        return string.substring(start - 1, start - 1 + length);
     }
 
     private static final String[] quadrantName1 =
             new String[]{
+                    "unused",
                     "ANTARES",
                     "RIGEL",
                     "PROCYON",
@@ -903,6 +915,7 @@ public class Game {
             };
     private static final String[] quadrantName2 =
             new String[]{
+                    "unused",
                     "SIRIUS",
                     "DENEB",
                     "CAPELLA",
