@@ -239,8 +239,8 @@ public class Game {
         // 1200 K7=K9:IFB9<>1 THEN X$=" S": X0$=" ARE "
         K7 = K9;
         if (B9 != 1) {
-            X$ = "s";
-            X0$ = " are ";
+            X$ = "S";
+            X0$ = " ARE ";
         }
     }
 
@@ -305,14 +305,15 @@ public class Game {
         for (int I = 0; I <= 3; I++) {
             K[I][3] = 0;
         }
-        Q$ = Z$ + Z$ + Z$ + Z$ + Z$ + Z$ + left$(Z$, 17);
+        //Q$ = Z$ + Z$ + Z$ + Z$ + Z$ + Z$ + Z$ + left$(Z$, 17); // 7 * 25 + 17 = 192
+        Q$ = String.join("", Collections.nCopies(192, " "));
         // 1660 REM Position Enterprise in quadrant, then place "K3" Klingons, &
         // 1670 REM "B3" starbases, & "S3" stars elsewhere.
         // 1680 A$="<*>":Z1=S1:Z2=S2:GOSUB 8670:IF K3<1 THEN 1820
         A$ = STARSHIP_ICON;
         Z1 = S1;
         Z2 = S2;
-        insertIconInString8670();
+        insertIconInQuadrantString8670();
         if (K3 >= 1) {
             // 1720 FOR I=1TOK3: GOSUB 8590: A$="+K+":Z1=R1:Z2=R2
             for (int I = 1; I <= K3; I++) {
@@ -321,7 +322,7 @@ public class Game {
                 Z1 = R1;
                 Z2 = R2;
                 // 1780 GOSUB 8670: K(I,1)=R1:K(I,2)=R2;K(I,3)=S9*0.5+RND(1):NEXTI
-                insertIconInString8670();
+                insertIconInQuadrantString8670();
                 K[I][1] = R1;
                 K[I][2] = R2;
                 K[I][3] = S9 * 0.5F + random.nextFloat();
@@ -336,7 +337,7 @@ public class Game {
             B4 = R1;
             Z2 = R2;
             B5 = R2;
-            insertIconInString8670();
+            insertIconInQuadrantString8670();
         }
         // 1910 FOR I=1TOS3:GOSUB 8590:A$=" * ":Z1=R1:Z2=R2:GOSUB 8670:NEXTI
         for (int I = 1; I <= 3; I++) {
@@ -344,7 +345,7 @@ public class Game {
             A$ = STAR_ICON;
             Z1 = R1;
             Z2 = R2;
-            insertIconInString8670();
+            insertIconInQuadrantString8670();
         }
         // 1980 GOSUB 6430
         goSub6430();
@@ -446,12 +447,12 @@ public class Game {
                 A$ = EMPTY_ICON;
                 Z1 = K[I][1];
                 Z2 = K[I][2];
-                insertIconInString8670();
+                insertIconInQuadrantString8670();
                 findEmptyPlaceInQuadrant8590();
                 K[I][1] = Z1;
                 K[I][2] = Z2;
                 A$ = KLINGON_ICON;
-                insertIconInString8670();
+                insertIconInQuadrantString8670();
             }
         } // 2700 NEXT I: GOSUB 6000
         goSub6000();
@@ -511,7 +512,7 @@ public class Game {
         A$ = EMPTY_ICON;
         Z1 = S1;
         Z2 = S2;
-        insertIconInString8670();
+        insertIconInQuadrantString8670();
         // 3110
         int C1int = Math.round(C1);
         X1 = C[C1int][1] + (C[C1int + 1][1] - C[C1int][1]) * (C1 - C1int);
@@ -551,7 +552,7 @@ public class Game {
         A$ = STARSHIP_ICON;
         Z1 = Math.round(S1);
         Z2 = Math.round(S2);
-        insertIconInString8670();
+        insertIconInQuadrantString8670();
         maneuverEnergy();
         T8 = 1;
         if (W1 < 1) {
@@ -739,7 +740,7 @@ public class Game {
                         Z1 = K[I][1];
                         Z2 = K[I][2];
                         A$ = EMPTY_ICON;
-                        insertIconInString8670();
+                        insertIconInQuadrantString8670();
                         // 4650 K(I,3)=0:G(Q1,Q2)=G(Q1,Q2)-100:Z(Q1,Q2)=G(Q1,Q2):IF K9<=0 THEN 6370
                         K[I][3] = 0;
                         G[Q1][Q2] = G[Q1][Q2] - 100; // Count down on Klingons in this sector
@@ -847,11 +848,10 @@ public class Game {
         } while (Z3 == 0);
     }
 
-    private void insertIconInString8670() {
+    private void insertIconInQuadrantString8670() {
         // 8660 REM INSERT IN STRING ARRAY FOR QUADRANT
         // 8670 S8=INT(Z2-.5)*3+INT(Z1-.5)*24+1
         S8 = Math.toIntExact(Math.round(Z2 - 0.5) * 3 + Math.round(Z1 - 0.5) * 24 + 1);
-        println("insert " + A$ + " in string " + Q$ + " at " + S8);
         // 8675 IF LEN(AS)<>3 THEN PRINT "ERROR": STOP
         if (A$.length() != 3) {
             print("ERROR");
@@ -865,14 +865,14 @@ public class Game {
         else if (S8 == 190) {
             Q$ = left$(Q$, 189) + A$;
         } else
-            // 8700 QS=LEFTSC0 Ss S6- 1) +AS+RIGHTSC OSs 199-S8): RETURN
+            // 8700 Q$=LEFT$(Q$,S8 - 1) +A$+ RIGHT$(Q$,190-S8): RETURN
             Q$ = left$(Q$, S8 - 1) + A$ + right$(Q$, 190 - S8);
     }
 
     private void checkForIcon8830() {
         // 8820 REM STRING COMPARISON IN QUADRANT ARRAY
         // Z3 is used to indicate success.
-        // 8830 ZASINTCZ 14.5) sZO=INTCZO+.5) 2S8=(ZO=1) e340 Z1=1)*Bat 12:Z3=0
+        // 8830 Z=INT(Z1+.5): sZO=INTCZO+.5) 2S8=(ZO=1) e340 Z1=1)*Bat 12:Z3=0
         Z1 = Math.round(Z1 + 0.5);
         Z2 = Math.round(Z2 + 0.5);
         S8 = Math.round((Z2 - 1) * 3 + (Z1 - 1) * 24 + 1);
@@ -898,6 +898,10 @@ public class Game {
     }
 
     private String mid$(String string, int start, int length) {
+        if (string.length() < start - 1 + length) {
+            println("out of bounds " + (start + length));
+            return "";
+        }
         return string.substring(start - 1, start - 1 + length);
     }
 
