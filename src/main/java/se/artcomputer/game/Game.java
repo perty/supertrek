@@ -129,11 +129,11 @@ public class Game {
     /**
      * Sector position
      */
-    private float S1 = fnr(); // 490
+    private int S1 = fnr(); // 490
     /**
      * Sector position
      */
-    private float S2 = fnr(); // 490
+    private int S2 = fnr(); // 490
 
     // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
     /**
@@ -149,7 +149,10 @@ public class Game {
      */
     private double S3;
     /**
-     * String representation of the current quadrant
+     * String representation of the current quadrant.
+     * A quadrant has 8x8 positions. Each position is 3 characters, therefore the string is
+     * 8 X 8 x 3 = 192 characters.
+     * To index into it, multiply by 3 for one dimension and then by 24 (8 * 3) for the other.
      */
     private String Q$; // 1600
     private String A$; // 1680
@@ -348,7 +351,7 @@ public class Game {
             insertIconInQuadrantString8670();
         }
         // 1980 GOSUB 6430
-        goSub6430();
+        shortRangeSensors6430();
     }
 
     private void running() {
@@ -381,7 +384,7 @@ public class Game {
         // 2160 NEXT I: PRINT "ENTER ONE OF THE FOLLOWING"
         switch (A$.toUpperCase()) {
             case "NAV" -> gotoNAV2300();
-            case "SRS" -> goSub6430(); // GOTO 1980
+            case "SRS" -> shortRangeSensors6430(); // GOTO 1980
             case "LRS" -> longRangeSensors();
             case "PHA" -> phaserControl();
             case "TOR" -> photonTorpedo();
@@ -524,8 +527,8 @@ public class Game {
         // 3170 FORI=1TON:Si=Si+X1:S2=S2+X2:1FSI<LORS1>=9ORS2<1ORS2>=9THEN 3500
         boolean shutdown = false;
         for (int i = 0; i < N; i++) {
-            S1 = S1 + X1;
-            S2 = S2 + X2;
+            S1 = S1 + Math.round(X1);
+            S2 = S2 + Math.round(X2);
             if (S1 < 1 || S1 >= 9 || S2 < 1 || S2 >= 9) {
                 exceededQuadrantLimits3500();
             } else {
@@ -560,7 +563,7 @@ public class Game {
         }
         // 3470 REM See if docked, then command
         // 3480 GOTO 1980
-        goSub6430();
+        shortRangeSensors6430();
     }
 
     // 3498 REM EXCEEDED QUADRANT LIMITS
@@ -831,8 +834,33 @@ public class Game {
         println("goSub6000");
     }
 
-    private void goSub6430() {
+    private void shortRangeSensors6430() {
         println("goSub6430");
+        // 6430 FORI=Si~!TOS1+1: FORU=S2-1TOS2t1
+        for (int I = S1 - 1; I <= S1 + 1; I++) {
+            for (int J = S2 - 1; J <= S2 + 1; J++) {
+                // 6450 TF INT C L ++. .5) >58 OR)IN T<C U+1- 5)G < LOORIRN TIC J+.W 5)T>3 C THEN 6540
+                if (!(Math.round(I + 0.5) < 1 || Math.round(I + 0.5) > 8 || Math.round(J + 0.5) < 1 || Math.round(J + 0.5) > 8)) {
+                    // 6490 ASH">!<"3Zfal:Z2eI:GIOG:S1FUz3+L1B THEN 6580
+                    A$ = STARBASE_ICON;
+                    Z1 = I;
+                    Z2 = J;
+                    checkForIcon8830();
+                    if (Z3 == 1) {
+                        break;
+                    }
+                }
+            }
+        }
+        // 6540 NEXTUSNEC:TI D@=G:GOTO6650
+        // 6580 D0=1:C$="DOCKED":E=E0:P=P0
+        // 6620 PRINT'SHIELDS DROPPED FOP DOCKING PURPOSES": S=6:GOTO 6720
+        // 6650 IM(3>@THEN C$="*RED*'":GOTO6720
+        // 6660 CS="GREEN"':iFE<EG*«1THENCS="YELLOW"
+        // 6720 ILFDC 2) >= G@THEN 6770
+        // 6736 PRINT: PRINT #*# SHORT RANGE SENSORS ARE OUT #4##": PRENT: RETURN
+        // 6776 Oss" “sPRINTOL :FORI=1T08
+        // 6820 FORJ=(I-1)*24im Le 24+ 1TOCI-4) *24+ 22STEP3:PRINT" “;MID$(QS,I, J);:NEXTJ
     }
 
     private void findEmptyPlaceInQuadrant8590() {
@@ -869,9 +897,12 @@ public class Game {
             Q$ = left$(Q$, S8 - 1) + A$ + right$(Q$, 190 - S8);
     }
 
+    /**
+     *  Check if an expected icon A$ is at Z1,Z2.
+     *  Z3 = 1 is used to indicate success.
+     */
     private void checkForIcon8830() {
         // 8820 REM STRING COMPARISON IN QUADRANT ARRAY
-        // Z3 is used to indicate success.
         // 8830 Z=INT(Z1+.5): sZO=INTCZO+.5) 2S8=(ZO=1) e340 Z1=1)*Bat 12:Z3=0
         Z1 = Math.round(Z1 + 0.5);
         Z2 = Math.round(Z2 + 0.5);
