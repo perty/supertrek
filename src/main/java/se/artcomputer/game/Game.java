@@ -890,13 +890,15 @@ public class Game {
             return;
         }
         // 6770 Oss" “sPRINTOL :FOR I=1T08
-        O1$ = "-------------------";
+        O1$ = String.join("",Collections.nCopies(24, "-"));
         println(O1$);
         for (int I = 1; I <= 8; I++) {
             // 6820 FORJ=(I-1)*24im Le 24+ 1TOCI-4) *24+ 22STEP3:PRINT" “;MID$(QS,I, J);:NEXTJ
-            for (int J = (I - 1) * 24 + 1; J <= (I - 1) * 24 + 22; J += 3) {
-                print(mid$(Q$, J, 3));
-            }
+//            for (int J = (I - 1) * 24 + 1; J <= (I - 1) * 24 + 22; J += 3) {
+//                print(mid$(Q$, J, 3));
+//            }
+            String line = mid$(Q$, (I - 1) * 24 + 1 , 24);
+            print(line);
             // 6830 ON I GOTO
             switch (I) {
                 case 1 -> println("     STARDATE           " + Math.round(T * 10) * 0.1);
@@ -906,7 +908,7 @@ public class Game {
                 case 5 -> println("     PHOTON TORPEDOES   " + Math.round(P));
                 case 6 -> println("     TOTAL ENERGY       " + Math.round(E + S));
                 case 7 -> println("     SHIELDS            " + Math.round(S));
-                case 8 -> println("     KLINGONS REMAINING  " + Math.round(K9));
+                case 8 -> println("     KLINGONS REMAINING " + Math.round(K9));
             }
         }
         println(O1$);
@@ -970,18 +972,19 @@ public class Game {
     }
 
     private String left$(String input, int i) {
-        return input.substring(0, Math.max(i - 1, input.length() - 1));
+        return input.substring(0, Math.min(i - 1, input.length() - 1));
     }
 
     private String right$(String input, int i) {
-        if (i > input.length()) {
+        if (input.length() - i - 1 > input.length() ) {
             println("right$ out of bounds " + i + "(" + input.length() + ")");
+            return "";
         }
         return input.substring(input.length() - i - 1);
     }
 
     private String mid$(String string, int start, int length) {
-        if (string.length() < start - 1 + length) {
+        if (string.length() < start - 1 + length || start <= 0) {
             println("out of bounds " + (start + length));
             return "";
         }
