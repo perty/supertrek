@@ -21,7 +21,13 @@ My idea was to do the same as back in the days and type it in but translate it t
 Basic was the language for home computers. It is an interpreted language that was designed to be easy to learn. It was also designed to be used on TTY. To edit a statement, you entered its line number and typed the statement. That is why a typically Basic program has line numbers that are 10, 20 and then 30 since you
 wanted to be able to insert lines between 10 and 20. (There was often a renumber function to use when you had inserted too many lines).
 
-Variables in Basic are a letter and an optional number. Yes, two characters! They are also global even if there is a subroutine concept. The type is either a number or a string, the latter is indicated by a dollar sign after the name. Arrays are also possible in most dialects. Although a number may not necessarily be integer, it can be used to index an array.
+Variables in Basic are a letter and an optional number. Yes, two characters! They are also global even if there is a subroutine concept. The type is either a number or a string, the latter is indicated by a dollar sign after the name.
+
+The global variables has an effect on subroutines. Whenever a subroutine is called, it may change global variabels. In fact, since there is no parameter concept, so to pass values to a subroutine, a number of variabels need to be set.
+
+For example, to see if a specific position has some value, the string variable A$ is set to the value while Z1 and Z2 describe the position.
+
+Arrays are also possible in most dialects. Although a number may not necessarily be integer, it can be used to index an array.
 
 Array indexes starts at 1, more human but everywhere else it is 0.
 
@@ -34,11 +40,12 @@ The "Q" character I have mistaken for "O" sometimes.
 
 I have tried using OCR, it helps for messages but not for code.
 
-Variable names can not be so descriptive names are not possible. Added to that, the author did not write comments on what they are used for. 
+Variable names can not be more than two characters so descriptive names are not possible. Added to that, the author did not write comments on what they are used for, in most cases. 
 
 The flow of the program can be hard to follow at times. There are no boundaries between parts of the program other than the sparse comments the author provided. Sometimes the flow jumps back to a line earlier in the program. Is it a loop? 
 
-Many calculations are hard to understand partly to naming of variables and partly lack of documentation. It is also core of the game logic so it is essential to get right.
+
+Many calculations are hard to understand partly to naming of variables and partly lack of documentation. It is also core of the game logic, so it is essential to get right.
 
 Correctness will also be a challenge, if I have the stamina to type it all in. If it seems to work, is it as intended?
 

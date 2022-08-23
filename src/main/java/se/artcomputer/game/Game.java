@@ -67,6 +67,9 @@ public class Game {
     private float E = 3000; // 370
     private float E0 = E; // 370
 
+    /**
+     * Photon torpedoes
+     */
     private int P = 10; // 440
     private int P0 = P; // 440
     private int S9 = 200; // 440
@@ -104,6 +107,7 @@ public class Game {
     private float H; // 4480
     private int S8; // 8670
     private int Z3; // 8590
+    private String C$; // 6580
 
     private double fnd() { // 470
         return Math.pow(Math.sqrt(K[I][1] - S1), 2) + Math.pow(K[I][2] - S2, 2);
@@ -837,6 +841,7 @@ public class Game {
     private void shortRangeSensors6430() {
         println("goSub6430");
         // 6430 FORI=Si~!TOS1+1: FORU=S2-1TOS2t1
+        boolean docked = false;
         for (int I = S1 - 1; I <= S1 + 1; I++) {
             for (int J = S2 - 1; J <= S2 + 1; J++) {
                 // 6450 TF INT C L ++. .5) >58 OR)IN T<C U+1- 5)G < LOORIRN TIC J+.W 5)T>3 C THEN 6540
@@ -847,20 +852,64 @@ public class Game {
                     Z2 = J;
                     checkForIcon8830();
                     if (Z3 == 1) {
+                        docked = true;
                         break;
                     }
                 }
             }
         }
         // 6540 NEXTUSNEC:TI D@=G:GOTO6650
-        // 6580 D0=1:C$="DOCKED":E=E0:P=P0
-        // 6620 PRINT'SHIELDS DROPPED FOP DOCKING PURPOSES": S=6:GOTO 6720
-        // 6650 IM(3>@THEN C$="*RED*'":GOTO6720
-        // 6660 CS="GREEN"':iFE<EG*«1THENCS="YELLOW"
+        if (!docked) {
+            D0 = 0;
+        } else {
+            // 6580 D0=1:C$="DOCKED":E=E0:P=P0
+            D0 = 1;
+            C$ = "DOCKED";
+            E = E0;
+            P = P0;
+            // 6620 PRINT'SHIELDS DROPPED FOP DOCKING PURPOSES": S=0:GOTO 6720
+            println("SHIELDS DROPPED FOP DOCKING PURPOSES");
+            S = 0;
+        }
+        // 6650 IM(3>@THEN C$="*RED*'":GOTO 6720
+        if (K3 > 0) {
+            C$ = "*RED*";
+        } else {
+            // 6660 CS="GREEN"':iFE<EG*«1THENCS="YELLOW"
+            C$ = "GREEN";
+            if (E < E0 * 0.1) {
+                C$ = "YELLOW";
+            }
+        }
         // 6720 ILFDC 2) >= G@THEN 6770
-        // 6736 PRINT: PRINT #*# SHORT RANGE SENSORS ARE OUT #4##": PRENT: RETURN
-        // 6776 Oss" “sPRINTOL :FORI=1T08
-        // 6820 FORJ=(I-1)*24im Le 24+ 1TOCI-4) *24+ 22STEP3:PRINT" “;MID$(QS,I, J);:NEXTJ
+        if (D[2] < 0) {
+            // 6730 PRINT: PRINT #*# SHORT RANGE SENSORS ARE OUT #4##": PRENT: RETURN
+            println("");
+            println("*** SHORT RANGE SENSORS ARE OUT ***");
+            println("");
+            return;
+        }
+        // 6770 Oss" “sPRINTOL :FOR I=1T08
+        O1$ = "-------------------";
+        println(O1$);
+        for (int I = 1; I <= 8; I++) {
+            // 6820 FORJ=(I-1)*24im Le 24+ 1TOCI-4) *24+ 22STEP3:PRINT" “;MID$(QS,I, J);:NEXTJ
+            for (int J = (I - 1) * 24 + 1; J <= (I - 1) * 24 + 22; J += 3) {
+                print(mid$(Q$, J, 3));
+            }
+            // 6830 ON I GOTO
+            switch (I) {
+                case 1 -> println("     STARDATE           " + Math.round(T * 10) * 0.1);
+                case 2 -> println("     CONDITION          " + C$);
+                case 3 -> println("     QUADRANT           " + Q1 + "," + Q2);
+                case 4 -> println("     SECTOR             " + S1 + "," + S2);
+                case 5 -> println("     PHOTON TORPEDOES   " + Math.round(P));
+                case 6 -> println("     TOTAL ENERGY       " + Math.round(E + S));
+                case 7 -> println("     SHIELDS            " + Math.round(S));
+                case 8 -> println("     KLINGONS REMAINING  " + Math.round(K9));
+            }
+        }
+        println(O1$);
     }
 
     private void findEmptyPlaceInQuadrant8590() {
@@ -898,8 +947,8 @@ public class Game {
     }
 
     /**
-     *  Check if an expected icon A$ is at Z1,Z2.
-     *  Z3 = 1 is used to indicate success.
+     * Check if an expected icon A$ is at Z1,Z2.
+     * Z3 = 1 is used to indicate success.
      */
     private void checkForIcon8830() {
         // 8820 REM STRING COMPARISON IN QUADRANT ARRAY
@@ -921,10 +970,13 @@ public class Game {
     }
 
     private String left$(String input, int i) {
-        return input.substring(0, i - 1);
+        return input.substring(0, Math.max(i - 1, input.length() - 1));
     }
 
     private String right$(String input, int i) {
+        if (i > input.length()) {
+            println("right$ out of bounds " + i + "(" + input.length() + ")");
+        }
         return input.substring(input.length() - i - 1);
     }
 
