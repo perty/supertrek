@@ -32,8 +32,8 @@ public class Game {
     private float[][] G = new float[9][9]; // 330
     private float[][] C = new float[10][3]; // 330
     /**
-     * Klingon position.
-     * [1][2] : position
+     * Klingon sector position and health.
+     * [1][2] : position?
      * [3] : hit points
      */
     private float[][] K = new float[4][4]; // 330
@@ -60,7 +60,10 @@ public class Game {
      * Days for mission
      */
     private int T9 = 25 + Math.round(random.nextFloat() * 10); // 370
-    private double D0 = 0.0F; // 370
+    /**
+     * Docked at a starbase
+     */
+    private int D0 = 0; // 370
     /**
      * Energy available
      */
@@ -396,6 +399,7 @@ public class Game {
             case "DAM" -> gotoDAM5690();
             case "COM" -> gotoCOM7290();
             case "XXX" -> gotoXXX6270();
+            case "GRS" -> galaxySensor();
             default -> help();
         }
     }
@@ -462,7 +466,7 @@ public class Game {
                 insertIconInQuadrantString8670();
             }
         } // 2700 NEXT I: GOSUB 6000
-        goSub6000();
+        klingonsShooting6000();
         D1 = 0;
         D6 = W1;
         if (W1 >= 1) {
@@ -686,6 +690,22 @@ public class Game {
         }
     }
 
+    private void galaxySensor() {
+        // For debugging
+        for (int i = 1; i <= 8; i++) {
+            print(String.format("%4d", i));
+        }
+        println("");
+        for (int i = 1; i <= 8; i++) {
+            println("----------------------------------");
+            print("" + i);
+            for (int j = 0; j <= 8; j++) {
+                print(String.format(" %03.0f", G[i][j]));
+            }
+            println("");
+        }
+    }
+
     /**
      * 4260 REM PHASER CONTROL CODE BEGINS HERE
      */
@@ -760,7 +780,7 @@ public class Game {
             }
         }
         // 4670 NEXT I: GOSUB 6000: GOTO 1990
-        goSub6000();
+        klingonsShooting6000();
     }
 
 
@@ -791,6 +811,10 @@ public class Game {
 
     private void goto6220() {
         println("goto6220");
+    }
+
+    private void goto6240() {
+        print("goto6240");
     }
 
     private void gotoCOM7290() {
@@ -834,13 +858,55 @@ public class Game {
         }
     }
 
-    private void goSub6000() {
+    private void klingonsShooting6000() {
         println("goSub6000");
+        //5990 REM KLINGONS SHOOTING
+        //6000 IFK3<=0 THEN RETURN
+        if (K3 <= 0) {
+            return;
+        }
+        // 6010 TFDG<>QTHENPRINT'STARBASE SHIELDS PROTECT THE ENTERPRISE": RETURN
+        if (D0 != 0) {
+            print("STARBASE SHIELDS PROTECT THE ENTERPRISE");
+            return;
+        }
+        // 6040 FORI= 1TO3: IFK(I, 3) <= 0 THEN 6200
+        for (int I = 1; I <= 3; I++) {
+            if (K[I][3] > 0) {
+                // 6060 H=INTCCKCEs 3) /FNDC 1) *C24+PNDC 120): SsS-HikCls 3=KCLs 3) /C3+RND(0)
+                H = Math.round((K[I][3] / fnd()) * 2 + random.nextFloat());
+                S = S - H;
+                K[I][3] = K[I][3] / (3 + random.nextFloat()); // Here RND(0) is in the code as opposed to RND(1).
+                // 6080 PRINT H;"UNIT HIT ON ENTERPRISE FROM SECTOR";K(I,1);",";K(I,2)"
+                print(H + "UNIT HIT ON ENTERPRISE FROM SECTOR " + K[I][1] + "," + K[I][2]);
+                // 6090 IFS<=0 THEN 6240
+                if (S <= 0) {
+                    goto6240(); // Ouch, we're done
+                } else {
+                    // 6100 PRINT" <SHIELDS DOWN TO"S Ss “UNL TS> "3 :IFH<20 THEN 6200
+                    print(" <SHIELDS DOWN TO " + S + " UNITS> ");
+                    if (H < 20) {
+                        continue;
+                    }
+                    // 6120 IF RND(1)>.60 OR H/S<=.02 THEN 6200
+                    if (random.nextFloat() > 0.6 || H / S <= 0.02) {
+                        continue;
+                    }
+                    // 6140 R1=FNR(1):D(R1)= FNRC1) 2DORI = DCRL) -H/S- «S*PNDC 1) :GOSUB 8790
+                    R1 = fnr();
+                    int index = Math.round(R1);
+                    D[index] = D[index] - H / S - 0.5F * random.nextFloat();
+                    goSub8790();
+                    // 6170 PRINT"DAMAGE CONTROL REPORTS ‘";G2$;" DAMAGED BY THE HIT'"
+                    print("DAMAGE CONTROL REPORTS ‘" + G2$ + " DAMAGED BY THE HIT'");
+                }
+            }
+        }
+        // 6200 NEXTI:RETURN
     }
 
     private void shortRangeSensors6430() {
-        println("goSub6430");
-        // 6430 FORI=Si~!TOS1+1: FORU=S2-1TOS2t1
+        // 6430 FORI=Si~!TOS1+1: FOR J=S2-1TOS2t1
         boolean docked = false;
         for (int I = S1 - 1; I <= S1 + 1; I++) {
             for (int J = S2 - 1; J <= S2 + 1; J++) {
@@ -890,14 +956,14 @@ public class Game {
             return;
         }
         // 6770 Oss" “sPRINTOL :FOR I=1T08
-        O1$ = String.join("",Collections.nCopies(24, "-"));
+        O1$ = String.join("", Collections.nCopies(24, "-"));
         println(O1$);
         for (int I = 1; I <= 8; I++) {
             // 6820 FORJ=(I-1)*24im Le 24+ 1TOCI-4) *24+ 22STEP3:PRINT" “;MID$(QS,I, J);:NEXTJ
 //            for (int J = (I - 1) * 24 + 1; J <= (I - 1) * 24 + 22; J += 3) {
 //                print(mid$(Q$, J, 3));
 //            }
-            String line = mid$(Q$, (I - 1) * 24 + 1 , 24);
+            String line = mid$(Q$, (I - 1) * 24 + 1, 24);
             print(line);
             // 6830 ON I GOTO
             switch (I) {
@@ -976,7 +1042,7 @@ public class Game {
     }
 
     private String right$(String input, int i) {
-        if (input.length() - i - 1 > input.length() ) {
+        if (input.length() - i - 1 > input.length()) {
             println("right$ out of bounds " + i + "(" + input.length() + ")");
             return "";
         }
