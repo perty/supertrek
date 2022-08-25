@@ -27,7 +27,7 @@ public class Game {
     // Try adding one to the size of each array and use 1 based index, as in Basic.
     // 338 DIM G(8,8),C(9,2),K(3.3),N(3),Z(8,8),D(8)
     /**
-     * Galaxy? In the LRS format.
+     * Galaxy in the LRS format.100 * Klingons + 10 * Bases + Stars
      */
     private float[][] G = new float[9][9]; // 330
     private float[][] C = new float[10][3]; // 330
@@ -84,6 +84,7 @@ public class Game {
      * Number of starbases
      */
     private int B9 = 0; // 440
+    /** Total number of Klingons in the galaxy? */
     private int K9 = 0; // 440
     private int K7 = 0; // 1200
     private String X$ = ""; // 440
@@ -144,15 +145,15 @@ public class Game {
 
     // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
     /**
-     * No of Klingons in the galaxy
+     * No of Klingons in the quadrant
      */
     private int K3;
     /**
-     * Starbases in the galaxy
+     * Starbases in the quadrant
      */
     private int B3;
     /**
-     * Stars in the galaxy
+     * Stars in the quadrant
      */
     private double S3;
     /**
@@ -205,7 +206,9 @@ public class Game {
 
         for (int I = 1; I <= 8; I++) {
             // 820 FOR I=1TO8: FOR J=1TO8:K3=0:Z(I,J)=0:R1=RND(1)
-            for (int J = 0; J < 8; J++) {
+            for (int J = 1; J <= 8; J++) {
+                K3 = 0;
+                Z[I][J] = 0;
                 R1 = random.nextFloat();
                 if (R1 > 0.98) {
                     // 850 IFR1>.98 THEN K3=3:K9=K9+3:GOTO 980
@@ -215,14 +218,14 @@ public class Game {
                     // 860 IFR1>.95 THEN K3=2:K9=K9+2:GOTO 980
                     K3 = 2;
                     K9 = K9 + 2;
-                } else {
+                } else if (R1 > 0.8) {
                     // 870 IFR1>.80 THEN K3=1:K9=K9+1
                     K3 = 1;
                     K9 = K9 + 1;
                 }
                 // 980 B3=0:IF RND(1) > .96 THEN B3=1:B9=B9+1
                 B3 = 0;
-                if (fnr() > 0.96) {
+                if (random.nextFloat() > 0.96) {
                     B3 = 1;
                     B9 = B9 + 1;
                 }
@@ -668,7 +671,7 @@ public class Game {
                 for (int J = Q2 - 1; J <= Q2 + 1; J++) {
                     //  4120 IF I>0 AND I<9 AND J>D AND J<9 THEN N(J-Q2+2)=G(I,J):Z(I,J)=G(I,J)
                     if (I > 0 && I < 9 && J > 0 && J < 9) {
-                        N[J - Q2 + 1] = G[I][J];
+                        N[J - Q2 + 2] = G[I][J];
                         Z[I][J] = G[I][J];
                     }
                 }
@@ -699,7 +702,7 @@ public class Game {
         for (int i = 1; i <= 8; i++) {
             println("----------------------------------");
             print("" + i);
-            for (int j = 0; j <= 8; j++) {
+            for (int j = 1; j <= 8; j++) {
                 print(String.format(" %03.0f", G[i][j]));
             }
             println("");

@@ -49,6 +49,14 @@ Many calculations are hard to understand partly to naming of variables and partl
 
 Correctness will also be a challenge, if I have the stamina to type it all in. If it seems to work, is it as intended?
 
+### Bugs and like
+
+The Basic code is well tested by playing and I believe no true bugs are there.
+
+However, bugs are created in the translation so that takes extensive testing to find out. Since I don't remember much about how to play and never known the inner workings, it is a challenge.
+
+I have discovered some minor things when using subroutines that will probably not cause any errors. 
+
 ### Ultimate goal
 
 The ultimate goal would be to put this online for others to enjoy and get a glimpse of what playing a game would be like back then.
