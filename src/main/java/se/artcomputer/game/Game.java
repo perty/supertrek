@@ -84,7 +84,9 @@ public class Game {
      * Number of starbases
      */
     private int B9 = 0; // 440
-    /** Total number of Klingons in the galaxy? */
+    /**
+     * Total number of Klingons in the galaxy?
+     */
     private int K9 = 0; // 440
     private int K7 = 0; // 1200
     private String X$ = ""; // 440
@@ -100,9 +102,16 @@ public class Game {
      * Name of quadrant
      */
     private String G2$;
+    /**
+     * Course
+     */
+    private float C1;
+    /**
+     * Warp factor
+     */
     private float W1; // 2360
     private float D1, D6; // 2700
-    private float X1, X, C1, Y; // 3110
+    private float X1, X, Y; // 3110
     private float X2, Q4, Q5; // 3140
     private float T8; // 3370
     private int X5; // 3620
@@ -191,7 +200,7 @@ public class Game {
 
         // 670 FOR I=1TO8:D(I)=0:NEXT I
         for (int I = 1; I <= 8; I++) {
-            D[I] = 0; //Redundant
+            D[I] = 0;
         }
     }
 
@@ -234,7 +243,7 @@ public class Game {
             }
         }
         if (K9 > T9) {
-            T9 = K9 + 1;
+            T9 = K9 + 1; // Mission is at least one day more than the number of Klingons.
         }
         // 1100 IF B9 <> 0 THEN 1200
         if (B9 == 0) {
@@ -245,7 +254,7 @@ public class Game {
             }
             // 1160 B9=1:G(Q1,Q2)=G(Q1,Q2)+10:Q1=FNR(1):Q2=FNR(1)
             B9 = 1;
-            G[Q1][Q2] = G[Q1][Q2] + 10;
+            G[Q1][Q2] = G[Q1][Q2] + 10; // Add a base
             Q1 = fnr();
             Q2 = fnr();
         }
@@ -257,9 +266,8 @@ public class Game {
         }
     }
 
-    public GameResult run(String line) {
+    public GameResult run() {
         switch (gameState) {
-
             case INITIAL -> {
                 initial();
                 gameState = RUNNING;
@@ -267,9 +275,6 @@ public class Game {
             case RUNNING -> {
                 running();
             }
-        }
-        if (line.equals("end")) {
-            return GameResult.END;
         }
         return GameResult.CONTINUE;
     }
@@ -287,7 +292,7 @@ public class Game {
         // 1390 IF Q1<1 OR Q1>8 OR Q2<1 OR Q2>8 THEN 1600
         if (!(Q1 < 1 || Q1 > 8 || Q2 < 1 || Q2 > 8)) {
             // 1430 GOSUB 9030:Print:IF T0<>T THEN 1490
-            goSub9030();
+            quadrantName9030();
             println("");
             if (T0 == T) {
                 // 1460 Print "Your mission begins with your starship located"
@@ -298,7 +303,11 @@ public class Game {
                 // 1490 Print "Now entering " G2$ " quadrant ..."
                 println("NOW ENTERING " + G2$ + " QUADRANT ...");
             }
-            // 1500 S3=G[Q1][Q2]-100 * K3 - 10 * B3: IF K3=0 THEN 1590
+            // 1500 PRINT:K3=INT(GCQl.Q2)*.01):B3=INT(G(Q1,Q2)*.1)-10*K3
+            println("");
+            K3 = Math.round(G[Q1][Q2] * 0.01F);
+            B3 = Math.round(G[Q1][Q2] * 0.1F) - 10 * K3;
+            // 1540 S3=G[Q1][Q2]-100 * K3 - 10 * B3: IF K3=0 THEN 1590
             S3 = G[Q1][Q2] - 100 * K3 - 10 * B3;
             if (K3 != 0) {
                 // 1560 Print "COMBAT AREA    CONDITION RED": IF S>200 THEN 1590
@@ -411,7 +420,7 @@ public class Game {
     private void gotoNAV2300() {
         // 2290 REM Course control begins here
         // 2300
-        int C1 = input("Course (0-9)");
+        C1 = inputF("Course (0-9)");
         if (C1 == 9) {
             C1 = 1;
         }
@@ -423,7 +432,7 @@ public class Game {
                 X$ = "0.2";
             }
             // 2360
-            W1 = inputF("WARP FACTOR (0 -" + X$ + "):");
+            W1 = inputF("WARP FACTOR (0 - " + X$ + "):");
             if (W1 != 0) {
                 if (D[1] < 0 && W1 > 0.2) {
                     // 2470
@@ -431,7 +440,7 @@ public class Game {
                 } else {
                     if (W1 > 0 && W1 <= 8) {
                         // 2490
-                        long N = Math.round(W1 * 8 + 0.5);
+                        N = Math.round(W1 * 8 + 0.5);
                         if (E - N < 0) {
                             println("ENGINEERING REPORTS 'INSUFFICIENT ENERGY AVAILABLE");
                             println("  FOR MANEUVERING AT WARP " + W1 + "!");
@@ -532,12 +541,13 @@ public class Game {
         X1 = C[C1int][1] + (C[C1int + 1][1] - C[C1int][1]) * (C1 - C1int);
         X = S1;
         Y = S2;
+        // 3140 C(C1,2) + (C(C1 + 1, 2) - C(C1, 2)) * (C1 - INT(C1)):Q4=Q1:Q5=Q2
         X2 = C[C1int][2] + (C[C1int + 1][2] - C[C1int][2]) * (C1 - C1int);
         Q4 = Q1;
         Q5 = Q2;
         // 3170 FORI=1TON:Si=Si+X1:S2=S2+X2:1FSI<LORS1>=9ORS2<1ORS2>=9THEN 3500
         boolean shutdown = false;
-        for (int i = 0; i < N; i++) {
+        for (int I = 1; I <= N; I++) {
             S1 = S1 + Math.round(X1);
             S2 = S2 + Math.round(X2);
             if (S1 < 1 || S1 >= 9 || S2 < 1 || S2 >= 9) {
@@ -567,10 +577,15 @@ public class Game {
         Z1 = Math.round(S1);
         Z2 = Math.round(S2);
         insertIconInQuadrantString8670();
-        maneuverEnergy();
+        maneuverEnergy3910();
         T8 = 1;
         if (W1 < 1) {
             T8 = 0.1F * Math.round(10 * W1);
+        }
+        // 3450 T=T+T8:IFT>T0+T9 THEN 6220
+        T = T + Math.round(T8);
+        if (T > T0 + T9) {
+            goto6220(); // Ran out of time
         }
         // 3470 REM See if docked, then command
         // 3480 GOTO 1980
@@ -844,7 +859,7 @@ public class Game {
         // 2260 GOTO 1990
     }
 
-    private void maneuverEnergy() {
+    private void maneuverEnergy3910() {
         //        3900 REM MANEUVER ENERGY S/R **
         //        3910 E=E-N-10:IFE>=0THEN RETURN
         //        3930 PRINT"SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER."
@@ -862,7 +877,6 @@ public class Game {
     }
 
     private void klingonsShooting6000() {
-        println("goSub6000");
         //5990 REM KLINGONS SHOOTING
         //6000 IFK3<=0 THEN RETURN
         if (K3 <= 0) {
@@ -909,7 +923,7 @@ public class Game {
     }
 
     private void shortRangeSensors6430() {
-        // 6430 FORI=Si~!TOS1+1: FOR J=S2-1TOS2t1
+        // 6430 FORI=S1-1TOS1+1: FOR J=S2-1TOS2t1
         boolean docked = false;
         for (int I = S1 - 1; I <= S1 + 1; I++) {
             for (int J = S2 - 1; J <= S2 + 1; J++) {
@@ -1085,7 +1099,7 @@ public class Game {
                     "SPICA"
             };
 
-    private void goSub9030() {
+    private void quadrantName9030() {
         // 9010 REM Quadrant name in G2$ from Z4,Z5 = G(Q1,Q2)
         // 9030 IF Z5<=4 THEN ON Z4 GOTO 9040,9050,9060,9070,9070,9080,9100,9110
         if (Z5 < 4) {
@@ -1135,8 +1149,15 @@ public class Game {
     }
 
     private float inputF(String prompt) {
-        System.out.print(prompt);
-        return scanner.nextFloat();
+        do {
+            System.out.print(prompt);
+            String string = scanner.nextLine();
+            try {
+                return Float.parseFloat(string);
+            } catch (NumberFormatException e) {
+                println(e.getMessage());
+            }
+        } while (true);
     }
 
     private void println(String s) {
