@@ -2,11 +2,11 @@
 
 ## Background
 
-During the 70's computer did not have much memory and there typically no other user interface than a TTY or CRT with 24 lines of 80 characters.
+During the 70's computer did not have much memory and there were typically no other user interface than a TTY or CRT with 24 lines of 80 characters.
 
 Still, games where made. 
 
-The programs, as the way things were before diskettes accompanied books, printed listings of Basic code. So to play the game, you simply typed the program on your program and saved it to a cassette tape. It was open source but more than a click away.
+The programs were, as the way things were before diskettes accompanied books, printed listings of Basic code. So to play the game, you simply typed the program on your home computer and saved it to a cassette tape. It was open source but more than a click away.
 
 When I found a book "Basic computer games" containing "101 great games to play on your home computer", nostalgia kicked in.
 
@@ -18,7 +18,7 @@ My idea was to do the same as back in the days and type it in but translate it t
 
 ### Basic language
 
-Basic was the language for home computers. It is an interpreted language that was designed to be easy to learn. It was also designed to be used on TTY. To edit a statement, you entered its line number and typed the statement. That is why a typically Basic program has line numbers that are 10, 20 and then 30 since you
+Basic was the language of the home computers. It is an interpreted language that was designed to be easy to learn. It was also designed to be used on TTY. To edit a statement, you entered its line number and typed the statement. That is why a typically Basic program has line numbers that are 10, 20 and then 30 since you
 wanted to be able to insert lines between 10 and 20. (There was often a renumber function to use when you had inserted too many lines).
 
 Variables in Basic are a letter and an optional number. Yes, two characters! They are also global even if there is a subroutine concept. The type is either a number or a string, the latter is indicated by a dollar sign after the name.
@@ -31,7 +31,7 @@ Arrays are also possible in most dialects. Although a number may not necessarily
 
 Array indexes starts at 1, more human but everywhere else it is 0.
 
-A common pattern with conditional statement is using a goto statement to skip the next few statements. Which becomes a challenge when writing in a modern language where you say that during the condition, execute the next few statements.
+A common pattern with conditional statement is using a goto statement to skip the next few statements. Which becomes a challenge when writing in a modern language where instead you say that during the condition, execute the next few statements.
 
 ### Challenges
 
@@ -44,8 +44,11 @@ Variable names can not be more than two characters so descriptive names are not 
 
 The flow of the program can be hard to follow at times. There are no boundaries between parts of the program other than the sparse comments the author provided. Sometimes the flow jumps back to a line earlier in the program. Is it a loop? 
 
-
 Many calculations are hard to understand partly to naming of variables and partly lack of documentation. It is also core of the game logic, so it is essential to get right.
+
+Since there is no way to express complex values in other ways than arrays, workarounds has to be used. For example, the state of the quadrant is represented as a string where three characters represents content in a position. Content being empty space, a star, starbase, the Enterprise or a Klingon.
+
+There are functions that takes parameters, like `MID$` which extracts a substring but those are all system defined. It is not always clear what they do, exactly. Does `INT` do the same as `Math.round` in Java?
 
 Correctness will also be a challenge, if I have the stamina to type it all in. If it seems to work, is it as intended?
 
