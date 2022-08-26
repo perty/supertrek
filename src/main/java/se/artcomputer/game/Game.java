@@ -30,6 +30,9 @@ public class Game {
      * Galaxy in the LRS format.100 * Klingons + 10 * Bases + Stars
      */
     private float[][] G = new float[9][9]; // 330
+    /**
+     * Constant table for translating from a given course (1-9) to delta on S1 and S2.
+     */
     private float[][] C = new float[10][3]; // 330
     /**
      * Klingon sector position and health.
@@ -553,8 +556,10 @@ public class Game {
             if (S1 < 1 || S1 >= 9 || S2 < 1 || S2 >= 9) {
                 exceededQuadrantLimits3500();
             } else {
+                // 3240 S8=INT(S1)*24+INT(S2)*3-26:IFMID$(Q$,S8,2)="  "THEN 3360
                 int S8 = Math.round(S1) * 24 + Math.round(S2) * 3 - 26;
-                if (!mid$(Q$, S8, 3).equals(EMPTY_ICON)) {
+                String check = mid$(Q$, S8, 3);
+                if (!check.equals(EMPTY_ICON)) {
                     S1 = Math.round(S1 - X1);
                     S2 = Math.round(S2 - X2);
                     println("WARP ENGINES SHUT DOWN AT");
@@ -977,9 +982,9 @@ public class Game {
         println(O1$);
         for (int I = 1; I <= 8; I++) {
             // 6820 FORJ=(I-1)*24im Le 24+ 1TOCI-4) *24+ 22STEP3:PRINT" “;MID$(QS,I, J);:NEXTJ
-//            for (int J = (I - 1) * 24 + 1; J <= (I - 1) * 24 + 22; J += 3) {
-//                print(mid$(Q$, J, 3));
-//            }
+            // for (int J = (I - 1) * 24 + 1; J <= (I - 1) * 24 + 22; J += 3) {
+            //     print(mid$(Q$, J, 3));
+            // }
             String line = mid$(Q$, (I - 1) * 24 + 1, 24);
             print(line);
             // 6830 ON I GOTO
