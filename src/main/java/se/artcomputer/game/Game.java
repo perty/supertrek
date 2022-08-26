@@ -29,7 +29,8 @@ public class Game {
     /**
      * Galaxy in the LRS format.100 * Klingons + 10 * Bases + Stars
      */
-    private float[][] G = new float[9][9]; // 330
+    // private float[][] G = new float[9][9]; // 330
+    private GalaxyContent galaxyContent = new GalaxyContent();
     /**
      * Constant table for translating from a given course (1-9) to delta on S1 and S2.
      */
@@ -174,7 +175,9 @@ public class Game {
      * 8 X 8 x 3 = 192 characters.
      * To index into it, multiply by 3 for one dimension and then by 24 (8 * 3) for the other.
      */
-    private String Q$; // 1600
+    //private String Q$; // 1600
+    private QuadrantContent quadrantContent = new QuadrantContent();
+
     private String A$; // 1680
 
     private float Z1, Z2; // 1680
@@ -242,7 +245,8 @@ public class Game {
                     B9 = B9 + 1;
                 }
                 // 1040 G(I,J)=K3*100+B3*10+FNR(1):NEXTJ:NEXTI:IFK9>T9 THEN T9=K9+1
-                G[I][J] = K3 * 100 + B3 * 10 + fnr();
+                //G[I][J] = K3 * 100 + B3 * 10 + fnr();
+                galaxyContent.init(I, J, K3, B3, fnr());
             }
         }
         if (K9 > T9) {
@@ -251,13 +255,16 @@ public class Game {
         // 1100 IF B9 <> 0 THEN 1200
         if (B9 == 0) {
             // 1150 IF G(Q1,Q2)<200 THEN G(Q1,Q2)=G(Q1,Q2)+120:K9=K9+1
-            if (G[Q1][Q2] < 200) {
-                G[Q1][Q2] = G[Q1][Q2] + 120;
+            //if (G[Q1][Q2] < 200) {
+            if (galaxyContent.getKlingons(Q1, Q2) < 2) {
+                // G[Q1][Q2] = G[Q1][Q2] + 120;  Note: probably mistake since bases is overwritten
+                galaxyContent.setKlingons(Q1, Q2, galaxyContent.getKlingons(Q1, Q2) + 1);
                 K9 = K9 + 1;
             }
             // 1160 B9=1:G(Q1,Q2)=G(Q1,Q2)+10:Q1=FNR(1):Q2=FNR(1)
             B9 = 1;
-            G[Q1][Q2] = G[Q1][Q2] + 10; // Add a base
+            //G[Q1][Q2] = G[Q1][Q2] + 10; // Add a base
+            galaxyContent.setBases(Q1, Q2, B9);
             Q1 = fnr();
             Q2 = fnr();
         }
@@ -291,7 +298,7 @@ public class Game {
         S3 = 0;
         G5 = 0;
         D4 = 0.5 * random.nextDouble();
-        Z[Q1][Q2] = G[Q1][Q2];
+        Z[Q1][Q2] = galaxyContent.numeric(Q1,Q2);
         // 1390 IF Q1<1 OR Q1>8 OR Q2<1 OR Q2>8 THEN 1600
         if (!(Q1 < 1 || Q1 > 8 || Q2 < 1 || Q2 > 8)) {
             // 1430 GOSUB 9030:Print:IF T0<>T THEN 1490
@@ -308,10 +315,10 @@ public class Game {
             }
             // 1500 PRINT:K3=INT(GCQl.Q2)*.01):B3=INT(G(Q1,Q2)*.1)-10*K3
             println("");
-            K3 = Math.round(G[Q1][Q2] * 0.01F);
-            B3 = Math.round(G[Q1][Q2] * 0.1F) - 10 * K3;
+            K3 = galaxyContent.getKlingons(Q1, Q2);
+            B3 = galaxyContent.getBases(Q1, Q2);
             // 1540 S3=G[Q1][Q2]-100 * K3 - 10 * B3: IF K3=0 THEN 1590
-            S3 = G[Q1][Q2] - 100 * K3 - 10 * B3;
+            S3 = galaxyContent.getStars(Q1, Q2);
             if (K3 != 0) {
                 // 1560 Print "COMBAT AREA    CONDITION RED": IF S>200 THEN 1590
                 println("COMBAT AREA CONDITION RED");
@@ -331,7 +338,8 @@ public class Game {
             K[I][3] = 0;
         }
         //Q$ = Z$ + Z$ + Z$ + Z$ + Z$ + Z$ + Z$ + left$(Z$, 17); // 7 * 25 + 17 = 192
-        Q$ = String.join("", Collections.nCopies(192, " "));
+        //Q$ = String.join("", Collections.nCopies(192, " "));
+        quadrantContent = new QuadrantContent();
         // 1660 REM Position Enterprise in quadrant, then place "K3" Klingons, &
         // 1670 REM "B3" starbases, & "S3" stars elsewhere.
         // 1680 A$="<*>":Z1=S1:Z2=S2:GOSUB 8670:IF K3<1 THEN 1820
@@ -558,7 +566,8 @@ public class Game {
             } else {
                 // 3240 S8=INT(S1)*24+INT(S2)*3-26:IFMID$(Q$,S8,2)="  "THEN 3360
                 int S8 = Math.round(S1) * 24 + Math.round(S2) * 3 - 26;
-                String check = mid$(Q$, S8, 3);
+                //String check = mid$(Q$, S8, 3);
+                String check = quadrantContent.get(S1, S2);
                 if (!check.equals(EMPTY_ICON)) {
                     S1 = Math.round(S1 - X1);
                     S2 = Math.round(S2 - X2);
@@ -606,7 +615,7 @@ public class Game {
         Q1 = Math.round(X / 8);
         Q2 = Math.round(Y / 8);
         S1 = Math.round(X - Q1 * 8);
-        // 3556 S2=INT(Y-Q2*8): IF S1=0 THEN Q1=Q1-1:S1=8
+        // 3550 S2=INT(Y-Q2*8): IF S1=0 THEN Q1=Q1-1:S1=8
         S2 = Math.round(Y - Q2 * 8);
         if (S1 == 0) {
             Q1 = Q1 - 1;
@@ -691,8 +700,8 @@ public class Game {
                 for (int J = Q2 - 1; J <= Q2 + 1; J++) {
                     //  4120 IF I>0 AND I<9 AND J>D AND J<9 THEN N(J-Q2+2)=G(I,J):Z(I,J)=G(I,J)
                     if (I > 0 && I < 9 && J > 0 && J < 9) {
-                        N[J - Q2 + 2] = G[I][J];
-                        Z[I][J] = G[I][J];
+                        N[J - Q2 + 2] = galaxyContent.numeric(I, J);
+                        Z[I][J] = galaxyContent.numeric(I, J);
                     }
                 }
                 // 4180 NEXTJ: FOR L=1TO3:PRINT": “;:IFN(L)<0 THEN PRINT"*** ";: GOTO4230
@@ -723,7 +732,7 @@ public class Game {
             println("----------------------------------");
             print("" + i);
             for (int j = 1; j <= 8; j++) {
-                print(String.format(" %03.0f", G[i][j]));
+                print(String.format(" %03.0f", galaxyContent.numeric(i, j)));
             }
             println("");
         }
@@ -793,8 +802,9 @@ public class Game {
                         insertIconInQuadrantString8670();
                         // 4650 K(I,3)=0:G(Q1,Q2)=G(Q1,Q2)-100:Z(Q1,Q2)=G(Q1,Q2):IF K9<=0 THEN 6370
                         K[I][3] = 0;
-                        G[Q1][Q2] = G[Q1][Q2] - 100; // Count down on Klingons in this sector
-                        Z[Q1][Q2] = G[Q1][Q2];
+                        //G[Q1][Q2] = G[Q1][Q2] - 100; // Count down on Klingons in this sector
+                        galaxyContent.setKlingons(Q1, Q2, galaxyContent.getKlingons(Q1, Q2) - 1); // Count down on Klingons in this sector
+                        Z[Q1][Q2] = galaxyContent.numeric(Q1, Q2);
                         if (K9 < 0) {
                             goto6370();
                         }
@@ -933,7 +943,7 @@ public class Game {
         for (int I = S1 - 1; I <= S1 + 1; I++) {
             for (int J = S2 - 1; J <= S2 + 1; J++) {
                 // 6450 TF INT C L ++. .5) >58 OR)IN T<C U+1- 5)G < LOORIRN TIC J+.W 5)T>3 C THEN 6540
-                if (!(Math.round(I + 0.5) < 1 || Math.round(I + 0.5) > 8 || Math.round(J + 0.5) < 1 || Math.round(J + 0.5) > 8)) {
+                if (!(I < 1 || I > 8 || J < 1 || J > 8)) {
                     // 6490 ASH">!<"3Zfal:Z2eI:GIOG:S1FUz3+L1B THEN 6580
                     A$ = STARBASE_ICON;
                     Z1 = I;
@@ -949,6 +959,16 @@ public class Game {
         // 6540 NEXTUSNEC:TI D@=G:GOTO6650
         if (!docked) {
             D0 = 0;
+            // 6650 IM(3>@THEN C$="*RED*'":GOTO 6720
+            if (K3 > 0) {
+                C$ = "*RED*";
+            } else {
+                // 6660 CS="GREEN"':iFE<EG*«1THENCS="YELLOW"
+                C$ = "GREEN";
+                if (E < E0 * 0.1) {
+                    C$ = "YELLOW";
+                }
+            }
         } else {
             // 6580 D0=1:C$="DOCKED":E=E0:P=P0
             D0 = 1;
@@ -959,16 +979,7 @@ public class Game {
             println("SHIELDS DROPPED FOP DOCKING PURPOSES");
             S = 0;
         }
-        // 6650 IM(3>@THEN C$="*RED*'":GOTO 6720
-        if (K3 > 0) {
-            C$ = "*RED*";
-        } else {
-            // 6660 CS="GREEN"':iFE<EG*«1THENCS="YELLOW"
-            C$ = "GREEN";
-            if (E < E0 * 0.1) {
-                C$ = "YELLOW";
-            }
-        }
+
         // 6720 ILFDC 2) >= G@THEN 6770
         if (D[2] < 0) {
             // 6730 PRINT: PRINT #*# SHORT RANGE SENSORS ARE OUT #4##": PRENT: RETURN
@@ -985,7 +996,8 @@ public class Game {
             // for (int J = (I - 1) * 24 + 1; J <= (I - 1) * 24 + 22; J += 3) {
             //     print(mid$(Q$, J, 3));
             // }
-            String line = mid$(Q$, (I - 1) * 24 + 1, 24);
+            //String line = mid$(Q$, (I - 1) * 24 + 1, 24);
+            String line = quadrantContent.getRow(I);
             print(line);
             // 6830 ON I GOTO
             switch (I) {
@@ -1018,22 +1030,23 @@ public class Game {
     private void insertIconInQuadrantString8670() {
         // 8660 REM INSERT IN STRING ARRAY FOR QUADRANT
         // 8670 S8=INT(Z2-.5)*3+INT(Z1-.5)*24+1
-        S8 = Math.toIntExact(Math.round(Z2 - 0.5) * 3 + Math.round(Z1 - 0.5) * 24 + 1);
+        //S8 = Math.toIntExact(Math.round(Z2 - 0.5) * 3 + Math.round(Z1 - 0.5) * 24 + 1);
         // 8675 IF LEN(AS)<>3 THEN PRINT "ERROR": STOP
         if (A$.length() != 3) {
             print("ERROR");
             stop();
         }
-        // 8680 IFS8= 1 THEN QS=A$+RIGHTS( QS 189): RETURN
-        if (S8 == 1) {
-            Q$ = A$ + right$(Q$, 189);
-        }
-        // 8690 IFS8= 196THEN QS=LEFTS( @$s 189) +AS: RETURN
-        else if (S8 == 190) {
-            Q$ = left$(Q$, 189) + A$;
-        } else
-            // 8700 Q$=LEFT$(Q$,S8 - 1) +A$+ RIGHT$(Q$,190-S8): RETURN
-            Q$ = left$(Q$, S8 - 1) + A$ + right$(Q$, 190 - S8);
+        quadrantContent.set(Math.round(Z1), Math.round(Z2), A$);
+//        // 8680 IFS8= 1 THEN QS=A$+RIGHTS( QS 189): RETURN
+//        if (S8 == 1) {
+//            Q$ = A$ + right$(Q$, 189);
+//        }
+//        // 8690 IFS8= 196THEN QS=LEFTS( @$s 189) +AS: RETURN
+//        else if (S8 == 190) {
+//            Q$ = left$(Q$, 189) + A$;
+//        } else
+//            // 8700 Q$=LEFT$(Q$,S8 - 1) +A$+ RIGHT$(Q$,190-S8): RETURN
+//            Q$ = left$(Q$, S8 - 1) + A$ + right$(Q$, 190 - S8);
     }
 
     /**
@@ -1043,11 +1056,12 @@ public class Game {
     private void checkForIcon8830() {
         // 8820 REM STRING COMPARISON IN QUADRANT ARRAY
         // 8830 Z=INT(Z1+.5): sZO=INTCZO+.5) 2S8=(ZO=1) e340 Z1=1)*Bat 12:Z3=0
-        Z1 = Math.round(Z1 + 0.5);
-        Z2 = Math.round(Z2 + 0.5);
-        S8 = Math.round((Z2 - 1) * 3 + (Z1 - 1) * 24 + 1);
+        //Z1 = Math.round(Z1 + 0.5);
+        //Z2 = Math.round(Z2 + 0.5);
+        //S8 = Math.round((Z2 - 1) * 3 + (Z1 - 1) * 24 + 1);
         // 8890 1FMI D&C QS, $8. 3)<>ASTHENRETURN
-        if (mid$(Q$, S8, 3).equals(A$)) {
+        String content = quadrantContent.get(Math.round(Z1), Math.round(Z2));
+        if (content.equals(A$)) {
             Z3 = 1;
         } else {
             Z3 = 0;
