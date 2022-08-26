@@ -55,7 +55,7 @@ public class Game {
     /**
      * Current day
      */
-    private int T = Math.round(random.nextFloat() * 20 + 20) * 100; // 370
+    private int T = intFloor(random.nextFloat() * 20 + 20) * 100; // 370
     /**
      * Start day
      */
@@ -63,7 +63,7 @@ public class Game {
     /**
      * Days for mission
      */
-    private int T9 = 25 + Math.round(random.nextFloat() * 10); // 370
+    private int T9 = 25 + intFloor(random.nextFloat() * 10); // 370
     /**
      * Docked at a starbase
      */
@@ -451,7 +451,7 @@ public class Game {
                 } else {
                     if (W1 > 0 && W1 <= 8) {
                         // 2490
-                        N = Math.round(W1 * 8 + 0.5);
+                        N = intFloor(W1 * 8 + 0.5);
                         if (E - N < 0) {
                             println("ENGINEERING REPORTS 'INSUFFICIENT ENERGY AVAILABLE");
                             println("  FOR MANEUVERING AT WARP " + W1 + "!");
@@ -519,7 +519,7 @@ public class Game {
         }// 2880 NEXT I: IF RND(1) > 0.2 THEN 3070
         if (random.nextFloat() <= 0.2) {
             R1 = fnr(); // 2910
-            int index = Math.round(R1);
+            int index = intFloor(R1);
             if (random.nextFloat() < 0.6) {
                 D[index] = D[index] - (random.nextFloat() * 5 + 1);
                 println("DAMAGE CONTROL REPORT:  ");
@@ -548,7 +548,7 @@ public class Game {
         Z2 = S2;
         insertIconInQuadrantString8670();
         // 3110
-        int C1int = Math.round(C1);
+        int C1int = intFloor(C1);
         X1 = C[C1int][1] + (C[C1int + 1][1] - C[C1int][1]) * (C1 - C1int);
         X = S1;
         Y = S2;
@@ -559,18 +559,18 @@ public class Game {
         // 3170 FORI=1TON:Si=Si+X1:S2=S2+X2:1FSI<LORS1>=9ORS2<1ORS2>=9THEN 3500
         boolean shutdown = false;
         for (int I = 1; I <= N; I++) {
-            S1 = S1 + Math.round(X1);
-            S2 = S2 + Math.round(X2);
+            S1 = S1 + intFloor(X1);
+            S2 = S2 + intFloor(X2);
             if (S1 < 1 || S1 >= 9 || S2 < 1 || S2 >= 9) {
                 exceededQuadrantLimits3500();
             } else {
                 // 3240 S8=INT(S1)*24+INT(S2)*3-26:IFMID$(Q$,S8,2)="  "THEN 3360
-                int S8 = Math.round(S1) * 24 + Math.round(S2) * 3 - 26;
+                int S8 = intFloor(S1) * 24 + intFloor(S2) * 3 - 26;
                 //String check = mid$(Q$, S8, 3);
                 String check = quadrantContent.get(S1, S2);
                 if (!check.equals(EMPTY_ICON)) {
-                    S1 = Math.round(S1 - X1);
-                    S2 = Math.round(S2 - X2);
+                    S1 = intFloor(S1 - X1);
+                    S2 = intFloor(S2 - X2);
                     println("WARP ENGINES SHUT DOWN AT");
                     println("SECTOR " + S1 + "," + S2 + " DUE TO BAD NAVIGATION.");
                     shutdown = true;
@@ -579,8 +579,8 @@ public class Game {
             }
         } // 3360
         if (!shutdown) {
-            S1 = Math.round(S1);
-            S2 = Math.round(S2);
+            S1 = intFloor(S1);
+            S2 = intFloor(S2);
         }
         goto3370();
     }
@@ -588,16 +588,16 @@ public class Game {
     private void goto3370() {
         // 3370
         A$ = STARSHIP_ICON;
-        Z1 = Math.round(S1);
-        Z2 = Math.round(S2);
+        Z1 = intFloor(S1);
+        Z2 = intFloor(S2);
         insertIconInQuadrantString8670();
         maneuverEnergy3910();
         T8 = 1;
         if (W1 < 1) {
-            T8 = 0.1F * Math.round(10 * W1);
+            T8 = 0.1F * intFloor(10 * W1);
         }
         // 3450 T=T+T8:IFT>T0+T9 THEN 6220
-        T = T + Math.round(T8);
+        T = T + intFloor(T8);
         if (T > T0 + T9) {
             goto6220(); // Ran out of time
         }
@@ -612,11 +612,11 @@ public class Game {
         // 3500 X=8*Q1+X+N*X1:Y=8*Q2+Y+N*X2:Q1=INT(X/8):Q2=INT(Y/8):S1=INT(X-Q1*8)
         X = 8 * Q1 + X + N * X1;
         Y = 8 * Q2 + Y + N * X2;
-        Q1 = Math.round(X / 8);
-        Q2 = Math.round(Y / 8);
-        S1 = Math.round(X - Q1 * 8);
+        Q1 = intFloor(X / 8);
+        Q2 = intFloor(Y / 8);
+        S1 = intFloor(X - Q1 * 8);
         // 3550 S2=INT(Y-Q2*8): IF S1=0 THEN Q1=Q1-1:S1=8
-        S2 = Math.round(Y - Q2 * 8);
+        S2 = intFloor(Y - Q2 * 8);
         if (S1 == 0) {
             Q1 = Q1 - 1;
             S1 = 8;
@@ -678,6 +678,13 @@ public class Game {
             // goto 1320 is entering a new quadrant.
             newQuadrant1320();
         }
+    }
+
+    private int intFloor(float X) {
+        return Math.toIntExact(Math.round(Math.floor(X)));
+    }
+    private int intFloor(double X) {
+        return Math.toIntExact(Math.round(Math.floor(X)));
     }
 
     private void longRangeSensors() {
@@ -775,11 +782,11 @@ public class Game {
         // 4410 E=E-X:1FDC7)<6THEN K=XRN*DC1)
         E = E - X;
         // 4450 HI=INT(X/K3) :FORI= 1T03: IFK(I,3)<=0 THEN 4670
-        H1 = Math.round(X / K3);
+        H1 = intFloor(X / K3);
         for (int I = 1; I <= 3; I++) {
             if (K[I][3] > 0) {
                 // 4480 H=INT((H1/FND(0)))*CRN2D1FCH>.11S*)KC+Ls23)THEN 4530
-                H = Math.round((H1 / fnd()) * (random.nextFloat() + 2));
+                H = intFloor((H1 / fnd()) * (random.nextFloat() + 2));
                 if (H <= 0.15 * K[I][3]) {
                     // 4500 PRINT"SENSORS SHOW NO DAMAGE TO ENEMY AT";K(I,1);",";K(I,2):GOTO 4670
                     println("SENSORS SHOW NO DAMAGE TO ENEMY AT" + K[I][1] + "," + K[I][2]);
@@ -906,7 +913,7 @@ public class Game {
         for (int I = 1; I <= 3; I++) {
             if (K[I][3] > 0) {
                 // 6060 H=INTCCKCEs 3) /FNDC 1) *C24+PNDC 120): SsS-HikCls 3=KCLs 3) /C3+RND(0)
-                H = Math.round((K[I][3] / fnd()) * 2 + random.nextFloat());
+                H = intFloor((K[I][3] / fnd()) * 2 + random.nextFloat());
                 S = S - H;
                 K[I][3] = K[I][3] / (3 + random.nextFloat()); // Here RND(0) is in the code as opposed to RND(1).
                 // 6080 PRINT H;"UNIT HIT ON ENTERPRISE FROM SECTOR";K(I,1);",";K(I,2)"
@@ -926,7 +933,7 @@ public class Game {
                     }
                     // 6140 R1=FNR(1):D(R1)= FNRC1) 2DORI = DCRL) -H/S- «S*PNDC 1) :GOSUB 8790
                     R1 = fnr();
-                    int index = Math.round(R1);
+                    int index = intFloor(R1);
                     D[index] = D[index] - H / S - 0.5F * random.nextFloat();
                     goSub8790();
                     // 6170 PRINT"DAMAGE CONTROL REPORTS ‘";G2$;" DAMAGED BY THE HIT'"
@@ -1001,14 +1008,14 @@ public class Game {
             print(line);
             // 6830 ON I GOTO
             switch (I) {
-                case 1 -> println("     STARDATE           " + Math.round(T * 10) * 0.1);
+                case 1 -> println("     STARDATE           " + intFloor(T * 10) * 0.1);
                 case 2 -> println("     CONDITION          " + C$);
                 case 3 -> println("     QUADRANT           " + Q1 + "," + Q2);
                 case 4 -> println("     SECTOR             " + S1 + "," + S2);
-                case 5 -> println("     PHOTON TORPEDOES   " + Math.round(P));
-                case 6 -> println("     TOTAL ENERGY       " + Math.round(E + S));
-                case 7 -> println("     SHIELDS            " + Math.round(S));
-                case 8 -> println("     KLINGONS REMAINING " + Math.round(K9));
+                case 5 -> println("     PHOTON TORPEDOES   " + intFloor(P));
+                case 6 -> println("     TOTAL ENERGY       " + intFloor(E + S));
+                case 7 -> println("     SHIELDS            " + intFloor(S));
+                case 8 -> println("     KLINGONS REMAINING " + intFloor(K9));
             }
         }
         println(O1$);
@@ -1036,7 +1043,7 @@ public class Game {
             print("ERROR");
             stop();
         }
-        quadrantContent.set(Math.round(Z1), Math.round(Z2), A$);
+        quadrantContent.set(intFloor(Z1), intFloor(Z2), A$);
 //        // 8680 IFS8= 1 THEN QS=A$+RIGHTS( QS 189): RETURN
 //        if (S8 == 1) {
 //            Q$ = A$ + right$(Q$, 189);
@@ -1060,7 +1067,7 @@ public class Game {
         //Z2 = Math.round(Z2 + 0.5);
         //S8 = Math.round((Z2 - 1) * 3 + (Z1 - 1) * 24 + 1);
         // 8890 1FMI D&C QS, $8. 3)<>ASTHENRETURN
-        String content = quadrantContent.get(Math.round(Z1), Math.round(Z2));
+        String content = quadrantContent.get(intFloor(Z1), intFloor(Z2));
         if (content.equals(A$)) {
             Z3 = 1;
         } else {
