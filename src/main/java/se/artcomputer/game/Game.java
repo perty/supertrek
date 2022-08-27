@@ -892,8 +892,53 @@ public class Game {
             }
             // 5190 K(I,3)=0:GOTO 5430
             K[I][3] = 0;
+        } else {
+            // 5210
+            A$ = STAR_ICON;
+            Z1 = X;
+            Z2 = Y;
+            checkForIcon8830();
+            if (Z3 == 1) {
+                println("STAR AT " + X3 + "," + Y3 + " ABSORBED TORPEDO ENERGY.");
+                klingonsShooting6000();
+                return;
+            } else {
+                // 5280
+                A$ = STARBASE_ICON;
+                Z1 = X;
+                Z2 = Y;
+                checkForIcon8830();
+                if (Z3 == 1) {
+                    println("*** STARBASE DESTROYED ***");
+                    B3 = B3 - 1;
+                    B9 = B9 - 1;
+                    // 5360 IFB9>0.. THEN 5400
+                    if (!(B9 > 0) || K9 > T - T0 - T9) {
+                        println("THAT DOES IT, CAPTAIN!! YOU ARE HEREBY RELIEVED OF COMMAND");
+                        println("AND SENTENCED TO 99 STARDATES AT HARD LABOR ON CYGNUS 12!!");
+                        gotoXXX6270();
+                    } else {
+                        // 5400
+                        println("STARFLEET COMMAND REVIEWING YOUR RECORD TO CONSIDER");
+                        println("COURT MARTIAL!");
+                        D0 = 0;
+                        A$ = EMPTY_ICON;
+                        Z1 = X;
+                        Z2 = Y;
+                        insertIconInQuadrantString8670();
+                        // 5470 G(Q1,Q2)=K3*100..
+                        galaxyContent.setKlingons(Q1,Q2,K3);
+                        galaxyContent.setBases(Q1, Q2, B3);
+                        Z[Q1][Q2] = galaxyContent.numeric(Q1, Q2);
+                        klingonsShooting6000();
+                        return;
+                    }
+                }
+            }
         }
+
         // 5490 PRINT "TORPEDO MISSED":GOSUB6000
+        klingonsShooting6000();
     }
 
     private void gotoSHE5530() {
