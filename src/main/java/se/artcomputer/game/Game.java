@@ -125,6 +125,7 @@ public class Game {
     private int S8; // 8670
     private int Z3; // 8590
     private String C$; // 6580
+    private int X3, Y3; // 4920
 
     private double fnd() { // 470
         return Math.pow(Math.sqrt(K[I][1] - S1), 2) + Math.pow(K[I][2] - S2, 2);
@@ -298,7 +299,7 @@ public class Game {
         S3 = 0;
         G5 = 0;
         D4 = 0.5 * random.nextDouble();
-        Z[Q1][Q2] = galaxyContent.numeric(Q1,Q2);
+        Z[Q1][Q2] = galaxyContent.numeric(Q1, Q2);
         // 1390 IF Q1<1 OR Q1>8 OR Q2<1 OR Q2>8 THEN 1600
         if (!(Q1 < 1 || Q1 > 8 || Q2 < 1 || Q2 > 8)) {
             // 1430 GOSUB 9030:Print:IF T0<>T THEN 1490
@@ -373,7 +374,7 @@ public class Game {
             insertIconInQuadrantString8670();
         }
         // 1910 FOR I=1TOS3:GOSUB 8590:A$=" * ":Z1=R1:Z2=R2:GOSUB 8670:NEXTI
-        for (int I = 1; I <= 3; I++) {
+        for (int I = 1; I <= S3; I++) {
             findEmptyPlaceInQuadrant8590();
             A$ = STAR_ICON;
             Z1 = R1;
@@ -510,7 +511,7 @@ public class Game {
                         println("DAMAGE CONTROL REPORT:  ");
                         println("\t\t\t\t\t\t\t");
                         R1 = I;
-                        goSub8790();
+                        deviceName8790();
                         println(G2$);
                         println(" REPAIR COMPLETED.");
                     }
@@ -523,7 +524,7 @@ public class Game {
             if (random.nextFloat() < 0.6) {
                 D[index] = D[index] - (random.nextFloat() * 5 + 1);
                 println("DAMAGE CONTROL REPORT:  ");
-                goSub8790();
+                deviceName8790();
                 println(G2$);
                 println("DAMAGED");
                 println("");
@@ -531,7 +532,7 @@ public class Game {
                 // 3000
                 D[index] = D[index] + (random.nextFloat() * 3 + 1);
                 println("DAMAGE CONTROL REPORT:  ");
-                goSub8790();
+                deviceName8790();
                 println(G2$);
                 println(" STATE OF REPAIR IMPROVED.");
             }
@@ -674,7 +675,7 @@ public class Game {
         } else {
             // 3870 T=T+1:GOSUB 3910: GOTO 1320
             T = T + 1;
-            goSub3910();
+            maneuverEnergy3910();
             // goto 1320 is entering a new quadrant.
             newQuadrant1320();
         }
@@ -683,6 +684,7 @@ public class Game {
     private int intFloor(float X) {
         return Math.toIntExact(Math.round(Math.floor(X)));
     }
+
     private int intFloor(double X) {
         return Math.toIntExact(Math.round(Math.floor(X)));
     }
@@ -823,22 +825,88 @@ public class Game {
         klingonsShooting6000();
     }
 
-
-    private void goSub3910() {
-        println("goSub3910");
-    }
-
     private void photonTorpedo() {
         // 4690 REM PHOTON TORPEDO CODE BEGINS HERE
-        println("photonTorpedo");
+        // 4700 IFPS=@THENPRINT"ALL PHOTON TORPEDOES EXPENDED":
+        if (P <= 0) {
+            println("ALL PHOTON TORPEDOES EXPENDED");
+            return;
+        }
+        // 4730 IF D(5) < 0 THEN
+        if (D[5] < 0) {
+            println("PHOTON TUBES ARE NOT OPERATIONAL");
+            return;
+        }
+        // 4760 INPUT PHOTON TORPEDO COURSE (1-9)
+        C1 = inputF("PHOTON TORPEDO COURSE (1-9)");
+        if (C1 == 9) {
+            C1 = 1;
+        }
+        if (C1 < 1 || C1 > 9) {
+            println("ENSIGN CHEKOV REPORTS, 'INCORRECT COURSE DATA, SIR!");
+            return;
+        }
+        // 4850 X1=C(C1,1)..
+        int C1int = intFloor(C1);
+        X1 = C[C1int][1] + (C[C1int + 1][1] - C[C1int][1]) * (C1 - C1int);
+        X2 = C[C1int][2] + (C[C1int + 1][2] - C[C1int][2]) * (C1 - C1int);
+        // 4910
+        println("TORPEDO TRACK:");
+        // 4920
+        do {
+            X = X + X1;
+            Y = Y + X2;
+            X3 = intFloor(X + 0.5);
+            Y3 = intFloor(Y + 0.5);
+            // 4960 IFX3<1ORX3>8 ... THEN 5490
+            if (!(X3 < 1 || X3 > 8 || Y3 < 1 || Y3 > 8)) {
+                // 5000 PRINT "  ...
+                println("        " + X3 + "," + Y3);
+                A$ = EMPTY_ICON;
+                Z1 = X;
+                Z2 = Y;
+                checkForIcon8830();
+                // 5050 IF Z3 <> 0 THEN 4920
+            }
+        } while (Z3 == 1);
+        A$ = KLINGON_ICON;
+        Z1 = X;
+        Z2 = Y;
+        checkForIcon8830();
+        if (Z3 == 1) {
+            println("*** KLINGON DESTROYED ***");
+            K3 = K3 - 1;
+            K9 = K9 - 1;
+            if (K9 <= 0) {
+                goto6370();
+            }
+            boolean breakOut = false;
+            for (I = 1; I <= 3; I++) {
+                if (X3 == K[I][1] && Y3 == K[I][2]) {
+                    breakOut = true;
+                    break;
+                }
+            }
+            if (!breakOut) {
+                I = 3;
+            }
+            // 5190 K(I,3)=0:GOTO 5430
+            K[I][3] = 0;
+        }
+        // 5490 PRINT "TORPEDO MISSED":GOSUB6000
     }
 
     private void gotoSHE5530() {
+        // REM 5520 SHIELD CONTROL
         println("gotoSHE5530");
     }
 
     private void gotoDAM5690() {
         println("gotoDAM5690");
+    }
+
+    private void goto6220() {
+        println("goto6220");
     }
 
     private void gotoXXX6270() {
@@ -849,10 +917,6 @@ public class Game {
         println("goto6370");
     }
 
-    private void goto6220() {
-        println("goto6220");
-    }
-
     private void goto6240() {
         print("goto6240");
     }
@@ -861,8 +925,19 @@ public class Game {
         println("gotoCOM7290");
     }
 
-    private void goSub8790() {
-        println("goSub8790");
+    private void deviceName8790() {
+        // 8780 REM PRINTS DEVICE NAME
+        // 8790 ON R1 GOTO ...
+        switch (intFloor(R1)) {
+            case 1 -> G2$ = "WARP ENGINES";
+            case 2 -> G2$ = "SHORT RANGE SENSORS";
+            case 3 -> G2$ = "LONG RANGE SENSORS";
+            case 4 -> G2$ = "PHASER CONTROL";
+            case 5 -> G2$ = "PHOTON TUBES";
+            case 6 -> G2$ = "DAMAGE CONTROL";
+            case 7 -> G2$ = "SHIELD CONTROL";
+            case 8 -> G2$ = "LIBRARY-COMPUTER";
+        }
     }
 
     private void help() {
@@ -935,7 +1010,7 @@ public class Game {
                     R1 = fnr();
                     int index = intFloor(R1);
                     D[index] = D[index] - H / S - 0.5F * random.nextFloat();
-                    goSub8790();
+                    deviceName8790();
                     // 6170 PRINT"DAMAGE CONTROL REPORTS ‘";G2$;" DAMAGED BY THE HIT'"
                     print("DAMAGE CONTROL REPORTS ‘" + G2$ + " DAMAGED BY THE HIT'");
                 }
@@ -1023,7 +1098,7 @@ public class Game {
 
     private void findEmptyPlaceInQuadrant8590() {
         // 8580 REM FIND EMPTY PLACE IN QUADRANT (FOR THINGS)
-        // 8590 RI= FNC 1): R2=FNRC 1) :Aas=" ":Z1=R12Z2= R2: GOSUBBE 38:1 FZ3=OTHEN B590
+        // 8590 RI= FNC 1): R2=FNRC 1) :Aas=" ":Z1=R12Z2= R2: GOSUB 8830:1 FZ3=OTHEN B590
         do {
             R1 = fnr();
             R2 = fnr();
@@ -1062,9 +1137,9 @@ public class Game {
      */
     private void checkForIcon8830() {
         // 8820 REM STRING COMPARISON IN QUADRANT ARRAY
-        // 8830 Z=INT(Z1+.5): sZO=INTCZO+.5) 2S8=(ZO=1) e340 Z1=1)*Bat 12:Z3=0
-        //Z1 = Math.round(Z1 + 0.5);
-        //Z2 = Math.round(Z2 + 0.5);
+        // 8830 Z1=INT(Z1+.5): sZO=INTCZO+.5) 2S8=(ZO=1) e340 Z1=1)*Bat 12:Z3=0
+        Z1 = intFloor(Z1 + 0.5);
+        Z2 = intFloor(Z2 + 0.5);
         //S8 = Math.round((Z2 - 1) * 3 + (Z1 - 1) * 24 + 1);
         // 8890 1FMI D&C QS, $8. 3)<>ASTHENRETURN
         String content = quadrantContent.get(intFloor(Z1), intFloor(Z2));
@@ -1078,6 +1153,7 @@ public class Game {
 
     private void stop() {
         print("STOP");
+        System.exit(1);
     }
 
     private String left$(String input, int i) {
