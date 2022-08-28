@@ -11,7 +11,7 @@ import static se.artcomputer.game.QuadrantContent.*;
  * Super Star Trek - May, 16 1978 - Requires 24k memory
  */
 public class Game {
-     GameState gameState = INITIAL;
+    GameState gameState = INITIAL;
     Scanner scanner = new Scanner(System.in);
 
     private final Random random = new Random();
@@ -960,7 +960,27 @@ public class Game {
 
     private void gotoSHE5530() {
         // REM 5520 SHIELD CONTROL
-        println("gotoSHE5530");
+        // 5530 IFD( 79<@THENPRINT’ SHIELD CONTROL INOPERABLE: GOTO199G
+        if (D[7] < 0) {
+            println("SHIELD CONTROL INOPERABLE");
+            return;
+        }
+        // 5562 PRINT ENERGY AVAILABLE ="J E+S;:1NPUT"NUMBER OF UNITS TO SHI ELDS"3x%
+        println("ENERGY AVAILABLE = " + (E + S));
+        float X = input("NUMBER OF UNITS TO SHIELDS");
+        if (X < 0 || S == X) {
+            println("<SHIELDS UNCHANGED>");
+            return;
+        }
+        if (X > E + S) {
+            println("SHIELD CONTROL REPORTS 'THIS IS NOT THE FEDERATION TREASURY'");
+            println("<SHIELDS UNCHANGED>");
+            return;
+        }
+        E = E + S - X;
+        S = X;
+        println("DEFLECTOR ROOM CONTROL REPORT:");
+        println("   'SHIELDS NOW AT" + intFloor(S) + " UNITS PER YOUR COMMAND.'");
     }
 
     private void gotoDAM5690() {
@@ -969,13 +989,13 @@ public class Game {
 
     private void goto6220() {
         // 6228 PRINT"LT 15 STARDATE"3 T:GOTO 6270
-        println("IT IS STARDATE "+ T);
+        println("IT IS STARDATE " + T);
         gotoXXX6270();
     }
 
     private void gotoXXX6270() {
         // 6270 6276PRINT"THEREWERKOES"'KLISNGONBATTLECRUISERSLEFTAT"
-        println("THERE WERE " + K9 +" KLINGON BATTLE CRUISERS LEFT AT");
+        println("THERE WERE " + K9 + " KLINGON BATTLE CRUISERS LEFT AT");
         println("THE END OF YOUR MISSION.");
         if (B9 == 0) {
             stop();
@@ -1190,6 +1210,7 @@ public class Game {
     private void insertIconInQuadrantString8670(int S1, int S2, String icon) {
         quadrantContent.set(S1, S2, icon);
     }
+
     private void insertIconInQuadrantString8670() {
         // 8660 REM INSERT IN STRING ARRAY FOR QUADRANT
         // 8670 S8=INT(Z2-.5)*3+INT(Z1-.5)*24+1
