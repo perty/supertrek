@@ -52,11 +52,11 @@ public class Game {
     /**
      * Current day
      */
-    private int T = intFloor(random.nextFloat() * 20 + 20) * 100; // 370
+    private float T = intFloor(random.nextFloat() * 20 + 20) * 100; // 370
     /**
      * Start day
      */
-    private final int T0 = T; // 370
+    private final float T0 = T; // 370
     /**
      * Days for mission
      */
@@ -97,7 +97,7 @@ public class Game {
     private int Z4;
     private int Z5;
     private int G5;
-    private double D4;
+    private float D4;
 
     /**
      * Name of quadrant
@@ -311,7 +311,7 @@ public class Game {
         K3 = 0;
         S3 = 0;
         G5 = 0;
-        D4 = 0.5 * random.nextDouble();
+        D4 = 0.5f * random.nextFloat();
         Z[Q1][Q2] = galaxyContent.numeric(Q1, Q2);
         // 1390 IF Q1<1 OR Q1>8 OR Q2<1 OR Q2>8 THEN 1600
         if (!(Q1 < 1 || Q1 > 8 || Q2 < 1 || Q2 > 8)) {
@@ -415,7 +415,7 @@ public class Game {
             }
         }
         // 2060 INPUT "COMMAND"; A$
-        A$ = input$("COMMAND");
+        A$ = input$("COMMAND ");
 
         // 2080 FOR I=1TO9:IF LEFT$(A$,3)<>MID$(A1$, 3*I-2,3) THEN 2160
         // 2140 ON I GOTO 2300,1980,4000,4260,4700,5530,5690,7290,6270
@@ -967,7 +967,7 @@ public class Game {
         }
         // 5562 PRINT ENERGY AVAILABLE ="J E+S;:1NPUT"NUMBER OF UNITS TO SHI ELDS"3x%
         println("ENERGY AVAILABLE = " + (E + S));
-        float X = input("NUMBER OF UNITS TO SHIELDS");
+        float X = inputF("NUMBER OF UNITS TO SHIELDS ");
         if (X < 0 || S == X) {
             println("<SHIELDS UNCHANGED>");
             return;
@@ -980,12 +980,55 @@ public class Game {
         E = E + S - X;
         S = X;
         println("DEFLECTOR ROOM CONTROL REPORT:");
-        println("   'SHIELDS NOW AT" + intFloor(S) + " UNITS PER YOUR COMMAND.'");
+        println("   'SHIELDS NOW AT " + intFloor(S) + " UNITS PER YOUR COMMAND.'");
     }
 
     private void gotoDAM5690() {
-        println("gotoDAM5690");
+        // do {
+        if (D[6] < 0) {
+            println("DAMAGE CONTROL NOT AVAILABLE");
+            if (D0 == 0) {
+                return;
+            }
+            // 5720
+            float D3 = 0;
+            for (int I = 1; I <= 8; I++) {
+                if (D[I] < 0) {
+                    D3 = D3 + 0.1f;
+                }
+            }
+            if (D3 == 0) {
+                return;
+            }
+            // 5780
+            println("");
+            D3 = D3 + D4;
+            if (D3 >= 1) {
+                D3 = 0.9f;
+            }
+            println("TECHNICIANS STANDING BY TO EFFECT REPAIRS TO YOUR SHIP");
+            println("ESTIMATED TIME TO REPAIR: " + 0.01 * intFloor(100 * D3) + " STARDATES");
+            String answer = input$("WILL YOU AUTHORIZE THE REPAIR ORDER (Y/N)");
+            if (!answer.equalsIgnoreCase("y")) {
+                return;
+            }
+            for (int I = 1; I <= 8; I++) {
+                if (D[I] < 0) {
+                    D[I] = 0;
+                }
+            }
+            T = T + D3 + 0.1f;
+        }
+        // 5910
+        println("");
+        println(String.format("%20s %s", "DEVICE", "STATE OF REPAIR"));
+        for (int I = 1; I <= 8; I++) {
+            println(String.format("%20s %3f", deviceName8790(I), intFloor(D[I] * 100) * 0.01));
+        }
+        println("");
     }
+    //while (D0 != 0); // GOTO 5720
+
 
     private void goto6220() {
         // 6228 PRINT"LT 15 STARDATE"3 T:GOTO 6270
