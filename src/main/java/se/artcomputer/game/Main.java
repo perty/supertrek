@@ -1,16 +1,12 @@
 package se.artcomputer.game;
 
-import java.util.Scanner;
-
-import static se.artcomputer.game.GameResult.CONTINUE;
+import static se.artcomputer.game.GameState.STOPPED;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello world!");
         Game game = new Game();
-        GameResult gameResult = CONTINUE;
-        while (gameResult == CONTINUE) {
-            gameResult = game.run();
+        while (game.gameState != STOPPED) {
+            game.run();
         }
     }
 }

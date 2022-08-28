@@ -4,25 +4,18 @@ import java.util.Collections;
 import java.util.Random;
 import java.util.Scanner;
 
-import static se.artcomputer.game.GameState.INITIAL;
-import static se.artcomputer.game.GameState.RUNNING;
+import static se.artcomputer.game.GameState.*;
+import static se.artcomputer.game.QuadrantContent.*;
 
 /**
  * Super Star Trek - May, 16 1978 - Requires 24k memory
  */
 public class Game {
-
-    public static final String STARSHIP_ICON = "<*>";
-    public static final String KLINGON_ICON = "+K+";
-    public static final String STARBASE_ICON = ">!<";
-    public static final String STAR_ICON = " * ";
-    public static final String EMPTY_ICON = "   ";
-    private GameState gameState = INITIAL;
-
+     GameState gameState = INITIAL;
     Scanner scanner = new Scanner(System.in);
 
-    private Random random = new Random();
-    private String Z$ = String.join("", Collections.nCopies(25, " "));  // 270
+    private final Random random = new Random();
+    //private String Z$ = String.join("", Collections.nCopies(25, " "));  // 270
 
     // Try adding one to the size of each array and use 1 based index, as in Basic.
     // 338 DIM G(8,8),C(9,2),K(3.3),N(3),Z(8,8),D(8)
@@ -30,28 +23,32 @@ public class Game {
      * Galaxy in the LRS format.100 * Klingons + 10 * Bases + Stars
      */
     // private float[][] G = new float[9][9]; // 330
-    private GalaxyContent galaxyContent = new GalaxyContent();
+    private final GalaxyContent galaxyContent = new GalaxyContent();
     /**
      * Constant table for translating from a given course (1-9) to delta on S1 and S2.
      */
-    private float[][] C = new float[10][3]; // 330
+    private final float[][] C = new float[10][3]; // 330
     /**
      * Klingon sector position and health.
      * [1][2] : position?
      * [3] : hit points
      */
-    private float[][] K = new float[4][4]; // 330
+    private final float[][] K = new float[4][4]; // 330
     //private float[] NA = new float[4]; // 330
     private float N; // 3170
-    private float[][] Z = new float[9][9]; // 330
+    private final float[][] Z = new float[9][9]; // 330
     /**
      * Damage
      * 1 = Warp engines
-     * 3 = lrs
+     * 2 = Short range sensors
+     * 3 = Long range sensors
      * 4 = phasers
+     * 5 = torpedoes
+     * 6 = damage control
+     * 7 = shield control
      * 8 = computer
      */
-    private float[] D = new float[9]; // 330
+    private final float[] D = new float[9]; // 330
     /**
      * Current day
      */
@@ -59,7 +56,7 @@ public class Game {
     /**
      * Start day
      */
-    private int T0 = T; // 370
+    private final int T0 = T; // 370
     /**
      * Days for mission
      */
@@ -72,13 +69,13 @@ public class Game {
      * Energy available
      */
     private float E = 3000; // 370
-    private float E0 = E; // 370
+    private final float E0 = E; // 370
 
     /**
      * Photon torpedoes
      */
     private int P = 10; // 440
-    private int P0 = P; // 440
+    private final int P0 = P; // 440
     private int S9 = 200; // 440
     /**
      * Shield energy
@@ -277,17 +274,16 @@ public class Game {
         }
     }
 
-    public GameResult run() {
+    public void run() {
         switch (gameState) {
             case INITIAL -> {
                 initial();
                 gameState = RUNNING;
             }
             case RUNNING -> {
-                running();
+                command();
             }
         }
-        return GameResult.CONTINUE;
     }
 
     private void newQuadrant1320() {
@@ -307,8 +303,8 @@ public class Game {
             println("");
             if (T0 == T) {
                 // 1460 Print "Your mission begins with your starship located"
-                println("YOUR MISSION BEGINS WITH YOUR STARSHIP LOCATED");
                 // 1470 PRINT "IN THE GALACTIC QUADRANT," G2$ " QUADRANT ...": GOTO 1500
+                println("YOUR MISSION BEGINS WITH YOUR STARSHIP LOCATED");
                 println("IN THE GALACTIC QUADRANT," + G2$ + " QUADRANT ...");
             } else {
                 // 1490 Print "Now entering " G2$ " quadrant ..."
@@ -385,12 +381,6 @@ public class Game {
         shortRangeSensors6430();
     }
 
-    private void running() {
-        do {
-            command();
-        } while (true);
-    }
-
     private void command() {
         // 1990 IF S+E > 10 THEN IF E>10 OR D[7]=0 THEN 2060
         if (S + E <= 10) {
@@ -452,18 +442,18 @@ public class Game {
                 } else {
                     if (W1 > 0 && W1 <= 8) {
                         // 2490
-                        N = intFloor(W1 * 8 + 0.5);
-                        if (E - N < 0) {
+                        int stepsN = intFloor(W1 * 8 + 0.5);
+                        if (E - stepsN < 0) {
                             println("ENGINEERING REPORTS 'INSUFFICIENT ENERGY AVAILABLE");
                             println("  FOR MANEUVERING AT WARP " + W1 + "!");
                             // 2530
-                            if (S >= N - E && D[7] > 0) {
+                            if (!(S < stepsN - E || D[7] > 0)) {
                                 println("DEFLECTOR CONTROL ROOM ACKNOWLEDGES " + S + " UNITS OF ENERGY");
                                 println("  PRESENTLY DEPLOYED TO SHIELDS.");
                             }
                         }
                         klingons();
-                        moveStarShip();
+                        moveStarShip(stepsN);
                     }
                 }
 
@@ -542,7 +532,7 @@ public class Game {
 
     // 3060
 
-    private void moveStarShip() {
+    private void moveStarShip(int stepsN) {
         // 3070 A$ = "   " ...
         A$ = EMPTY_ICON;
         Z1 = S1;
@@ -559,9 +549,10 @@ public class Game {
         Q5 = Q2;
         // 3170 FORI=1TON:Si=Si+X1:S2=S2+X2:1FSI<LORS1>=9ORS2<1ORS2>=9THEN 3500
         boolean shutdown = false;
-        for (int I = 1; I <= N; I++) {
+        for (int I = 1; I <= stepsN; I++) {
             S1 = S1 + intFloor(X1);
             S2 = S2 + intFloor(X2);
+            println("Move to " + S1 + "," + S2 + ".");
             if (S1 < 1 || S1 >= 9 || S2 < 1 || S2 >= 9) {
                 exceededQuadrantLimits3500();
             } else {
@@ -827,7 +818,7 @@ public class Game {
 
     private void photonTorpedo() {
         // 4690 REM PHOTON TORPEDO CODE BEGINS HERE
-        // 4700 IFPS=@THENPRINT"ALL PHOTON TORPEDOES EXPENDED":
+        // 4700 IF P<=0 THEN PRINT"ALL PHOTON TORPEDOES EXPENDED":
         if (P <= 0) {
             println("ALL PHOTON TORPEDOES EXPENDED");
             return;
@@ -927,7 +918,7 @@ public class Game {
                         Z2 = Y;
                         insertIconInQuadrantString8670();
                         // 5470 G(Q1,Q2)=K3*100..
-                        galaxyContent.setKlingons(Q1,Q2,K3);
+                        galaxyContent.setKlingons(Q1, Q2, K3);
                         galaxyContent.setBases(Q1, Q2, B3);
                         Z[Q1][Q2] = galaxyContent.numeric(Q1, Q2);
                         klingonsShooting6000();
@@ -951,19 +942,39 @@ public class Game {
     }
 
     private void goto6220() {
-        println("goto6220");
+        // 6228 PRINT"LT 15 STARDATE"3 T:GOTO 6270
+        println("IT IS STARDATE "+ T);
+        gotoXXX6270();
     }
 
     private void gotoXXX6270() {
-        println("gotoXXX6270");
+        // 6270 6276PRINT"THEREWERKOES"'KLISNGONBATTLECRUISERSLEFTAT"
+        println("THERE WERE " + K9 +" KLINGON BATTLE CRUISERS LEFT AT");
+        println("THE END OF YOUR MISSION.");
+        if (B9 == 0) {
+            stop();
+        }
+        // 6310 PRINT" THE FEDERATION IS IN NEED OF A NEV STARSHIP COMMANDER"
+        println("THE FEDERATION IS IN NEED OF A NEV STARSHIP COMMANDER");
+        println("FOR A SIMILAR MISSION -- IF THERE 1S A VOLUNTEER,");
+        String answer = input$("LET HIM STEP FORWARD AND ENTER ‘AYE'");
+        if (answer.equalsIgnoreCase("AYE")) {
+            gameState = INITIAL;
+        } else {
+            stop();
+        }
     }
 
     private void goto6370() {
         println("goto6370");
     }
 
-    private void goto6240() {
-        print("goto6240");
+    private void enterpriseDestroyed6240() {
+        // 6240 PRINT: PRINT'THE ENTERPRISE AAS BEEN DESTROYED. THE FEDERATION ws"3
+        // 6250 PRINT'YILL BE CONQUENED’:GOTO 6220
+        println("THE ENTERPRISE HAS BEEN DESTROYED. THE FEDERATION");
+        println("WILL BE CONQUERED");
+        goto6220();
     }
 
     private void gotoCOM7290() {
@@ -973,16 +984,21 @@ public class Game {
     private void deviceName8790() {
         // 8780 REM PRINTS DEVICE NAME
         // 8790 ON R1 GOTO ...
-        switch (intFloor(R1)) {
-            case 1 -> G2$ = "WARP ENGINES";
-            case 2 -> G2$ = "SHORT RANGE SENSORS";
-            case 3 -> G2$ = "LONG RANGE SENSORS";
-            case 4 -> G2$ = "PHASER CONTROL";
-            case 5 -> G2$ = "PHOTON TUBES";
-            case 6 -> G2$ = "DAMAGE CONTROL";
-            case 7 -> G2$ = "SHIELD CONTROL";
-            case 8 -> G2$ = "LIBRARY-COMPUTER";
-        }
+        G2$ = deviceName8790(intFloor(R1));
+    }
+
+    private String deviceName8790(int device) {
+        return switch (device) {
+            case 1 -> "WARP ENGINES";
+            case 2 -> "SHORT RANGE SENSORS";
+            case 3 -> "LONG RANGE SENSORS";
+            case 4 -> "PHASER CONTROL";
+            case 5 -> "PHOTON TUBES";
+            case 6 -> "DAMAGE CONTROL";
+            case 7 -> "SHIELD CONTROL";
+            case 8 -> "LIBRARY-COMPUTER";
+            default -> "?";
+        };
     }
 
     private void help() {
@@ -1037,13 +1053,13 @@ public class Game {
                 S = S - H;
                 K[I][3] = K[I][3] / (3 + random.nextFloat()); // Here RND(0) is in the code as opposed to RND(1).
                 // 6080 PRINT H;"UNIT HIT ON ENTERPRISE FROM SECTOR";K(I,1);",";K(I,2)"
-                print(H + "UNIT HIT ON ENTERPRISE FROM SECTOR " + K[I][1] + "," + K[I][2]);
+                println(H + "UNIT HIT ON ENTERPRISE FROM SECTOR " + intFloor(K[I][1]) + "," + intFloor(K[I][2]));
                 // 6090 IFS<=0 THEN 6240
                 if (S <= 0) {
-                    goto6240(); // Ouch, we're done
+                    enterpriseDestroyed6240(); // Ouch, we're done
                 } else {
                     // 6100 PRINT" <SHIELDS DOWN TO"S Ss “UNL TS> "3 :IFH<20 THEN 6200
-                    print(" <SHIELDS DOWN TO " + S + " UNITS> ");
+                    println(" <SHIELDS DOWN TO " + S + " UNITS> ");
                     if (H < 20) {
                         continue;
                     }
@@ -1055,9 +1071,8 @@ public class Game {
                     R1 = fnr();
                     int index = intFloor(R1);
                     D[index] = D[index] - H / S - 0.5F * random.nextFloat();
-                    deviceName8790();
                     // 6170 PRINT"DAMAGE CONTROL REPORTS ‘";G2$;" DAMAGED BY THE HIT'"
-                    print("DAMAGE CONTROL REPORTS ‘" + G2$ + " DAMAGED BY THE HIT'");
+                    print("DAMAGE CONTROL REPORTS ‘" + deviceName8790(index) + " DAMAGED BY THE HIT'");
                 }
             }
         }
@@ -1198,7 +1213,7 @@ public class Game {
 
     private void stop() {
         print("STOP");
-        System.exit(1);
+        gameState = STOPPED;
     }
 
     private String left$(String input, int i) {

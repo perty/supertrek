@@ -4,17 +4,21 @@ package se.artcomputer.game;
  * Instead of having a string representation of the quadrant contents.
  */
 public class QuadrantContent {
+    public static final String STARSHIP_ICON = "<*>";
+    public static final String KLINGON_ICON = "+K+";
+    public static final String STARBASE_ICON = ">!<";
+    public static final String STAR_ICON = " * ";
+    public static final String EMPTY_ICON = "   ";
     private final String[][] content;
 
     public QuadrantContent() {
         content = new String[8][8];
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                content[i][j] = "   ";
+                content[i][j] = EMPTY_ICON;
             }
         }
     }
-
 
     public String get(int s1, int s2) {
         if (s1 < 1 || s1 > 8 || s2 < 1 || s2 > 8) {
@@ -33,7 +37,7 @@ public class QuadrantContent {
     }
 
     public String getRow(int row) {
-        if (row < 1 || row > 8 ) {
+        if (row < 1 || row > 8) {
             System.err.printf("Row out of bounds %d%n", row);
             return "";
         }
