@@ -1083,12 +1083,12 @@ public class Game {
             return;
         }
         // 7320
-        int answer = input("COMPUTER ACTIVE AND AWAITING COMMAND");
+        int answer = input("COMPUTER ACTIVE AND AWAITING COMMAND ");
         println("");
         H8 = 1;
         switch (answer) {
             case 0 -> goto7540();
-            case 1 -> goto7900();
+            case 1 -> statusReport7900();
             case 2 -> goto8070();
             case 3 -> goto8500();
             case 4 -> goto8150();
@@ -1139,12 +1139,27 @@ public class Game {
         }
     }
 
-    private void printTab(int tab) {
-        print("Tab" + tab);
-    }
-
-    private void goto7900() {
-
+    private void statusReport7900() {
+        // 7890 REM STATUS REPORT
+        println(" STATUS REPORT ");
+        X$ = "";
+        if (K9 > 1) {
+            X$ = "S";
+        }
+        println("KLINGON" + X$ + " LEFT: " + K9);
+        println("MISSION MUST BE COMPLETED IN " + (0.1 * intFloor((T0 + T9 - T) * 10))+ " STARDATES");
+        X$ = "S";
+        if (B9 < 2) {
+            X$ = "";
+        }
+        if (B9 >= 1) {
+            println("THE FEDERATION IS MAINTAINING " + B9 + " STARBASE" + X$ + " IN THE GALAXY");
+        } else {
+            println("YOUR STUPIDITY HAS LEFT YOU ON YOUR OWN IN");
+            println("   THE GALAXY -- YOU HAVE NO STARBASES LEFT!");
+            // GOTO 5690
+            gotoDAM5690();
+        }
     }
 
     private void goto8070() {
@@ -1505,4 +1520,9 @@ public class Game {
     private void print(String s) {
         System.out.print(s);
     }
+
+    private void printTab(int tab) {
+        print("Tab" + tab);
+    }
+
 }
