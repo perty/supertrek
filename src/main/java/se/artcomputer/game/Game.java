@@ -123,6 +123,7 @@ public class Game {
     private int Z3; // 8590
     private String C$; // 6580
     private int X3, Y3; // 4920
+    private int H8; // 7400
 
     private double fnd() { // 470
         return Math.pow(Math.sqrt(K[I][1] - S1), 2) + Math.pow(K[I][2] - S2, 2);
@@ -1082,9 +1083,9 @@ public class Game {
             return;
         }
         // 7320
-        int answer = input("COMPUTER ACTIVE AND AWATING COMMAND");
+        int answer = input("COMPUTER ACTIVE AND AWAITING COMMAND");
         println("");
-        float H8 = 1;
+        H8 = 1;
         switch (answer) {
             case 0 -> goto7540();
             case 1 -> goto7900();
@@ -1100,7 +1101,46 @@ public class Game {
     }
 
     private void goto7540() {
+        // 7530 REM CUM GALACTIC RECORD
+        // 7544 PRINT'COMPUTER RECORD. OF GALAXY FOR QUADRANT"; Q
+        println("COMPUTER RECORD. OF GALAXY FOR QUADRANT" + Q1 + "," + Q2);
+        println("    1     2     3     4     5     6     7     8");
+        O1$ =   "  ----- ----- ----- ----- ----- ----- ----- ----- ";
+        println(O1$);
+        for (int I = 1; I <= 8; I++) {
+            print(String.format("%d ", I));
+            // IF H8 = 0 THEN 7740
+            if (H8 != 0) {
+                for (int J = 1; J <= 8; J++) {
+                    print("| ");
+                    if (Z[I][J] == 0) {
+                        print("*** "); // GOTO 7720
+                    } else {
+                        print(String.format("%03.0f ", Z[I][J]));
+                    }
+                }
+            } else {
+                // 7740 24-122S=12GOSUB9G30:5*JLENG(G=25)I):NPTRINCTT1ABC5IB~)3.G25
+                Z4 = 1;
+                Z5 = 1;
+                goSub9030();
+                int J0 = intFloor(15 - 0.5 * G2$.length());
+                printTab(J0);
+                print(G2$);
+                Z5 = 5;
+                goSub9030();
+                J0 = intFloor(39 - 0.5 * G2$.length());
+                printTab(J0);
+                print(G2$);
+            }
+            // 7850
+            println("");
+            println(O1$);
+        }
+    }
 
+    private void printTab(int tab) {
+        print("Tab" + tab);
     }
 
     private void goto7900() {
@@ -1116,6 +1156,10 @@ public class Game {
     }
 
     private void goto8500() {
+
+    }
+
+    private void goSub9030() {
 
     }
 
@@ -1431,8 +1475,15 @@ public class Game {
     }
 
     private int input(String prompt) {
-        System.out.print(prompt);
-        return scanner.nextInt();
+        do {
+            System.out.print(prompt);
+            String string = scanner.nextLine();
+            try {
+                return Integer.parseInt(string);
+            } catch (NumberFormatException e) {
+                println(e.getMessage());
+            }
+        } while (true);
     }
 
     private float inputF(String prompt) {
