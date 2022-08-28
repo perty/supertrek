@@ -768,7 +768,7 @@ public class Game {
      * 4260 REM PHASER CONTROL CODE BEGINS HERE
      */
     private void phaserControl() {
-        // 4260 IFD(4)<@THENPRINT'PHASERS INOPERATI VE":GOTO1996
+        // 4260 IFD(4)<0THENPRINT'PHASERS INOPERATI VE":GOTO1996
         if (D[4] < 0) {
             println("PHASERS INOPERATIVE");
             return;
@@ -960,7 +960,7 @@ public class Game {
 
     private void gotoSHE5530() {
         // REM 5520 SHIELD CONTROL
-        // 5530 IFD( 79<@THENPRINT’ SHIELD CONTROL INOPERABLE: GOTO199G
+        // 5530 IFD( 79<0THENPRINT’ SHIELD CONTROL INOPERABLE: GOTO199G
         if (D[7] < 0) {
             println("SHIELD CONTROL INOPERABLE");
             return;
@@ -1076,7 +1076,58 @@ public class Game {
     }
 
     private void gotoCOM7290() {
-        println("gotoCOM7290");
+        // 7286 REM LIBRARY COMPUTER CODE
+        if (D[8] < 0) {
+            println("COMPUTER DISABLED");
+            return;
+        }
+        // 7320
+        int answer = input("COMPUTER ACTIVE AND AWATING COMMAND");
+        println("");
+        float H8 = 1;
+        switch (answer) {
+            case 0 -> goto7540();
+            case 1 -> goto7900();
+            case 2 -> goto8070();
+            case 3 -> goto8500();
+            case 4 -> goto8150();
+            case 5 -> goto7400();
+            default -> computerHelp();
+        }
+    }
+
+    private void goto7400() {
+    }
+
+    private void goto7540() {
+
+    }
+
+    private void goto7900() {
+
+    }
+
+    private void goto8070() {
+
+    }
+
+    private void goto8150() {
+
+    }
+
+    private void goto8500() {
+
+    }
+
+    private void computerHelp() {
+        // 7360
+        println("FUNCTIONS AVAILABLE FROM LIBRARY-COMPUTER:");
+        println(" 0 = CUMULATIVE GALACTIC RECORD");
+        println(" 1 = STATUS REPORT");
+        println(" 2 = PHOTON TORPEDO DATA");
+        println(" 3 = STARBASE NAV DATA");
+        println(" 4 = DIRECTION/DISTANCE CALCULATOR");
+        println(" 5 = GALAXY 'REGION NAME' MAP");
     }
 
     private void deviceName8790() {
