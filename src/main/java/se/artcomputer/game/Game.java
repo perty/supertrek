@@ -35,7 +35,7 @@ public class Game {
      */
     private final float[][] K = new float[4][4]; // 330
     //private float[] NA = new float[4]; // 330
-    private float N; // 3170
+    //private float N; // 3170
     private final float[][] Z = new float[9][9]; // 330
     /**
      * Damage
@@ -211,7 +211,7 @@ public class Game {
     // 710 A1$="NAVSRSLRSPHATORSHEDAMCOMXXX"
     private final String A1$ = "NAVSRSLRSPHATORSHEDAMCOMXXX";
 
-    private float R1, R2;
+    private int R1, R2;
 
     // 810 REM Setup what exists in galaxy...
     private void setupGalaxy() {
@@ -222,16 +222,16 @@ public class Game {
             for (int J = 1; J <= 8; J++) {
                 K3 = 0;
                 Z[I][J] = 0;
-                R1 = random.nextFloat();
-                if (R1 > 0.98) {
+                float randomLevel = random.nextFloat();
+                if (randomLevel > 0.98) {
                     // 850 IFR1>.98 THEN K3=3:K9=K9+3:GOTO 980
                     K3 = 3;
                     K9 = K9 + 3;
-                } else if (R1 > 0.95) {
+                } else if (randomLevel > 0.95) {
                     // 860 IFR1>.95 THEN K3=2:K9=K9+2:GOTO 980
                     K3 = 2;
                     K9 = K9 + 2;
-                } else if (R1 > 0.8) {
+                } else if (randomLevel > 0.8) {
                     // 870 IFR1>.80 THEN K3=1:K9=K9+1
                     K3 = 1;
                     K9 = K9 + 1;
@@ -280,10 +280,27 @@ public class Game {
                 initial();
                 gameState = RUNNING;
             }
-            case RUNNING -> {
-                command();
-            }
+            case RUNNING -> command();
         }
+    }
+
+    private void initial() {
+        initValues();
+        setupGalaxy();
+        println("                                  ,-----*-----,"); // 221
+        println("                                   `---  ----´");
+        prompt(); // 1230
+        newQuadrant1320();
+    }
+
+    private void prompt() {
+        println("YOUR ORDERS ARE AS FOLLOWS:"); //1230
+        println("  DESTROY THE " + K9 + " KLINGON WARSHIPS WHICH HAS INVADED"); //1240
+        println("  THE GALAXY BEFORE THEY CAN ATTACK FEDERATION HEADQUARTERS"); //1250
+        println("  ON STARDATE " + (T0 + T9) + ". THIS GIVES YOU " + T9 + " DAYS. THERE" + X0$); //1260
+        println("  " + B9 + " STARBASE" + X$ + " IN THE GALAXY TO RESUPPLY YOUR SHIP."); //1270
+        println("");
+        println("HIT RETURN WHEN YOU ARE READY.");
     }
 
     private void newQuadrant1320() {
@@ -343,7 +360,7 @@ public class Game {
         A$ = STARSHIP_ICON;
         Z1 = S1;
         Z2 = S2;
-        insertIconInQuadrantString8670();
+        insertIconInQuadrantString8670(S1, S2, STARSHIP_ICON);
         if (K3 >= 1) {
             // 1720 FOR I=1TOK3: GOSUB 8590: A$="+K+":Z1=R1:Z2=R2
             for (int I = 1; I <= K3; I++) {
@@ -352,7 +369,7 @@ public class Game {
                 Z1 = R1;
                 Z2 = R2;
                 // 1780 GOSUB 8670: K(I,1)=R1:K(I,2)=R2;K(I,3)=S9*0.5+RND(1):NEXTI
-                insertIconInQuadrantString8670();
+                insertIconInQuadrantString8670(R1, R1, KLINGON_ICON);
                 K[I][1] = R1;
                 K[I][2] = R2;
                 K[I][3] = S9 * 0.5F + random.nextFloat();
@@ -554,10 +571,10 @@ public class Game {
             S2 = S2 + intFloor(X2);
             println("Move to " + S1 + "," + S2 + ".");
             if (S1 < 1 || S1 >= 9 || S2 < 1 || S2 >= 9) {
-                exceededQuadrantLimits3500();
+                exceededQuadrantLimits3500(stepsN);
             } else {
                 // 3240 S8=INT(S1)*24+INT(S2)*3-26:IFMID$(Q$,S8,2)="  "THEN 3360
-                int S8 = intFloor(S1) * 24 + intFloor(S2) * 3 - 26;
+                //int S8 = intFloor(S1) * 24 + intFloor(S2) * 3 - 26;
                 //String check = mid$(Q$, S8, 3);
                 String check = quadrantContent.get(S1, S2);
                 if (!check.equals(EMPTY_ICON)) {
@@ -574,16 +591,16 @@ public class Game {
             S1 = intFloor(S1);
             S2 = intFloor(S2);
         }
-        goto3370();
+        goto3370(stepsN);
     }
 
-    private void goto3370() {
+    private void goto3370(int stepsN) {
         // 3370
         A$ = STARSHIP_ICON;
         Z1 = intFloor(S1);
         Z2 = intFloor(S2);
         insertIconInQuadrantString8670();
-        maneuverEnergy3910();
+        maneuverEnergy3910(stepsN);
         T8 = 1;
         if (W1 < 1) {
             T8 = 0.1F * intFloor(10 * W1);
@@ -600,10 +617,10 @@ public class Game {
 
     // 3498 REM EXCEEDED QUADRANT LIMITS
 
-    private void exceededQuadrantLimits3500() {
+    private void exceededQuadrantLimits3500(int stepsN) {
         // 3500 X=8*Q1+X+N*X1:Y=8*Q2+Y+N*X2:Q1=INT(X/8):Q2=INT(Y/8):S1=INT(X-Q1*8)
-        X = 8 * Q1 + X + N * X1;
-        Y = 8 * Q2 + Y + N * X2;
+        X = 8 * Q1 + X + stepsN * X1;
+        Y = 8 * Q2 + Y + stepsN * X2;
         Q1 = intFloor(X / 8);
         Q2 = intFloor(Y / 8);
         S1 = intFloor(X - Q1 * 8);
@@ -662,22 +679,31 @@ public class Game {
         }
         // 3860 IF8*Q1+Q2=8*Q4+Q5 THEN 3370
         if (8 * Q1 + Q2 == 8 * Q4 + Q5) {
-            goto3370();
+            goto3370(stepsN);
         } else {
             // 3870 T=T+1:GOSUB 3910: GOTO 1320
             T = T + 1;
-            maneuverEnergy3910();
+            maneuverEnergy3910(stepsN);
             // goto 1320 is entering a new quadrant.
             newQuadrant1320();
         }
     }
 
-    private int intFloor(float X) {
-        return Math.toIntExact(Math.round(Math.floor(X)));
-    }
-
-    private int intFloor(double X) {
-        return Math.toIntExact(Math.round(Math.floor(X)));
+    private void maneuverEnergy3910(int stepsN) {
+        //        3900 REM MANEUVER ENERGY S/R **
+        //        3910 E=E-N-10:IFE>=0THEN RETURN
+        //        3930 PRINT"SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER."
+        //        3940 S=S+E: E=0: IFS<=0THEN S=0
+        //        3980 RETURN
+        E = E - stepsN - 10;
+        if (E < 0) {
+            println("SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER.");
+            S = S + E;
+            E = 0;
+            if (S <= 0) {
+                S = 0;
+            }
+        }
     }
 
     private void longRangeSensors() {
@@ -806,7 +832,7 @@ public class Game {
                         galaxyContent.setKlingons(Q1, Q2, galaxyContent.getKlingons(Q1, Q2) - 1); // Count down on Klingons in this sector
                         Z[Q1][Q2] = galaxyContent.numeric(Q1, Q2);
                         if (K9 < 0) {
-                            goto6370();
+                            victory6370();
                         }
                     }
                 }
@@ -869,7 +895,7 @@ public class Game {
             K3 = K3 - 1;
             K9 = K9 - 1;
             if (K9 <= 0) {
-                goto6370();
+                victory6370();
             }
             boolean breakOut = false;
             for (I = 1; I <= 3; I++) {
@@ -954,6 +980,10 @@ public class Game {
         if (B9 == 0) {
             stop();
         }
+        restart6290();
+    }
+
+    private void restart6290() {
         // 6310 PRINT" THE FEDERATION IS IN NEED OF A NEV STARSHIP COMMANDER"
         println("THE FEDERATION IS IN NEED OF A NEV STARSHIP COMMANDER");
         println("FOR A SIMILAR MISSION -- IF THERE 1S A VOLUNTEER,");
@@ -965,8 +995,13 @@ public class Game {
         }
     }
 
-    private void goto6370() {
-        println("goto6370");
+    private void victory6370() {
+        // 6370 PRINT"CONGRATULATION CAPTAIN! THE LAST KLINGON BATTLE CRUISER"
+        println("CONGRATULATION, CAPTAIN! THE LAST KLINGON BATTLE CRUISER");
+        println("MENACING THE FEDERATION HAS BEEN DESTROYED.");
+        // 6400 PRINT"YOUR EFFICLENCY RATINGI15"319G@*I~1(92)K127:GOTO 6290
+        println("YOUR EFFICIENCY RATING IS " + Math.pow(1000 * (K7 / (T - 10F)), 2));
+        restart6290();
     }
 
     private void enterpriseDestroyed6240() {
@@ -1015,23 +1050,6 @@ public class Game {
         println("  XXX (TO RESIGN YOUR COMMAND)");
         println("");
         // 2260 GOTO 1990
-    }
-
-    private void maneuverEnergy3910() {
-        //        3900 REM MANEUVER ENERGY S/R **
-        //        3910 E=E-N-10:IFE>=0THEN RETURN
-        //        3930 PRINT"SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER."
-        //        3940 S=S+E: E=0: IFS<=0THEN S=0
-        //        3980 RETURN
-        E = E - N - 10;
-        if (E < 0) {
-            println("SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER.");
-            S = S + E;
-            E = 0;
-            if (S <= 0) {
-                S = 0;
-            }
-        }
     }
 
     private void klingonsShooting6000() {
@@ -1169,16 +1187,19 @@ public class Game {
         } while (Z3 == 0);
     }
 
+    private void insertIconInQuadrantString8670(int S1, int S2, String icon) {
+        quadrantContent.set(S1, S2, icon);
+    }
     private void insertIconInQuadrantString8670() {
         // 8660 REM INSERT IN STRING ARRAY FOR QUADRANT
         // 8670 S8=INT(Z2-.5)*3+INT(Z1-.5)*24+1
         //S8 = Math.toIntExact(Math.round(Z2 - 0.5) * 3 + Math.round(Z1 - 0.5) * 24 + 1);
         // 8675 IF LEN(AS)<>3 THEN PRINT "ERROR": STOP
-        if (A$.length() != 3) {
-            print("ERROR");
-            stop();
-        }
-        quadrantContent.set(intFloor(Z1), intFloor(Z2), A$);
+//        if (A$.length() != 3) {
+//            print("ERROR");
+//            stop();
+//        }
+        insertIconInQuadrantString8670(intFloor(Z1), intFloor(Z2), A$);
 //        // 8680 IFS8= 1 THEN QS=A$+RIGHTS( QS 189): RETURN
 //        if (S8 == 1) {
 //            Q$ = A$ + right$(Q$, 189);
@@ -1216,25 +1237,25 @@ public class Game {
         gameState = STOPPED;
     }
 
-    private String left$(String input, int i) {
-        return input.substring(0, Math.min(i - 1, input.length() - 1));
-    }
+//    private String left$(String input, int i) {
+//        return input.substring(0, Math.min(i - 1, input.length() - 1));
+//    }
 
-    private String right$(String input, int i) {
-        if (input.length() - i - 1 > input.length()) {
-            println("right$ out of bounds " + i + "(" + input.length() + ")");
-            return "";
-        }
-        return input.substring(input.length() - i - 1);
-    }
+//    private String right$(String input, int i) {
+//        if (input.length() - i - 1 > input.length()) {
+//            println("right$ out of bounds " + i + "(" + input.length() + ")");
+//            return "";
+//        }
+//        return input.substring(input.length() - i - 1);
+//    }
 
-    private String mid$(String string, int start, int length) {
-        if (string.length() < start - 1 + length || start <= 0) {
-            println("out of bounds " + (start + length));
-            return "";
-        }
-        return string.substring(start - 1, start - 1 + length);
-    }
+//    private String mid$(String string, int start, int length) {
+//        if (string.length() < start - 1 + length || start <= 0) {
+//            println("out of bounds " + (start + length));
+//            return "";
+//        }
+//        return string.substring(start - 1, start - 1 + length);
+//    }
 
     private static final String[] quadrantName1 =
             new String[]{
@@ -1281,23 +1302,12 @@ public class Game {
         }
     }
 
-    private void initial() {
-        initValues();
-        setupGalaxy();
-        println("                                  ,-----*-----,"); // 221
-        println("                                   `---  ----´");
-        prompt(); // 1230
-        newQuadrant1320();
+    private int intFloor(float X) {
+        return Math.toIntExact(Math.round(Math.floor(X)));
     }
 
-    private void prompt() {
-        println("YOUR ORDERS ARE AS FOLLOWS:"); //1230
-        println("  DESTROY THE " + K9 + " KLINGON WARSHIPS WHICH HAS INVADED"); //1240
-        println("  THE GALAXY BEFORE THEY CAN ATTACK FEDERATION HEADQUARTERS"); //1250
-        println("  ON STARDATE " + (T0 + T9) + ". THIS GIVES YOU " + T9 + " DAYS. THERE" + X0$); //1260
-        println("  " + B9 + " STARBASE" + X$ + " IN THE GALAXY TO RESUPPLY YOUR SHIP."); //1270
-        println("");
-        println("HIT RETURN WHEN YOU ARE READY.");
+    private int intFloor(double X) {
+        return Math.toIntExact(Math.round(Math.floor(X)));
     }
 
     private String input$(String prompt) {
