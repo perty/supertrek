@@ -124,6 +124,7 @@ public class Game {
     private String C$; // 6580
     private int X3, Y3; // 4920
     private int H8; // 7400
+    private float A; // 8120
 
     private double fnd() { // 470
         return Math.pow(Math.sqrt(K[I][1] - S1), 2) + Math.pow(K[I][2] - S2, 2);
@@ -774,12 +775,9 @@ public class Game {
             println("PHASERS INOPERATIVE");
             return;
         }
-        // 4265 TFK3>8 THEN 4330
-        if (K3 <= 8) {
-            // 4270 PRINT'SCI ENCE OFFICER SPOCK REPORTS ‘SENSORS SHOW NG ENEMY SHIPS"
-            // 4280 PRINT" IN THIS QUADRAN "'3G0TO1996
-            println("SCIENCE OFFICER SPOCK REPORTS ‘SENSORS SHOWING ENEMY SHIPS");
-            println(" IN THIS QUADRANT'");
+        // 4265 TFK3>0 THEN 4330
+        if (K3 <= 0) {
+            noEnemy4270();
             return;
         }
 
@@ -841,6 +839,13 @@ public class Game {
         }
         // 4670 NEXT I: GOSUB 6000: GOTO 1990
         klingonsShooting6000();
+    }
+
+    private void noEnemy4270() {
+        // 4270 PRINT'SCI ENCE OFFICER SPOCK REPORTS ‘SENSORS SHOW NG ENEMY SHIPS"
+        // 4280 PRINT" IN THIS QUADRAN "'3G0TO1996
+        println("SCIENCE OFFICER SPOCK REPORTS ‘SENSORS SHOWING ENEMY SHIPS");
+        println(" IN THIS QUADRANT'");
     }
 
     private void photonTorpedo() {
@@ -1089,7 +1094,7 @@ public class Game {
         switch (answer) {
             case 0 -> goto7540();
             case 1 -> statusReport7900();
-            case 2 -> goto8070();
+            case 2 -> calculator8070();
             case 3 -> goto8500();
             case 4 -> goto8150();
             case 5 -> goto7400();
@@ -1105,7 +1110,7 @@ public class Game {
         // 7544 PRINT'COMPUTER RECORD. OF GALAXY FOR QUADRANT"; Q
         println("COMPUTER RECORD. OF GALAXY FOR QUADRANT" + Q1 + "," + Q2);
         println("    1     2     3     4     5     6     7     8");
-        O1$ =   "  ----- ----- ----- ----- ----- ----- ----- ----- ";
+        O1$ = "  ----- ----- ----- ----- ----- ----- ----- ----- ";
         println(O1$);
         for (int I = 1; I <= 8; I++) {
             print(String.format("%d ", I));
@@ -1147,7 +1152,7 @@ public class Game {
             X$ = "S";
         }
         println("KLINGON" + X$ + " LEFT: " + K9);
-        println("MISSION MUST BE COMPLETED IN " + (0.1 * intFloor((T0 + T9 - T) * 10))+ " STARDATES");
+        println("MISSION MUST BE COMPLETED IN " + (0.1 * intFloor((T0 + T9 - T) * 10)) + " STARDATES");
         X$ = "S";
         if (B9 < 2) {
             X$ = "";
@@ -1162,12 +1167,98 @@ public class Game {
         }
     }
 
-    private void goto8070() {
-
+    private void calculator8070() {
+        // 8060 REM TORPEDO, BASE NAVs D/D CALCULATOR
+        if (K3 <= 0) {
+            noEnemy4270();
+        }
+        X$ = "";
+        if (K3 > 1) {
+            X$ = "S";
+        }
+        println("FROM ENTERPRISE TO KLINGON BATTLE CRUISE" + X$);
+        H8 = 0;
+        for (int I = 1; I <= 3; I++) {
+            if (K[I][3] > 0) {
+                W1 = K[I][1];
+                X = K[I][2];
+                C1 = S1;
+                A = S2; // GOTO 8220
+                goto8220();
+            }
+            // 8460 PRINT"DISTANCE="3SQRCXt2+At2)31FH1TSHEN=IO9
+            println("DISTANCE = " + (Math.sqrt(Math.pow(X, 2) + Math.pow(A, 2))));
+            if (H8 == 1) {
+                break;
+            }
+            // 8480
+        }
     }
 
     private void goto8150() {
+        // 8158 PRINT"DI RECTI ON/DISTANCE CALCULATOR:
+        println("DIRECTION ON/DISTANCE CALCULATOR:");
+        println("YOU ARE AT QUADRANT " + Q1 + "," + Q2 + " SECTOR " + S1 + "," + S2);
+        println("PLEASE ENTER");
+        println("INITIAL COORDINATES (X,Y)");
+        C1 = input("X:");
+        A = input("Y:");
+        println("FINAL COORDINATES (X,Y)");
+        W1 = input("X:");
+        X = input("Y:");
+        goto8220();
+    }
 
+    private void goto8220() {
+        // 8220
+        X = X - A;
+        A = C1 - W1;
+        if (X >= 0) { // else 8350
+            if (A >= 0) { // else 8410
+                if (X <= 0) { // else 8280
+                    if (A == 0) {
+                        C1 = 5;
+                    } else {
+                        C1 = 1; // 8280
+                    }
+                    goto8290();
+                }
+            } else {
+                C1 = 7;
+                goto8420();
+            }
+        } else {
+            // 8350
+            if (A > 0) {
+                C1 = 3;
+                goto8420();
+            } else {
+                if (X != 0) {
+                    C1 = 5;
+                    goto8290();
+                } else {
+                    C1 = 7;
+                    goto8420();
+                }
+            }
+        }
+    }
+
+    private void goto8290() {
+        if (!(Math.abs(A) <= Math.abs(X))) { // else 8330
+            // 8310  PRINT" DIRECTION ="3C1+¢(CABSC A) -ABS(X) )+ABSCA)) /ABSCA)) :GO0T08 4
+            println("DIRECTION = " + (C1 + ((Math.abs(A) - Math.abs(X) + Math.abs(A)) / Math.abs(A))));
+        } else { // 8330
+            println("DIRECTION = " + (C1 + Math.abs(A) / Math.abs(X)));
+        }  // GOTO 8460
+    }
+
+    private void goto8420() {
+        if (Math.abs(A) < Math.abs(X)) {  // else 8450
+            println("DIRECTION = " + (C1 + ((Math.abs(X) - Math.abs(A) + Math.abs(X)) / Math.abs(X))));
+        } else {
+            println("DIRECTION = " + (C1 + Math.abs(X) / Math.abs(A)));
+        }
     }
 
     private void goto8500() {
