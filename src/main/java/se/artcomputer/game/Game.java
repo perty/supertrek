@@ -548,9 +548,7 @@ public class Game {
         } // 3070
     }
 
-
     // 3060
-
     private void moveStarShip(int stepsN) {
         // 3070 A$ = "   " ...
         A$ = EMPTY_ICON;
@@ -1036,6 +1034,51 @@ public class Game {
     //while (D0 != 0); // GOTO 5720
 
 
+    private void klingonsShooting6000() {
+        //5990 REM KLINGONS SHOOTING
+        //6000 IFK3<=0 THEN RETURN
+        if (K3 <= 0) {
+            return;
+        }
+        // 6010 TFDG<>QTHENPRINT'STARBASE SHIELDS PROTECT THE ENTERPRISE": RETURN
+        if (D0 != 0) {
+            print("STARBASE SHIELDS PROTECT THE ENTERPRISE");
+            return;
+        }
+        // 6040 FORI= 1TO3: IFK(I, 3) <= 0 THEN 6200
+        for (int I = 1; I <= 3; I++) {
+            if (K[I][3] > 0) {
+                // 6060 H=INTCCKCEs 3) /FNDC 1) *C24+PNDC 120): SsS-HikCls 3=KCLs 3) /C3+RND(0)
+                H = intFloor((K[I][3] / fnd()) * 2 + random.nextFloat());
+                S = S - H;
+                K[I][3] = K[I][3] / (3 + random.nextFloat()); // Here RND(0) is in the code as opposed to RND(1).
+                // 6080 PRINT H;"UNIT HIT ON ENTERPRISE FROM SECTOR";K(I,1);",";K(I,2)"
+                println(H + "UNIT HIT ON ENTERPRISE FROM SECTOR " + intFloor(K[I][1]) + "," + intFloor(K[I][2]));
+                // 6090 IFS<=0 THEN 6240
+                if (S <= 0) {
+                    enterpriseDestroyed6240(); // Ouch, we're done
+                } else {
+                    // 6100 PRINT" <SHIELDS DOWN TO"S Ss “UNL TS> "3 :IFH<20 THEN 6200
+                    println(" <SHIELDS DOWN TO " + S + " UNITS> ");
+                    if (H < 20) {
+                        continue;
+                    }
+                    // 6120 IF RND(1)>.60 OR H/S<=.02 THEN 6200
+                    if (random.nextFloat() > 0.6 || H / S <= 0.02) {
+                        continue;
+                    }
+                    // 6140 R1=FNR(1):D(R1)= FNRC1) 2DORI = DCRL) -H/S- «S*PNDC 1) :GOSUB 8790
+                    R1 = fnr();
+                    int index = intFloor(R1);
+                    D[index] = D[index] - H / S - 0.5F * random.nextFloat();
+                    // 6170 PRINT"DAMAGE CONTROL REPORTS ‘";G2$;" DAMAGED BY THE HIT'"
+                    print("DAMAGE CONTROL REPORTS ‘" + deviceName8790(index) + " DAMAGED BY THE HIT'");
+                }
+            }
+        }
+        // 6200 NEXTI:RETURN
+    }
+
     private void goto6220() {
         // 6228 PRINT"LT 15 STARDATE"3 T:GOTO 6270
         println("IT IS STARDATE " + T);
@@ -1090,25 +1133,33 @@ public class Game {
         // 7320
         int answer = input("COMPUTER ACTIVE AND AWAITING COMMAND ");
         println("");
-        H8 = 1;
+        H8 = 1; // Behaviour switch?
         switch (answer) {
-            case 0 -> goto7540();
+            case 0 -> cumulativeGalacticRecord7540();
             case 1 -> statusReport7900();
             case 2 -> calculator8070();
-            case 3 -> goto8500();
+            case 3 -> starbaseNavData8500();
             case 4 -> goto8150();
-            case 5 -> goto7400();
+            case 5 -> galaxyRegionMap7400();
             default -> computerHelp();
         }
     }
 
-    private void goto7400() {
+    private void galaxyRegionMap7400() {
+        H8 = 0;
+        G5 = 1;
+        println("              THE GALAXY");
+        goto7550();
     }
 
-    private void goto7540() {
+    private void cumulativeGalacticRecord7540() {
         // 7530 REM CUM GALACTIC RECORD
         // 7544 PRINT'COMPUTER RECORD. OF GALAXY FOR QUADRANT"; Q
         println("COMPUTER RECORD. OF GALAXY FOR QUADRANT" + Q1 + "," + Q2);
+        goto7550();
+    }
+
+    private void goto7550() {
         println("    1     2     3     4     5     6     7     8");
         O1$ = "  ----- ----- ----- ----- ----- ----- ----- ----- ";
         println(O1$);
@@ -1123,17 +1174,17 @@ public class Game {
                     } else {
                         print(String.format("%03.0f ", Z[I][J]));
                     }
-                }
+                } // 7720
             } else {
                 // 7740 24-122S=12GOSUB9G30:5*JLENG(G=25)I):NPTRINCTT1ABC5IB~)3.G25
                 Z4 = 1;
                 Z5 = 1;
-                goSub9030();
+                quadrantName9030();
                 int J0 = intFloor(15 - 0.5 * G2$.length());
                 printTab(J0);
                 print(G2$);
                 Z5 = 5;
-                goSub9030();
+                quadrantName9030();
                 J0 = intFloor(39 - 0.5 * G2$.length());
                 printTab(J0);
                 print(G2$);
@@ -1196,7 +1247,7 @@ public class Game {
     }
 
     private void goto8150() {
-        // 8158 PRINT"DI RECTI ON/DISTANCE CALCULATOR:
+        // 8158 PRINT"DIRECTION/DISTANCE CALCULATOR:
         println("DIRECTION ON/DISTANCE CALCULATOR:");
         println("YOU ARE AT QUADRANT " + Q1 + "," + Q2 + " SECTOR " + S1 + "," + S2);
         println("PLEASE ENTER");
@@ -1261,12 +1312,34 @@ public class Game {
         }
     }
 
-    private void goto8500() {
+    private void starbaseNavData8500() {
+        // 8500 LFB3<>@THENPRINT! FROM ENTERPRISE TO STARBASE:": ¥1=B4:X=B5:G0TO1286
+        if (B3 != 0) {
+            println("FROM ENTERPRISE TO STARBASE:");
+            W1 = B4;
+            X = B5; // GOTO 8120
+            C1 = S1;
+            A = S2;
+            goto8220();
+        } else {
+            // 8510 PFINT"MR. SPOCK REPOPTSs ‘SENSORS SHOW NO STARBASES IN THI S"3
+            print("MR. SPOCK REPORTS, ‘SENSORS SHOW NO STARBASES IN THIS");
+            println(" QUADRANT.'");
+        }
 
     }
 
-    private void goSub9030() {
-
+    private void findEmptyPlaceInQuadrant8590() {
+        // 8580 REM FIND EMPTY PLACE IN QUADRANT (FOR THINGS)
+        // 8590 RI= FNC 1): R2=FNRC 1) :Aas=" ":Z1=R12Z2= R2: GOSUB 8830:1 FZ3=OTHEN B590
+        do {
+            R1 = fnr();
+            R2 = fnr();
+            A$ = EMPTY_ICON;
+            Z1 = R1;
+            Z2 = R2;
+            checkForIcon8830();
+        } while (Z3 == 0);
     }
 
     private void computerHelp() {
@@ -1300,6 +1373,7 @@ public class Game {
         };
     }
 
+
     private void help() {
         // 2160
         println("ENTER ONE OF THE FOLLOWING:");
@@ -1314,51 +1388,6 @@ public class Game {
         println("  XXX (TO RESIGN YOUR COMMAND)");
         println("");
         // 2260 GOTO 1990
-    }
-
-    private void klingonsShooting6000() {
-        //5990 REM KLINGONS SHOOTING
-        //6000 IFK3<=0 THEN RETURN
-        if (K3 <= 0) {
-            return;
-        }
-        // 6010 TFDG<>QTHENPRINT'STARBASE SHIELDS PROTECT THE ENTERPRISE": RETURN
-        if (D0 != 0) {
-            print("STARBASE SHIELDS PROTECT THE ENTERPRISE");
-            return;
-        }
-        // 6040 FORI= 1TO3: IFK(I, 3) <= 0 THEN 6200
-        for (int I = 1; I <= 3; I++) {
-            if (K[I][3] > 0) {
-                // 6060 H=INTCCKCEs 3) /FNDC 1) *C24+PNDC 120): SsS-HikCls 3=KCLs 3) /C3+RND(0)
-                H = intFloor((K[I][3] / fnd()) * 2 + random.nextFloat());
-                S = S - H;
-                K[I][3] = K[I][3] / (3 + random.nextFloat()); // Here RND(0) is in the code as opposed to RND(1).
-                // 6080 PRINT H;"UNIT HIT ON ENTERPRISE FROM SECTOR";K(I,1);",";K(I,2)"
-                println(H + "UNIT HIT ON ENTERPRISE FROM SECTOR " + intFloor(K[I][1]) + "," + intFloor(K[I][2]));
-                // 6090 IFS<=0 THEN 6240
-                if (S <= 0) {
-                    enterpriseDestroyed6240(); // Ouch, we're done
-                } else {
-                    // 6100 PRINT" <SHIELDS DOWN TO"S Ss “UNL TS> "3 :IFH<20 THEN 6200
-                    println(" <SHIELDS DOWN TO " + S + " UNITS> ");
-                    if (H < 20) {
-                        continue;
-                    }
-                    // 6120 IF RND(1)>.60 OR H/S<=.02 THEN 6200
-                    if (random.nextFloat() > 0.6 || H / S <= 0.02) {
-                        continue;
-                    }
-                    // 6140 R1=FNR(1):D(R1)= FNRC1) 2DORI = DCRL) -H/S- «S*PNDC 1) :GOSUB 8790
-                    R1 = fnr();
-                    int index = intFloor(R1);
-                    D[index] = D[index] - H / S - 0.5F * random.nextFloat();
-                    // 6170 PRINT"DAMAGE CONTROL REPORTS ‘";G2$;" DAMAGED BY THE HIT'"
-                    print("DAMAGE CONTROL REPORTS ‘" + deviceName8790(index) + " DAMAGED BY THE HIT'");
-                }
-            }
-        }
-        // 6200 NEXTI:RETURN
     }
 
     private void shortRangeSensors6430() {
@@ -1436,19 +1465,6 @@ public class Game {
             }
         }
         println(O1$);
-    }
-
-    private void findEmptyPlaceInQuadrant8590() {
-        // 8580 REM FIND EMPTY PLACE IN QUADRANT (FOR THINGS)
-        // 8590 RI= FNC 1): R2=FNRC 1) :Aas=" ":Z1=R12Z2= R2: GOSUB 8830:1 FZ3=OTHEN B590
-        do {
-            R1 = fnr();
-            R2 = fnr();
-            A$ = EMPTY_ICON;
-            Z1 = R1;
-            Z2 = R2;
-            checkForIcon8830();
-        } while (Z3 == 0);
     }
 
     private void insertIconInQuadrantString8670(int S1, int S2, String icon) {
