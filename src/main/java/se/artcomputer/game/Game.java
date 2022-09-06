@@ -24,6 +24,7 @@ public class Game {
      */
     // private float[][] G = new float[9][9]; // 330
     private final GalaxyContent galaxyContent = new GalaxyContent();
+
     /**
      * Constant table for translating from a given course (1-9) to delta on S1 and S2.
      */
@@ -36,7 +37,9 @@ public class Game {
     private final float[][] K = new float[4][4]; // 330
     //private float[] NA = new float[4]; // 330
     //private float N; // 3170
-    private final float[][] Z = new float[9][9]; // 330
+    //private final float[][] Z = new float[9][9]; // 330
+    private final GalaxyContent cumulativeContent = new GalaxyContent();
+
     /**
      * Damage
      * 1 = Warp engines
@@ -211,7 +214,7 @@ public class Game {
     }
 
     // 710 A1$="NAVSRSLRSPHATORSHEDAMCOMXXX"
-    private final String A1$ = "NAVSRSLRSPHATORSHEDAMCOMXXX";
+    //private final String A1$ = "NAVSRSLRSPHATORSHEDAMCOMXXX";
 
     private int R1, R2;
 
@@ -223,7 +226,6 @@ public class Game {
             // 820 FOR I=1TO8: FOR J=1TO8:K3=0:Z(I,J)=0:R1=RND(1)
             for (int J = 1; J <= 8; J++) {
                 K3 = 0;
-                Z[I][J] = 0;
                 float randomLevel = random.nextFloat();
                 if (randomLevel > 0.98) {
                     // 850 IFR1>.98 THEN K3=3:K9=K9+3:GOTO 980
@@ -314,7 +316,7 @@ public class Game {
         S3 = 0;
         G5 = 0;
         D4 = 0.5f * random.nextFloat();
-        Z[Q1][Q2] = galaxyContent.numeric(Q1, Q2);
+        cumulativeContent.setQuadrant(Q1, Q2, galaxyContent.getQuadrant(Q1, Q2));
         // 1390 IF Q1<1 OR Q1>8 OR Q2<1 OR Q2>8 THEN 1600
         if (!(Q1 < 1 || Q1 > 8 || Q2 < 1 || Q2 > 8)) {
             // 1430 GOSUB 9030:Print:IF T0<>T THEN 1490
@@ -359,19 +361,13 @@ public class Game {
         // 1660 REM Position Enterprise in quadrant, then place "K3" Klingons, &
         // 1670 REM "B3" starbases, & "S3" stars elsewhere.
         // 1680 A$="<*>":Z1=S1:Z2=S2:GOSUB 8670:IF K3<1 THEN 1820
-        A$ = STARSHIP_ICON;
-        Z1 = S1;
-        Z2 = S2;
         insertIconInQuadrantString8670(S1, S2, STARSHIP_ICON);
         if (K3 >= 1) {
             // 1720 FOR I=1TOK3: GOSUB 8590: A$="+K+":Z1=R1:Z2=R2
             for (int I = 1; I <= K3; I++) {
                 findEmptyPlaceInQuadrant8590();
-                A$ = KLINGON_ICON;
-                Z1 = R1;
-                Z2 = R2;
                 // 1780 GOSUB 8670: K(I,1)=R1:K(I,2)=R2;K(I,3)=S9*0.5+RND(1):NEXTI
-                insertIconInQuadrantString8670(R1, R1, KLINGON_ICON);
+                insertIconInQuadrantString8670(R1, R2, KLINGON_ICON);
                 K[I][1] = R1;
                 K[I][2] = R2;
                 K[I][3] = S9 * 0.5F + random.nextFloat();
@@ -381,12 +377,9 @@ public class Game {
         if (B3 >= 1) {
             // 1880 GOSUB 8590: A$=">!<":Z1=R1:B4=R1:Z2=R2:B5=R2:GOSUB 8670
             findEmptyPlaceInQuadrant8590();
-            A$ = STARBASE_ICON;
-            Z1 = R1;
             B4 = R1;
-            Z2 = R2;
             B5 = R2;
-            insertIconInQuadrantString8670();
+            insertIconInQuadrantString8670(R1, R2, STARBASE_ICON);
         }
         // 1910 FOR I=1TOS3:GOSUB 8590:A$=" * ":Z1=R1:Z2=R2:GOSUB 8670:NEXTI
         for (int I = 1; I <= S3; I++) {
@@ -394,7 +387,7 @@ public class Game {
             A$ = STAR_ICON;
             Z1 = R1;
             Z2 = R2;
-            insertIconInQuadrantString8670();
+            insertIconInQuadrantString8670(R1, R2, STAR_ICON);
         }
         // 1980 GOSUB 6430
         shortRangeSensors6430();
@@ -488,15 +481,11 @@ public class Game {
         for (int I = 1; I <= K3; I++) {
             if (K[I][3] != 0) {
                 // 2610
-                A$ = EMPTY_ICON;
-                Z1 = K[I][1];
-                Z2 = K[I][2];
-                insertIconInQuadrantString8670();
+                insertIconInQuadrantString8670(K[I][1], K[I][2], EMPTY_ICON);
                 findEmptyPlaceInQuadrant8590();
                 K[I][1] = Z1;
                 K[I][2] = Z2;
-                A$ = KLINGON_ICON;
-                insertIconInQuadrantString8670();
+                insertIconInQuadrantString8670(K[I][1], K[I][2], KLINGON_ICON);
             }
         } // 2700 NEXT I: GOSUB 6000
         klingonsShooting6000();
@@ -551,10 +540,7 @@ public class Game {
     // 3060
     private void moveStarShip(int stepsN) {
         // 3070 A$ = "   " ...
-        A$ = EMPTY_ICON;
-        Z1 = S1;
-        Z2 = S2;
-        insertIconInQuadrantString8670();
+        insertIconInQuadrantString8670(S1, S2, EMPTY_ICON);
         // 3110
         int C1int = intFloor(C1);
         X1 = C[C1int][1] + (C[C1int + 1][1] - C[C1int][1]) * (C1 - C1int);
@@ -596,10 +582,7 @@ public class Game {
 
     private void goto3370(int stepsN) {
         // 3370
-        A$ = STARSHIP_ICON;
-        Z1 = intFloor(S1);
-        Z2 = intFloor(S2);
-        insertIconInQuadrantString8670();
+        insertIconInQuadrantString8670(S1, S2, STARSHIP_ICON);
         maneuverEnergy3910(stepsN);
         T8 = 1;
         if (W1 < 1) {
@@ -727,7 +710,7 @@ public class Game {
                     //  4120 IF I>0 AND I<9 AND J>D AND J<9 THEN N(J-Q2+2)=G(I,J):Z(I,J)=G(I,J)
                     if (I > 0 && I < 9 && J > 0 && J < 9) {
                         N[J - Q2 + 2] = galaxyContent.numeric(I, J);
-                        Z[I][J] = galaxyContent.numeric(I, J);
+                        cumulativeContent.setQuadrant(I, J, galaxyContent.getQuadrant(I, J));
                     }
                 }
                 // 4180 NEXTJ: FOR L=1TO3:PRINT": “;:IFN(L)<0 THEN PRINT"*** ";: GOTO4230
@@ -819,16 +802,13 @@ public class Game {
                         // 4580 K3=K3-1:K9=K9-1:Z1=K(I,1):Z2=K(I,2):A$="   ":GOSUB 8670
                         K3 = K3 - 1;
                         K9 = K9 - 1;
-                        Z1 = K[I][1];
-                        Z2 = K[I][2];
-                        A$ = EMPTY_ICON;
-                        insertIconInQuadrantString8670();
+                        insertIconInQuadrantString8670(K[I][1], K[I][2], EMPTY_ICON);
                         // 4650 K(I,3)=0:G(Q1,Q2)=G(Q1,Q2)-100:Z(Q1,Q2)=G(Q1,Q2):IF K9<=0 THEN 6370
                         K[I][3] = 0;
                         //G[Q1][Q2] = G[Q1][Q2] - 100; // Count down on Klingons in this sector
                         galaxyContent.setKlingons(Q1, Q2, galaxyContent.getKlingons(Q1, Q2) - 1); // Count down on Klingons in this sector
-                        Z[Q1][Q2] = galaxyContent.numeric(Q1, Q2);
-                        if (K9 < 0) {
+                        cumulativeContent.setQuadrant(Q1, Q2, galaxyContent.getQuadrant(Q1, Q2));
+                        if (K9 <= 0) {
                             victory6370();
                         }
                     }
@@ -842,7 +822,7 @@ public class Game {
     private void noEnemy4270() {
         // 4270 PRINT'SCI ENCE OFFICER SPOCK REPORTS ‘SENSORS SHOW NG ENEMY SHIPS"
         // 4280 PRINT" IN THIS QUADRAN "'3G0TO1996
-        println("SCIENCE OFFICER SPOCK REPORTS ‘SENSORS SHOWING ENEMY SHIPS");
+        println("SCIENCE OFFICER SPOCK REPORTS ‘SENSORS SHOWING NO ENEMY SHIPS");
         println(" IN THIS QUADRANT'");
     }
 
@@ -870,10 +850,15 @@ public class Game {
         // 4850 X1=C(C1,1)..
         int C1int = intFloor(C1);
         X1 = C[C1int][1] + (C[C1int + 1][1] - C[C1int][1]) * (C1 - C1int);
+        E = E - 2;
+        P = P - 1;
         X2 = C[C1int][2] + (C[C1int + 1][2] - C[C1int][2]) * (C1 - C1int);
+        X = S1;
+        Y = S2;
         // 4910
         println("TORPEDO TRACK:");
         // 4920
+        boolean missed = false;
         do {
             X = X + X1;
             Y = Y + X2;
@@ -888,8 +873,16 @@ public class Game {
                 Z2 = Y;
                 checkForIcon8830();
                 // 5050 IF Z3 <> 0 THEN 4920
+            } else {
+                missed = true;
             }
-        } while (Z3 == 1);
+        } while (Z3 == 1 && !missed);
+        if (missed) {
+            // 5490 PRINT "TORPEDO MISSED":GOSUB6000
+            println("TORPEDO MISSED");
+            klingonsShooting6000();
+            return;
+        }
         A$ = KLINGON_ICON;
         Z1 = X;
         Z2 = Y;
@@ -943,22 +936,16 @@ public class Game {
                         println("STARFLEET COMMAND REVIEWING YOUR RECORD TO CONSIDER");
                         println("COURT MARTIAL!");
                         D0 = 0;
-                        A$ = EMPTY_ICON;
-                        Z1 = X;
-                        Z2 = Y;
-                        insertIconInQuadrantString8670();
-                        // 5470 G(Q1,Q2)=K3*100..
-                        galaxyContent.setKlingons(Q1, Q2, K3);
-                        galaxyContent.setBases(Q1, Q2, B3);
-                        Z[Q1][Q2] = galaxyContent.numeric(Q1, Q2);
-                        klingonsShooting6000();
-                        return;
                     }
                 }
             }
         }
-
-        // 5490 PRINT "TORPEDO MISSED":GOSUB6000
+        // 5430
+        insertIconInQuadrantString8670(X, Y, EMPTY_ICON);
+        // 5470 G(Q1,Q2)=K3*100..
+        galaxyContent.setKlingons(Q1, Q2, K3);
+        galaxyContent.setBases(Q1, Q2, B3);
+        cumulativeContent.setQuadrant(Q1, Q2, galaxyContent.getQuadrant(Q1, Q2));
         klingonsShooting6000();
     }
 
@@ -1139,7 +1126,7 @@ public class Game {
             case 1 -> statusReport7900();
             case 2 -> calculator8070();
             case 3 -> starbaseNavData8500();
-            case 4 -> goto8150();
+            case 4 -> directionDistanceCalculator8150();
             case 5 -> galaxyRegionMap7400();
             default -> computerHelp();
         }
@@ -1169,10 +1156,10 @@ public class Game {
             if (H8 != 0) {
                 for (int J = 1; J <= 8; J++) {
                     print("| ");
-                    if (Z[I][J] == 0) {
+                    if (cumulativeContent.numeric(I, J) == 0) {
                         print("*** "); // GOTO 7720
                     } else {
-                        print(String.format("%03.0f ", Z[I][J]));
+                        print(String.format("%03.0f ", cumulativeContent.numeric(I, J)));
                     }
                 } // 7720
             } else {
@@ -1246,8 +1233,8 @@ public class Game {
         }
     }
 
-    private void goto8150() {
-        // 8158 PRINT"DIRECTION/DISTANCE CALCULATOR:
+    private void directionDistanceCalculator8150() {
+        // 8150 PRINT"DIRECTION/DISTANCE CALCULATOR:
         println("DIRECTION ON/DISTANCE CALCULATOR:");
         println("YOU ARE AT QUADRANT " + Q1 + "," + Q2 + " SECTOR " + S1 + "," + S2);
         println("PLEASE ENTER");
@@ -1274,7 +1261,7 @@ public class Game {
                     }
                     goto8290();
                 }
-            } else {
+            } else {  // 8410
                 C1 = 7;
                 goto8420();
             }
@@ -1469,18 +1456,23 @@ public class Game {
 
     private void insertIconInQuadrantString8670(int S1, int S2, String icon) {
         quadrantContent.set(S1, S2, icon);
+        println(String.format("insert %d,%d '%s'", S1, S2, icon));
     }
 
-    private void insertIconInQuadrantString8670() {
-        // 8660 REM INSERT IN STRING ARRAY FOR QUADRANT
-        // 8670 S8=INT(Z2-.5)*3+INT(Z1-.5)*24+1
-        //S8 = Math.toIntExact(Math.round(Z2 - 0.5) * 3 + Math.round(Z1 - 0.5) * 24 + 1);
-        // 8675 IF LEN(AS)<>3 THEN PRINT "ERROR": STOP
+    private void insertIconInQuadrantString8670(float S1, float S2, String icon) {
+        insertIconInQuadrantString8670(intFloor(S1), intFloor(S2), icon);
+    }
+
+//    private void insertIconInQuadrantString8670() {
+    // 8660 REM INSERT IN STRING ARRAY FOR QUADRANT
+    // 8670 S8=INT(Z2-.5)*3+INT(Z1-.5)*24+1
+    //S8 = Math.toIntExact(Math.round(Z2 - 0.5) * 3 + Math.round(Z1 - 0.5) * 24 + 1);
+    // 8675 IF LEN(AS)<>3 THEN PRINT "ERROR": STOP
 //        if (A$.length() != 3) {
 //            print("ERROR");
 //            stop();
 //        }
-        insertIconInQuadrantString8670(intFloor(Z1), intFloor(Z2), A$);
+//        insertIconInQuadrantString8670(intFloor(Z1), intFloor(Z2), A$);
 //        // 8680 IFS8= 1 THEN QS=A$+RIGHTS( QS 189): RETURN
 //        if (S8 == 1) {
 //            Q$ = A$ + right$(Q$, 189);
@@ -1491,7 +1483,7 @@ public class Game {
 //        } else
 //            // 8700 Q$=LEFT$(Q$,S8 - 1) +A$+ RIGHT$(Q$,190-S8): RETURN
 //            Q$ = left$(Q$, S8 - 1) + A$ + right$(Q$, 190 - S8);
-    }
+//    }
 
     /**
      * Check if an expected icon A$ is at Z1,Z2.
@@ -1583,8 +1575,8 @@ public class Game {
         }
     }
 
-    private int intFloor(float X) {
-        return Math.toIntExact(Math.round(Math.floor(X)));
+    private int intFloor(float value) {
+        return Math.toIntExact(Math.round(Math.floor(value)));
     }
 
     private int intFloor(double X) {

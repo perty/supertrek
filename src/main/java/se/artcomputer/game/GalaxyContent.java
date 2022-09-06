@@ -4,7 +4,16 @@ package se.artcomputer.game;
  * Instead of having a numerical representation for each quadrant's content.
  */
 public class GalaxyContent {
-    private final Quadrant[][] content = new Quadrant[8][8];
+    private final Quadrant[][] content;
+
+    public GalaxyContent() {
+        content = new Quadrant[8][8];
+        for (int q1 = 1; q1 <= 8; q1++) {
+            for (int q2 = 1; q2 <= 8; q2++) {
+                setQuadrant(q1, q2, new Quadrant(0, 0, 0));
+            }
+        }
+    }
 
     public void init(int q1, int q2, int klingons, int bases, int stars) {
         if (q1 < 1 || q1 > 8 || q2 < 1 || q2 > 8) {
@@ -30,12 +39,20 @@ public class GalaxyContent {
         return getQuadrant(q1, q2).bases;
     }
 
-    private Quadrant getQuadrant(int q1, int q2) {
+    Quadrant getQuadrant(int q1, int q2) {
         if (q1 < 1 || q1 > 8 || q2 < 1 || q2 > 8) {
             System.err.printf("Quadrant of bounds %d,%d%n", q1, q2);
             return new Quadrant(-1, -1, -1);
         }
         return content[q1 - 1][q2 - 1];
+    }
+
+    public void setQuadrant(int q1, int q2, Quadrant quadrant) {
+        if (q1 < 1 || q1 > 8 || q2 < 1 || q2 > 8) {
+            System.err.printf("Quadrant of bounds %d,%d%n", q1, q2);
+        } else {
+            content[q1 - 1][q2 - 1] = quadrant;
+        }
     }
 
     public int getStars(int q1, int q2) {
