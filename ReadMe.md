@@ -52,7 +52,7 @@ There are functions that takes parameters, like `MID$` which extracts a substrin
 
 Correctness will also be a challenge, if I have the stamina to type it all in. If it seems to work, is it as intended?
 
-Update: I had the stamina, it turned out but there are of course issues. It is interesting to see how different programming has become. Today, nobody would put the number of enemies in a variable and all the enemies positions in another place. As of now, when ironed out enough to play the game, the number of enemies left to kill is more than the number of existing enemies. An impossible task.
+Update: I had the stamina, it turned out, but there are of course issues. It is interesting to see how different programming has become. Today, nobody would put the number of enemies in a variable and all the enemies positions in another place. As of now, when ironed out enough to play the game, the number of enemies left to kill is more than the number of existing enemies. An impossible task.
 
 ### Bugs and like
 

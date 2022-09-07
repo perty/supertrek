@@ -38,7 +38,7 @@ public class Game {
     //private float[] NA = new float[4]; // 330
     //private float N; // 3170
     //private final float[][] Z = new float[9][9]; // 330
-    private final GalaxyContent cumulativeContent = new GalaxyContent();
+    private GalaxyContent cumulativeContent;
 
     /**
      * Damage
@@ -211,6 +211,7 @@ public class Game {
         for (int I = 1; I <= 8; I++) {
             D[I] = 0;
         }
+        cumulativeContent = new GalaxyContent();
     }
 
     // 710 A1$="NAVSRSLRSPHATORSHEDAMCOMXXX"
@@ -221,7 +222,6 @@ public class Game {
     // 810 REM Setup what exists in galaxy...
     private void setupGalaxy() {
         // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
-
         for (int I = 1; I <= 8; I++) {
             // 820 FOR I=1TO8: FOR J=1TO8:K3=0:Z(I,J)=0:R1=RND(1)
             for (int J = 1; J <= 8; J++) {
@@ -304,7 +304,7 @@ public class Game {
         println("  ON STARDATE " + (T0 + T9) + ". THIS GIVES YOU " + T9 + " DAYS. THERE" + X0$); //1260
         println("  " + B9 + " STARBASE" + X$ + " IN THE GALAXY TO RESUPPLY YOUR SHIP."); //1270
         println("");
-        println("HIT RETURN WHEN YOU ARE READY.");
+        input$("HIT RETURN WHEN YOU ARE READY.");
     }
 
     private void newQuadrant1320() {
@@ -871,7 +871,7 @@ public class Game {
             } else {
                 missed = true;
             }
-        } while (checkForIcon8830(X, Y, EMPTY_ICON) && !missed);
+        } while (!missed && checkForIcon8830(X, Y, EMPTY_ICON));
         if (missed) {
             // 5490 PRINT "TORPEDO MISSED":GOSUB6000
             println("TORPEDO MISSED");
