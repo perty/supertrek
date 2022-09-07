@@ -130,7 +130,7 @@ public class Game {
     private float A; // 8120
 
     private double fnd() { // 470
-        return Math.pow(Math.sqrt(K[I][1] - S1), 2) + Math.pow(K[I][2] - S2, 2);
+        return Math.sqrt(Math.pow(K[I][1] - S1, 2) + Math.pow(K[I][2] - S2, 2));
     }
 
 
@@ -430,7 +430,7 @@ public class Game {
     private void gotoNAV2300() {
         // 2290 REM Course control begins here
         // 2300
-        C1 = inputF("Course (0-9)");
+        C1 = inputF("Course (0-9): ");
         if (C1 == 9) {
             C1 = 1;
         }
@@ -442,7 +442,7 @@ public class Game {
                 X$ = "0.2";
             }
             // 2360
-            W1 = inputF("WARP FACTOR (0 - " + X$ + "):");
+            W1 = inputF("WARP FACTOR (0 - " + X$ + "): ");
             if (W1 != 0) {
                 if (D[1] < 0 && W1 > 0.2) {
                     // 2470
@@ -551,7 +551,6 @@ public class Game {
         for (int I = 1; I <= stepsN; I++) {
             S1 = S1 + intFloor(X1);
             S2 = S2 + intFloor(X2);
-            println("Move to " + S1 + "," + S2 + ".");
             if (S1 < 1 || S1 >= 9 || S2 < 1 || S2 >= 9) {
                 exceededQuadrantLimits3500(stepsN);
                 return;
@@ -650,7 +649,7 @@ public class Game {
             println(" IS HEREBY *DENIED*. SHUT DOWN YOUR ENGINES.'");
             println("CHIEF ENGINEER SCOTT REPORTS ‘WARP ENGINES SHUT DOWN'");
             // 3840 PRINT" AT SECTOR";S1;",";S2;"OF QUADRANT";Q1;",";Q2;"-'"
-            println(" AT SECTOR" + S1 + "," + S2 + "OF QUADRANT" + Q1 + "," + Q2 + "-'");
+            println(" AT SECTOR " + S1 + "," + S2 + " OF QUADRANT " + Q1 + "," + Q2 + " '");
             // 3850 IF T>T0+T9 THEN 6220
             if (T > T0 + T9) {
                 goto6220();
@@ -769,7 +768,7 @@ public class Game {
             // 4360 PRINT" ENERGY AVAILABLE =";E; "UNITS"
             println(" ENERGY AVAILABLE =" + E + "UNITS");
             // 4370 INPUT'NUMBER OF UNITS TO FIRE";X:IF X<=0 THEN 1990
-            X = input("NUMBER OF UNITS TO FIRE");
+            X = input("NUMBER OF UNITS TO FIRE: ");
             if (X <= 0) {
                 return;
             }
@@ -777,6 +776,9 @@ public class Game {
         } while (E - X < 0);
         // 4410 E=E-X:1FDC7)<6THEN K=XRN*DC1)
         E = E - X;
+        if (D[7] < 0) {
+            X = X * random.nextFloat();
+        }
         // 4450 HI=INT(X/K3) :FORI= 1T03: IFK(I,3)<=0 THEN 4670
         H1 = intFloor(X / K3);
         for (int I = 1; I <= 3; I++) {
@@ -785,11 +787,11 @@ public class Game {
                 H = intFloor((H1 / fnd()) * (random.nextFloat() + 2));
                 if (H <= 0.15 * K[I][3]) {
                     // 4500 PRINT"SENSORS SHOW NO DAMAGE TO ENEMY AT";K(I,1);",";K(I,2):GOTO 4670
-                    println("SENSORS SHOW NO DAMAGE TO ENEMY AT" + K[I][1] + "," + K[I][2]);
+                    println("SENSORS SHOW NO DAMAGE TO ENEMY AT " + K[I][1] + "," + K[I][2]);
                 } else {
                     // 4530 K(I,3)=K(I,3)-H:PRINT H;" UNIT HIT ON KLINGON IN SECTOR";K(I,1);",";K(I,2)
                     K[I][3] = K[I][3] - H;
-                    println(H + " UNIT HIT ON KLINGON IN SECTOR" + K[I][1] + "," + K[I][2]);
+                    println(H + " UNIT HIT ON KLINGON IN SECTOR " + K[I][1] + "," + K[I][2]);
                     // 4550 PRINTK(C I+ 2)s1 FKCLs 3)<=@THENPRINT"*** KLINGON DESTROYED ***"':GOTO 4580
                     if (K[I][3] > 0) {
                         // 4560 PRINT" (SENSORS SHOW'SKCI303."UNITS REMAINING)":GOTO 4670
@@ -836,7 +838,7 @@ public class Game {
             return;
         }
         // 4760 INPUT PHOTON TORPEDO COURSE (1-9)
-        C1 = inputF("PHOTON TORPEDO COURSE (1-9)");
+        C1 = inputF("PHOTON TORPEDO COURSE (1-9): ");
         if (C1 == 9) {
             C1 = 1;
         }
@@ -937,7 +939,7 @@ public class Game {
         }
         // 5562 PRINT ENERGY AVAILABLE ="J E+S;:1NPUT"NUMBER OF UNITS TO SHI ELDS"3x%
         println("ENERGY AVAILABLE = " + (E + S));
-        float X = inputF("NUMBER OF UNITS TO SHIELDS ");
+        float X = inputF("NUMBER OF UNITS TO SHIELDS: ");
         if (X < 0 || S == X) {
             println("<SHIELDS UNCHANGED>");
             return;
@@ -1038,7 +1040,7 @@ public class Game {
                     int index = intFloor(R1);
                     D[index] = D[index] - H / S - 0.5F * random.nextFloat();
                     // 6170 PRINT"DAMAGE CONTROL REPORTS ‘";G2$;" DAMAGED BY THE HIT'"
-                    print("DAMAGE CONTROL REPORTS ‘" + deviceName8790(index) + " DAMAGED BY THE HIT'");
+                    println("DAMAGE CONTROL REPORTS ‘" + deviceName8790(index) + " DAMAGED BY THE HIT'");
                 }
             }
         }
@@ -1097,7 +1099,7 @@ public class Game {
             return;
         }
         // 7320
-        int answer = input("COMPUTER ACTIVE AND AWAITING COMMAND ");
+        int answer = input("COMPUTER ACTIVE AND AWAITING COMMAND: ");
         println("");
         H8 = 1; // Behaviour switch?
         switch (answer) {
@@ -1121,7 +1123,7 @@ public class Game {
     private void cumulativeGalacticRecord7540() {
         // 7530 REM CUM GALACTIC RECORD
         // 7544 PRINT'COMPUTER RECORD. OF GALAXY FOR QUADRANT"; Q
-        println("COMPUTER RECORD. OF GALAXY FOR QUADRANT" + Q1 + "," + Q2);
+        println("COMPUTER RECORD. OF GALAXY FOR QUADRANT " + Q1 + "," + Q2);
         goto7550();
     }
 
@@ -1218,11 +1220,11 @@ public class Game {
         println("YOU ARE AT QUADRANT " + Q1 + "," + Q2 + " SECTOR " + S1 + "," + S2);
         println("PLEASE ENTER");
         println("INITIAL COORDINATES (X,Y)");
-        C1 = input("X:");
-        A = input("Y:");
+        C1 = input("X: ");
+        A = input("Y: ");
         println("FINAL COORDINATES (X,Y)");
-        W1 = input("X:");
-        X = input("Y:");
+        W1 = input("X: ");
+        X = input("Y: ");
         goto8220();
     }
 
@@ -1437,7 +1439,6 @@ public class Game {
 
     private void insertIconInQuadrantString8670(int S1, int S2, String icon) {
         quadrantContent.set(S1, S2, icon);
-        println(String.format("insert %d,%d '%s'", S1, S2, icon));
     }
 
     private void insertIconInQuadrantString8670(float S1, float S2, String icon) {
