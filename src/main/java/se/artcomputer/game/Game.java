@@ -356,7 +356,6 @@ public class Game {
             K[I][3] = 0;
         }
         //Q$ = Z$ + Z$ + Z$ + Z$ + Z$ + Z$ + Z$ + left$(Z$, 17); // 7 * 25 + 17 = 192
-        //Q$ = String.join("", Collections.nCopies(192, " "));
         quadrantContent = new QuadrantContent();
         // 1660 REM Position Enterprise in quadrant, then place "K3" Klingons, &
         // 1670 REM "B3" starbases, & "S3" stars elsewhere.
@@ -384,9 +383,6 @@ public class Game {
         // 1910 FOR I=1TOS3:GOSUB 8590:A$=" * ":Z1=R1:Z2=R2:GOSUB 8670:NEXTI
         for (int I = 1; I <= S3; I++) {
             findEmptyPlaceInQuadrant8590();
-            A$ = STAR_ICON;
-            Z1 = R1;
-            Z2 = R2;
             insertIconInQuadrantString8670(R1, R2, STAR_ICON);
         }
         // 1980 GOSUB 6430
@@ -558,6 +554,7 @@ public class Game {
             println("Move to " + S1 + "," + S2 + ".");
             if (S1 < 1 || S1 >= 9 || S2 < 1 || S2 >= 9) {
                 exceededQuadrantLimits3500(stepsN);
+                return;
             } else {
                 // 3240 S8=INT(S1)*24+INT(S2)*3-26:IFMID$(Q$,S8,2)="  "THEN 3360
                 //int S8 = intFloor(S1) * 24 + intFloor(S2) * 3 - 26;
@@ -599,7 +596,6 @@ public class Game {
     }
 
     // 3498 REM EXCEEDED QUADRANT LIMITS
-
     private void exceededQuadrantLimits3500(int stepsN) {
         // 3500 X=8*Q1+X+N*X1:Y=8*Q2+Y+N*X2:Q1=INT(X/8):Q2=INT(Y/8):S1=INT(X-Q1*8)
         X = 8 * Q1 + X + stepsN * X1;
@@ -745,6 +741,7 @@ public class Game {
             }
             println("");
         }
+        println(galaxyContent.statistics());
     }
 
     /**
@@ -868,75 +865,57 @@ public class Game {
             if (!(X3 < 1 || X3 > 8 || Y3 < 1 || Y3 > 8)) {
                 // 5000 PRINT "  ...
                 println("        " + X3 + "," + Y3);
-                A$ = EMPTY_ICON;
-                Z1 = X;
-                Z2 = Y;
-                checkForIcon8830();
                 // 5050 IF Z3 <> 0 THEN 4920
             } else {
                 missed = true;
             }
-        } while (Z3 == 1 && !missed);
+        } while (checkForIcon8830(X, Y, EMPTY_ICON) && !missed);
         if (missed) {
             // 5490 PRINT "TORPEDO MISSED":GOSUB6000
             println("TORPEDO MISSED");
             klingonsShooting6000();
             return;
         }
-        A$ = KLINGON_ICON;
-        Z1 = X;
-        Z2 = Y;
-        checkForIcon8830();
-        if (Z3 == 1) {
-            println("*** KLINGON DESTROYED ***");
-            K3 = K3 - 1;
-            K9 = K9 - 1;
-            if (K9 <= 0) {
-                victory6370();
-            }
-            boolean breakOut = false;
-            for (I = 1; I <= 3; I++) {
-                if (X3 == K[I][1] && Y3 == K[I][2]) {
-                    breakOut = true;
-                    break;
+        switch (quadrantContent.get(intFloor(X), intFloor(Y))) {
+            case KLINGON_ICON -> {
+                println("*** KLINGON DESTROYED ***");
+                K3 = K3 - 1;
+                K9 = K9 - 1;
+                if (K9 <= 0) {
+                    victory6370();
                 }
+                boolean breakOut = false;
+                for (I = 1; I <= 3; I++) {
+                    if (X3 == K[I][1] && Y3 == K[I][2]) {
+                        breakOut = true;
+                        break;
+                    }
+                }
+                if (!breakOut) {
+                    I = 3;
+                }
+                // 5190 K(I,3)=0:GOTO 5430
+                K[I][3] = 0;
             }
-            if (!breakOut) {
-                I = 3;
-            }
-            // 5190 K(I,3)=0:GOTO 5430
-            K[I][3] = 0;
-        } else {
-            // 5210
-            A$ = STAR_ICON;
-            Z1 = X;
-            Z2 = Y;
-            checkForIcon8830();
-            if (Z3 == 1) {
+            case STAR_ICON -> {
                 println("STAR AT " + X3 + "," + Y3 + " ABSORBED TORPEDO ENERGY.");
                 klingonsShooting6000();
                 return;
-            } else {
-                // 5280
-                A$ = STARBASE_ICON;
-                Z1 = X;
-                Z2 = Y;
-                checkForIcon8830();
-                if (Z3 == 1) {
-                    println("*** STARBASE DESTROYED ***");
-                    B3 = B3 - 1;
-                    B9 = B9 - 1;
-                    // 5360 IFB9>0.. THEN 5400
-                    if (!(B9 > 0) || K9 > T - T0 - T9) {
-                        println("THAT DOES IT, CAPTAIN!! YOU ARE HEREBY RELIEVED OF COMMAND");
-                        println("AND SENTENCED TO 99 STARDATES AT HARD LABOR ON CYGNUS 12!!");
-                        gotoXXX6270();
-                    } else {
-                        // 5400
-                        println("STARFLEET COMMAND REVIEWING YOUR RECORD TO CONSIDER");
-                        println("COURT MARTIAL!");
-                        D0 = 0;
-                    }
+            }
+            case STARBASE_ICON -> {
+                println("*** STARBASE DESTROYED ***");
+                B3 = B3 - 1;
+                B9 = B9 - 1;
+                // 5360 IFB9>0.. THEN 5400
+                if (!(B9 > 0) || K9 > T - T0 - T9) {
+                    println("THAT DOES IT, CAPTAIN!! YOU ARE HEREBY RELIEVED OF COMMAND");
+                    println("AND SENTENCED TO 99 STARDATES AT HARD LABOR ON CYGNUS 12!!");
+                    gotoXXX6270();
+                } else {
+                    // 5400
+                    println("STARFLEET COMMAND REVIEWING YOUR RECORD TO CONSIDER");
+                    println("COURT MARTIAL!");
+                    D0 = 0;
                 }
             }
         }
@@ -1223,11 +1202,11 @@ public class Game {
                 C1 = S1;
                 A = S2; // GOTO 8220
                 goto8220();
-            }
-            // 8460 PRINT"DISTANCE="3SQRCXt2+At2)31FH1TSHEN=IO9
-            println("DISTANCE = " + (Math.sqrt(Math.pow(X, 2) + Math.pow(A, 2))));
-            if (H8 == 1) {
-                break;
+                // 8460 PRINT"DISTANCE="3SQRCXt2+At2)31FH1TSHEN=IO9
+                println("DISTANCE = " + (Math.sqrt(Math.pow(X, 2) + Math.pow(A, 2))));
+                if (H8 == 1) {
+                    break;
+                }
             }
             // 8480
         }
@@ -1259,8 +1238,10 @@ public class Game {
                     } else {
                         C1 = 1; // 8280
                     }
-                    goto8290();
+                } else {
+                    C1 = 1; // 8280
                 }
+                goto8290();
             } else {  // 8410
                 C1 = 7;
                 goto8420();
@@ -1503,6 +1484,14 @@ public class Game {
             Z3 = 0;
         }
         // 8900 Z3=1:RETURN
+    }
+
+    private boolean checkForIcon8830(int s1, int s2, String icon) {
+        return quadrantContent.get(s1, s2).equals(icon);
+    }
+
+    private boolean checkForIcon8830(float s1, float s2, String icon) {
+        return quadrantContent.get(intFloor(s1), intFloor(s2)).equals(icon);
     }
 
     private void stop() {

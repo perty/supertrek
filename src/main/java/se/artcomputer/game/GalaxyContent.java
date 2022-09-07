@@ -15,6 +15,18 @@ public class GalaxyContent {
         }
     }
 
+    public String statistics() {
+        int klingons = 0, bases = 0;
+        for (int q1 = 1; q1 <= 8; q1++) {
+            for (int q2 = 1; q2 <= 8; q2++) {
+                Quadrant quadrant = getQuadrant(q1, q2);
+                klingons += quadrant.klingons;
+                bases += quadrant.bases;
+            }
+        }
+        return String.format("Klingons: %d, Bases: %d", klingons, bases);
+    }
+
     public void init(int q1, int q2, int klingons, int bases, int stars) {
         if (q1 < 1 || q1 > 8 || q2 < 1 || q2 > 8) {
             System.err.printf("Quadrant of bounds %d,%d%n", q1, q2);
