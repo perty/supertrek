@@ -14,8 +14,7 @@ public class Game {
     GameState gameState = INITIAL;
     Scanner scanner = new Scanner(System.in);
 
-    private final Random random = new Random();
-    //private String Z$ = String.join("", Collections.nCopies(25, " "));  // 270
+    private final Random random;
 
     // Try adding one to the size of each array and use 1 based index, as in Basic.
     // 338 DIM G(8,8),C(9,2),K(3.3),N(3),Z(8,8),D(8)
@@ -31,8 +30,8 @@ public class Game {
     private final float[][] C = new float[10][3]; // 330
     /**
      * Klingon sector position and health.
-     * [1][2] : position?
-     * [3] : hit points
+     * [1][2] : position
+     * [3] : hit points remaining
      */
     private final float[][] K = new float[4][4]; // 330
     //private float[] NA = new float[4]; // 330
@@ -55,19 +54,19 @@ public class Game {
     /**
      * Current day
      */
-    private float T = intFloor(random.nextFloat() * 20 + 20) * 100; // 370
+    private float currentDate;
     /**
      * Start day
      */
-    private final float T0 = T; // 370
+    private final float startDate; // 370
     /**
      * Days for mission
      */
-    private int T9 = 25 + intFloor(random.nextFloat() * 10); // 370
+    private int missionDays;
     /**
      * Docked at a starbase
      */
-    private int D0 = 0; // 370
+    private boolean docked = false; // 370
     /**
      * Energy available
      */
@@ -129,6 +128,17 @@ public class Game {
     private int H8; // 7400
     private float A; // 8120
 
+    public Game(Random random) {
+        this.random = random;
+        currentDate = intFloor(random.nextFloat() * 20 + 20) * 100; // 370
+        startDate = currentDate;
+        missionDays = 25 + intFloor(random.nextFloat() * 10); // 370
+        Q1 = fnr();
+        Q2 = fnr();
+        S1 = fnr();
+        S2 = fnr();
+    }
+
     private double fnd() { // 470
         return Math.sqrt(Math.pow(K[I][1] - S1, 2) + Math.pow(K[I][2] - S2, 2));
     }
@@ -145,19 +155,19 @@ public class Game {
     /**
      * Quadrant position
      */
-    private int Q1 = fnr(); // 490
+    private int Q1; // 490
     /**
      * Quadrant position
      */
-    private int Q2 = fnr(); // 490
+    private int Q2; // 490
     /**
      * Sector position
      */
-    private int S1 = fnr(); // 490
+    private int S1; // 490
     /**
      * Sector position
      */
-    private int S2 = fnr(); // 490
+    private int S2; // 490
 
     // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
     /**
@@ -251,8 +261,8 @@ public class Game {
                 galaxyContent.init(I, J, K3, B3, fnr());
             }
         }
-        if (K9 > T9) {
-            T9 = K9 + 1; // Mission is at least one day more than the number of Klingons.
+        if (K9 > missionDays) {
+            missionDays = K9 + 1; // Mission is at least one day more than the number of Klingons.
         }
         // 1100 IF B9 <> 0 THEN 1200
         if (B9 == 0) {
@@ -292,7 +302,12 @@ public class Game {
         initValues();
         setupGalaxy();
         println("                                  ,-----*-----,"); // 221
-        println("                                   `---  ----´");
+        println("                 ,--------------  `----  ----'");
+        println("                  '--------- --'      / /");
+        println("                       ,---' '-------/ /--,");
+        println("                        '----------------'");
+        println("");
+        println("                 THE USS ENTERPRISE --~- NCC~1701");
         prompt(); // 1230
         newQuadrant1320();
     }
@@ -301,7 +316,7 @@ public class Game {
         println("YOUR ORDERS ARE AS FOLLOWS:"); //1230
         println("  DESTROY THE " + K9 + " KLINGON WARSHIPS WHICH HAS INVADED"); //1240
         println("  THE GALAXY BEFORE THEY CAN ATTACK FEDERATION HEADQUARTERS"); //1250
-        println("  ON STARDATE " + (T0 + T9) + ". THIS GIVES YOU " + T9 + " DAYS. THERE" + X0$); //1260
+        println("  ON STARDATE " + (startDate + missionDays) + ". THIS GIVES YOU " + missionDays + " DAYS. THERE" + X0$); //1260
         println("  " + B9 + " STARBASE" + X$ + " IN THE GALAXY TO RESUPPLY YOUR SHIP."); //1270
         println("");
         input$("HIT RETURN WHEN YOU ARE READY.");
@@ -322,7 +337,7 @@ public class Game {
             // 1430 GOSUB 9030:Print:IF T0<>T THEN 1490
             quadrantName9030();
             println("");
-            if (T0 == T) {
+            if (startDate == currentDate) {
                 // 1460 Print "Your mission begins with your starship located"
                 // 1470 PRINT "IN THE GALACTIC QUADRANT," G2$ " QUADRANT ...": GOTO 1500
                 println("YOUR MISSION BEGINS WITH YOUR STARSHIP LOCATED");
@@ -444,7 +459,7 @@ public class Game {
             // 2360
             W1 = inputF("WARP FACTOR (0 - " + X$ + "): ");
             if (W1 != 0) {
-                if (D[1] < 0 && W1 > 0.2) {
+                if (D[1] < 0 && W1 > 0.200001) {
                     // 2470
                     println("WARP ENGINES ARE DAMAGED, MAXIMUM SPEED = WARP 0.2");
                 } else {
@@ -517,18 +532,13 @@ public class Game {
             int index = intFloor(R1);
             if (random.nextFloat() < 0.6) {
                 D[index] = D[index] - (random.nextFloat() * 5 + 1);
-                println("DAMAGE CONTROL REPORT:  ");
-                deviceName8790();
-                println(G2$);
-                println("DAMAGED");
+                println("DAMAGE CONTROL REPORT: " + deviceName8790(index) + " DAMAGED");
                 println("");
             } else {
                 // 3000
                 D[index] = D[index] + (random.nextFloat() * 3 + 1);
-                println("DAMAGE CONTROL REPORT:  ");
-                deviceName8790();
-                println(G2$);
-                println(" STATE OF REPAIR IMPROVED.");
+                println("DAMAGE CONTROL REPORT: " + deviceName8790(index) + " STATE OF REPAIR IMPROVED.");
+                println("");
             }
         } // 3070
     }
@@ -585,8 +595,8 @@ public class Game {
             T8 = 0.1F * intFloor(10 * W1);
         }
         // 3450 T=T+T8:IFT>T0+T9 THEN 6220
-        T = T + intFloor(T8);
-        if (T > T0 + T9) {
+        currentDate = currentDate + intFloor(T8);
+        if (currentDate > startDate + missionDays) {
             goto6220(); // Ran out of time
         }
         // 3470 REM See if docked, then command
@@ -651,7 +661,7 @@ public class Game {
             // 3840 PRINT" AT SECTOR";S1;",";S2;"OF QUADRANT";Q1;",";Q2;"-'"
             println(" AT SECTOR " + S1 + "," + S2 + " OF QUADRANT " + Q1 + "," + Q2 + " '");
             // 3850 IF T>T0+T9 THEN 6220
-            if (T > T0 + T9) {
+            if (currentDate > startDate + missionDays) {
                 goto6220();
             }
         }
@@ -660,7 +670,7 @@ public class Game {
             goto3370(stepsN);
         } else {
             // 3870 T=T+1:GOSUB 3910: GOTO 1320
-            T = T + 1;
+            currentDate = currentDate + 1;
             maneuverEnergy3910(stepsN);
             // goto 1320 is entering a new quadrant.
             newQuadrant1320();
@@ -909,7 +919,7 @@ public class Game {
                 B3 = B3 - 1;
                 B9 = B9 - 1;
                 // 5360 IFB9>0.. THEN 5400
-                if (!(B9 > 0) || K9 > T - T0 - T9) {
+                if (!(B9 > 0) || K9 > currentDate - startDate - missionDays) {
                     println("THAT DOES IT, CAPTAIN!! YOU ARE HEREBY RELIEVED OF COMMAND");
                     println("AND SENTENCED TO 99 STARDATES AT HARD LABOR ON CYGNUS 12!!");
                     gotoXXX6270();
@@ -917,7 +927,7 @@ public class Game {
                     // 5400
                     println("STARFLEET COMMAND REVIEWING YOUR RECORD TO CONSIDER");
                     println("COURT MARTIAL!");
-                    D0 = 0;
+                    docked = false;
                 }
             }
         }
@@ -959,7 +969,7 @@ public class Game {
         // do {
         if (D[6] < 0) {
             println("DAMAGE CONTROL NOT AVAILABLE");
-            if (D0 == 0) {
+            if (!docked) {
                 return;
             }
             // 5720
@@ -989,7 +999,7 @@ public class Game {
                     D[I] = 0;
                 }
             }
-            T = T + D3 + 0.1f;
+            currentDate = currentDate + D3 + 0.1f;
         }
         // 5910
         println("");
@@ -1009,7 +1019,7 @@ public class Game {
             return;
         }
         // 6010 TFDG<>QTHENPRINT'STARBASE SHIELDS PROTECT THE ENTERPRISE": RETURN
-        if (D0 != 0) {
+        if (docked) {
             print("STARBASE SHIELDS PROTECT THE ENTERPRISE");
             return;
         }
@@ -1049,7 +1059,7 @@ public class Game {
 
     private void goto6220() {
         // 6228 PRINT"LT 15 STARDATE"3 T:GOTO 6270
-        println("IT IS STARDATE " + T);
+        println("IT IS STARDATE " + currentDate);
         gotoXXX6270();
     }
 
@@ -1080,7 +1090,7 @@ public class Game {
         println("CONGRATULATION, CAPTAIN! THE LAST KLINGON BATTLE CRUISER");
         println("MENACING THE FEDERATION HAS BEEN DESTROYED.");
         // 6400 PRINT"YOUR EFFICLENCY RATINGI15"319G@*I~1(92)K127:GOTO 6290
-        println("YOUR EFFICIENCY RATING IS " + Math.pow(1000 * (K7 / (T - 10F)), 2));
+        println("YOUR EFFICIENCY RATING IS " + Math.pow(1000 * (K7 / (currentDate - 10F)), 2));
         restart6290();
     }
 
@@ -1171,7 +1181,7 @@ public class Game {
             X$ = "S";
         }
         println("KLINGON" + X$ + " LEFT: " + K9);
-        println("MISSION MUST BE COMPLETED IN " + (0.1 * intFloor((T0 + T9 - T) * 10)) + " STARDATES");
+        println("MISSION MUST BE COMPLETED IN " + (0.1 * intFloor((startDate + missionDays - currentDate) * 10)) + " STARDATES");
         X$ = "S";
         if (B9 < 2) {
             X$ = "";
@@ -1362,26 +1372,21 @@ public class Game {
 
     private void shortRangeSensors6430() {
         // 6430 FORI=S1-1TOS1+1: FOR J=S2-1TOS2t1
-        boolean docked = false;
+        docked = false;
         for (int I = S1 - 1; I <= S1 + 1; I++) {
             for (int J = S2 - 1; J <= S2 + 1; J++) {
                 // 6450 TF INT C L ++. .5) >58 OR)IN T<C U+1- 5)G < LOORIRN TIC J+.W 5)T>3 C THEN 6540
                 if (!(I < 1 || I > 8 || J < 1 || J > 8)) {
                     // 6490 ASH">!<"3Zfal:Z2eI:GIOG:S1FUz3+L1B THEN 6580
-                    A$ = STARBASE_ICON;
-                    Z1 = I;
-                    Z2 = J;
-                    checkForIcon8830();
-                    if (Z3 == 1) {
+                    if (checkForIcon8830(I, J, STARBASE_ICON)) {
                         docked = true;
                         break;
                     }
                 }
             }
         }
-        // 6540 NEXTUSNEC:TI D@=G:GOTO6650
+        // 6540 NEXT:NEXTJ:D0 = 0:GOTO6650
         if (!docked) {
-            D0 = 0;
             // 6650 IM(3>@THEN C$="*RED*'":GOTO 6720
             if (K3 > 0) {
                 C$ = "*RED*";
@@ -1394,7 +1399,6 @@ public class Game {
             }
         } else {
             // 6580 D0=1:C$="DOCKED":E=E0:P=P0
-            D0 = 1;
             C$ = "DOCKED";
             E = E0;
             P = P0;
@@ -1424,7 +1428,7 @@ public class Game {
             print(line);
             // 6830 ON I GOTO
             switch (I) {
-                case 1 -> println("     STARDATE           " + intFloor(T * 10) * 0.1);
+                case 1 -> println("     STARDATE           " + intFloor(currentDate * 10) * 0.1);
                 case 2 -> println("     CONDITION          " + C$);
                 case 3 -> println("     QUADRANT           " + Q1 + "," + Q2);
                 case 4 -> println("     SECTOR             " + S1 + "," + S2);
@@ -1485,10 +1489,6 @@ public class Game {
             Z3 = 0;
         }
         // 8900 Z3=1:RETURN
-    }
-
-    private boolean checkForIcon8830(int s1, int s2, String icon) {
-        return quadrantContent.get(s1, s2).equals(icon);
     }
 
     private boolean checkForIcon8830(float s1, float s2, String icon) {

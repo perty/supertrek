@@ -52,7 +52,7 @@ There are functions that takes parameters, like `MID$` which extracts a substrin
 
 Correctness will also be a challenge, if I have the stamina to type it all in. If it seems to work, is it as intended?
 
-Update: I had the stamina, it turned out, but there are of course issues. It is interesting to see how different programming has become. Today, nobody would put the number of enemies in a variable and all the enemies positions in another place. As of now, when ironed out enough to play the game, the number of enemies left to kill is more than the number of existing enemies. An impossible task.
+Update: I had the stamina, it turned out, but there are of course issues. It is interesting to see how different programming has become. Today, nobody would put the number of enemies in a variable and all the enemies positions in another place. As of now, when ironed out enough to play the game, the number of enemies left to kill is more than the number of existing enemies. An impossible task. Turned out to be a bug when loosing and volunteering for a new mission.
 
 ### Bugs and like
 
@@ -61,6 +61,10 @@ The Basic code is well tested by playing and I believe no true bugs are there.
 However, bugs are created in the translation so that takes extensive testing to find out. Since I don't remember much about how to play and never known the inner workings, it is a challenge.
 
 I have discovered some minor things when using subroutines that will probably not cause any errors. 
+
+### Testing
+
+Now that I have got it to work somewhat, I need to start testing more extensively. I am thinking that the random number generator could get a seed so that the same game is played each time. Also, a feature that would be nice is a log of events. Can be used in verifying but perhaps also entertaining. 
 
 ### Ultimate goal
 
