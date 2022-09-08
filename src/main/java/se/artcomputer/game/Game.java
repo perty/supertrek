@@ -11,7 +11,7 @@ import static se.artcomputer.game.QuadrantContent.*;
  */
 public class Game {
     GameState gameState = INITIAL;
-    private final GameInput scanner ;
+    private final GameInput scanner;
 
     private final Random random;
 
@@ -1371,42 +1371,7 @@ public class Game {
     }
 
     private void shortRangeSensors6430() {
-        // 6430 FORI=S1-1TOS1+1: FOR J=S2-1TOS2t1
-        docked = false;
-        for (int I = S1 - 1; I <= S1 + 1; I++) {
-            for (int J = S2 - 1; J <= S2 + 1; J++) {
-                // 6450 TF INT C L ++. .5) >58 OR)IN T<C U+1- 5)G < LOORIRN TIC J+.W 5)T>3 C THEN 6540
-                if (!(I < 1 || I > 8 || J < 1 || J > 8)) {
-                    // 6490 ASH">!<"3Zfal:Z2eI:GIOG:S1FUz3+L1B THEN 6580
-                    if (checkForIcon8830(I, J, STARBASE_ICON)) {
-                        docked = true;
-                        break;
-                    }
-                }
-            }
-        }
-        // 6540 NEXT:NEXTJ:D0 = 0:GOTO6650
-        if (!docked) {
-            // 6650 IM(3>@THEN C$="*RED*'":GOTO 6720
-            if (K3 > 0) {
-                C$ = "*RED*";
-            } else {
-                // 6660 CS="GREEN"':iFE<EG*«1THENCS="YELLOW"
-                C$ = "GREEN";
-                if (E < E0 * 0.1) {
-                    C$ = "YELLOW";
-                }
-            }
-        } else {
-            // 6580 D0=1:C$="DOCKED":E=E0:P=P0
-            C$ = "DOCKED";
-            E = E0;
-            P = P0;
-            // 6620 PRINT'SHIELDS DROPPED FOP DOCKING PURPOSES": S=0:GOTO 6720
-            println("SHIELDS DROPPED FOP DOCKING PURPOSES");
-            S = 0;
-        }
-
+        Condition condition = condition();
         // 6720 ILFDC 2) >= G@THEN 6770
         if (D[2] < 0) {
             // 6730 PRINT: PRINT #*# SHORT RANGE SENSORS ARE OUT #4##": PRENT: RETURN
@@ -1429,7 +1394,7 @@ public class Game {
             // 6830 ON I GOTO
             switch (I) {
                 case 1 -> println("     STARDATE           " + intFloor(currentDate * 10) * 0.1);
-                case 2 -> println("     CONDITION          " + C$);
+                case 2 -> println("     CONDITION          " + condition.toString());
                 case 3 -> println("     QUADRANT           " + Q1 + "," + Q2);
                 case 4 -> println("     SECTOR             " + S1 + "," + S2);
                 case 5 -> println("     PHOTON TORPEDOES   " + intFloor(P));
@@ -1614,4 +1579,55 @@ public class Game {
         print("Tab" + tab);
     }
 
+    public int totalKlingons() {
+        return galaxyContent.getTotalKlingons();
+    }
+
+    public Position currentSector() {
+        return new Position(S1, S2);
+    }
+
+    public Position currentQuadrant() {
+        return new Position(Q1, Q2);
+    }
+
+    public Condition condition() {
+        Condition result;
+        // 6430 FORI=S1-1TOS1+1: FOR J=S2-1TOS2t1
+        docked = false;
+        for (int I = S1 - 1; I <= S1 + 1; I++) {
+            for (int J = S2 - 1; J <= S2 + 1; J++) {
+                // 6450 TF INT C L ++. .5) >58 OR)IN T<C U+1- 5)G < LOORIRN TIC J+.W 5)T>3 C THEN 6540
+                if (!(I < 1 || I > 8 || J < 1 || J > 8)) {
+                    // 6490 ASH">!<"3Zfal:Z2eI:GIOG:S1FUz3+L1B THEN 6580
+                    if (checkForIcon8830(I, J, STARBASE_ICON)) {
+                        docked = true;
+                        break;
+                    }
+                }
+            }
+        }
+        // 6540 NEXT:NEXTJ:D0 = 0:GOTO6650
+        if (!docked) {
+            // 6650 IM(3>@THEN C$="*RED*'":GOTO 6720
+            if (K3 > 0) {
+                result = Condition.RED;
+            } else {
+                // 6660 CS="GREEN"':iFE<EG*«1THENCS="YELLOW"
+                result = Condition.GREEN;
+                if (E < E0 * 0.1) {
+                    result = Condition.YELLOW;
+                }
+            }
+        } else {
+            // 6580 D0=1:C$="DOCKED":E=E0:P=P0
+            result = Condition.DOCKED;
+            E = E0;
+            P = P0;
+            // 6620 PRINT'SHIELDS DROPPED FOP DOCKING PURPOSES": S=0:GOTO 6720
+            println("SHIELDS DROPPED FOP DOCKING PURPOSES");
+            S = 0;
+        }
+        return result;
+    }
 }

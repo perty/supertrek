@@ -76,6 +76,17 @@ public class GalaxyContent {
         return quadrant.klingons * 100 + quadrant.bases * 10 + quadrant.stars;
     }
 
+    public int getTotalKlingons() {
+        int klingons = 0;
+        for (int q1 = 1; q1 <= 8; q1++) {
+            for (int q2 = 1; q2 <= 8; q2++) {
+                Quadrant quadrant = getQuadrant(q1, q2);
+                klingons += quadrant.klingons;
+            }
+        }
+        return klingons;
+    }
+
     private static class Quadrant {
         int klingons;
         int bases;
