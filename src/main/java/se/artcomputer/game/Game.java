@@ -966,41 +966,41 @@ public class Game {
     }
 
     private void gotoDAM5690() {
-        // do {
         if (D[6] < 0) {
             println("DAMAGE CONTROL NOT AVAILABLE");
             if (!docked) {
                 return;
             }
-            // 5720
-            float D3 = 0;
-            for (int I = 1; I <= 8; I++) {
-                if (D[I] < 0) {
-                    D3 = D3 + 0.1f;
-                }
-            }
-            if (D3 == 0) {
-                return;
-            }
-            // 5780
-            println("");
-            D3 = D3 + D4;
-            if (D3 >= 1) {
-                D3 = 0.9f;
-            }
-            println("TECHNICIANS STANDING BY TO EFFECT REPAIRS TO YOUR SHIP");
-            println("ESTIMATED TIME TO REPAIR: " + 0.01 * intFloor(100 * D3) + " STARDATES");
-            String answer = input$("WILL YOU AUTHORIZE THE REPAIR ORDER (Y/N)");
-            if (!answer.equalsIgnoreCase("y")) {
-                return;
-            }
-            for (int I = 1; I <= 8; I++) {
-                if (D[I] < 0) {
-                    D[I] = 0;
-                }
-            }
-            currentDate = currentDate + D3 + 0.1f;
         }
+        if (docked) {
+            // 5720
+            float repairCost = 0;
+            for (int I = 1; I <= 8; I++) {
+                if (D[I] < 0) {
+                    repairCost = repairCost + 0.1f;
+                }
+            }
+            if (repairCost > 0) {
+                // 5780
+                println("");
+                repairCost = repairCost + D4;
+                if (repairCost >= 1) {
+                    repairCost = 0.9f;
+                }
+                println("TECHNICIANS STANDING BY TO EFFECT REPAIRS TO YOUR SHIP");
+                println("ESTIMATED TIME TO REPAIR: " + 0.01 * intFloor(100 * repairCost) + " STARDATES");
+                String answer = input$("WILL YOU AUTHORIZE THE REPAIR ORDER (Y/N)");
+                if (answer.equalsIgnoreCase("y")) {
+                    for (int I = 1; I <= 8; I++) {
+                        if (D[I] < 0) {
+                            D[I] = 0;
+                        }
+                    }
+                    currentDate = currentDate + repairCost + 0.1f;
+                }
+            }
+        }
+
         // 5910
         println("");
         println(String.format("%20s %s", "DEVICE", "STATE OF REPAIR"));
@@ -1009,7 +1009,6 @@ public class Game {
         }
         println("");
     }
-    //while (D0 != 0); // GOTO 5720
 
 
     private void klingonsShooting6000() {

@@ -47,7 +47,7 @@ class GameTest {
         scanner.setLines("NAV", "5", "0.1");
         game.step();
         assertEquals(DOCKED, game.condition());
-        scanner.setLines("DAM");
+        scanner.setLines("DAM", "Y");
         game.step();
     }
 

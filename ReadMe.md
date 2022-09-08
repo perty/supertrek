@@ -62,6 +62,8 @@ However, bugs are created in the translation so that takes extensive testing to 
 
 I have discovered some minor things when using subroutines that will probably not cause any errors. 
 
+Discovered however code that is weird. The damage repair is not available unless the damage control itself is damaged. There is also a check that at least one device is damaged, which will always be true. So that has to change.
+
 ### Testing
 
 Now that I have got it to work somewhat, I need to start testing more extensively. I am thinking that the random number generator could get a seed so that the same game is played each time. Also, a feature that would be nice is a log of events. Can be used in verifying but perhaps also entertaining. 
