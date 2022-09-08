@@ -1,15 +1,26 @@
 package se.artcomputer.game;
 
 import java.util.Random;
+import java.util.Scanner;
 
 import static se.artcomputer.game.GameState.STOPPED;
 
 public class Main {
     public static void main(String[] args) {
         long seed = 1337;
-        Game game = new Game(new Random(seed));
+        Game game = new Game(new GameInputImpl(), new Random(seed));
         while (game.gameState != STOPPED) {
-            game.run();
+            game.step();
         }
     }
+
+    private static class GameInputImpl implements GameInput {
+        private final Scanner scanner = new Scanner(System.in);
+
+        @Override
+        public String nextLine() {
+            return scanner.nextLine();
+        }
+    }
+
 }

@@ -2,7 +2,6 @@ package se.artcomputer.game;
 
 import java.util.Collections;
 import java.util.Random;
-import java.util.Scanner;
 
 import static se.artcomputer.game.GameState.*;
 import static se.artcomputer.game.QuadrantContent.*;
@@ -12,7 +11,7 @@ import static se.artcomputer.game.QuadrantContent.*;
  */
 public class Game {
     GameState gameState = INITIAL;
-    Scanner scanner = new Scanner(System.in);
+    private final GameInput scanner ;
 
     private final Random random;
 
@@ -128,7 +127,8 @@ public class Game {
     private int H8; // 7400
     private float A; // 8120
 
-    public Game(Random random) {
+    public Game(GameInput scanner, Random random) {
+        this.scanner = scanner;
         this.random = random;
         currentDate = intFloor(random.nextFloat() * 20 + 20) * 100; // 370
         startDate = currentDate;
@@ -288,7 +288,7 @@ public class Game {
         }
     }
 
-    public void run() {
+    public void step() {
         switch (gameState) {
             case INITIAL -> {
                 initial();
