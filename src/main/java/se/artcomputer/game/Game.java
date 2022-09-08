@@ -479,7 +479,6 @@ public class Game {
                         moveStarShip(stepsN);
                     }
                 }
-
             }
         }
     }
@@ -1413,28 +1412,6 @@ public class Game {
         insertIconInQuadrantString8670(intFloor(S1), intFloor(S2), icon);
     }
 
-//    private void insertIconInQuadrantString8670() {
-    // 8660 REM INSERT IN STRING ARRAY FOR QUADRANT
-    // 8670 S8=INT(Z2-.5)*3+INT(Z1-.5)*24+1
-    //S8 = Math.toIntExact(Math.round(Z2 - 0.5) * 3 + Math.round(Z1 - 0.5) * 24 + 1);
-    // 8675 IF LEN(AS)<>3 THEN PRINT "ERROR": STOP
-//        if (A$.length() != 3) {
-//            print("ERROR");
-//            stop();
-//        }
-//        insertIconInQuadrantString8670(intFloor(Z1), intFloor(Z2), A$);
-//        // 8680 IFS8= 1 THEN QS=A$+RIGHTS( QS 189): RETURN
-//        if (S8 == 1) {
-//            Q$ = A$ + right$(Q$, 189);
-//        }
-//        // 8690 IFS8= 196THEN QS=LEFTS( @$s 189) +AS: RETURN
-//        else if (S8 == 190) {
-//            Q$ = left$(Q$, 189) + A$;
-//        } else
-//            // 8700 Q$=LEFT$(Q$,S8 - 1) +A$+ RIGHT$(Q$,190-S8): RETURN
-//            Q$ = left$(Q$, S8 - 1) + A$ + right$(Q$, 190 - S8);
-//    }
-
     /**
      * Check if an expected icon A$ is at Z1,Z2.
      * Z3 = 1 is used to indicate success.
@@ -1463,26 +1440,6 @@ public class Game {
         print("STOP");
         gameState = STOPPED;
     }
-
-//    private String left$(String input, int i) {
-//        return input.substring(0, Math.min(i - 1, input.length() - 1));
-//    }
-
-//    private String right$(String input, int i) {
-//        if (input.length() - i - 1 > input.length()) {
-//            println("right$ out of bounds " + i + "(" + input.length() + ")");
-//            return "";
-//        }
-//        return input.substring(input.length() - i - 1);
-//    }
-
-//    private String mid$(String string, int start, int length) {
-//        if (string.length() < start - 1 + length || start <= 0) {
-//            println("out of bounds " + (start + length));
-//            return "";
-//        }
-//        return string.substring(start - 1, start - 1 + length);
-//    }
 
     private static final String[] quadrantName1 =
             new String[]{
@@ -1628,5 +1585,9 @@ public class Game {
             S = 0;
         }
         return result;
+    }
+
+    public float shields() {
+        return S;
     }
 }

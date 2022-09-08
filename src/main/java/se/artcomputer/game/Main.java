@@ -7,7 +7,7 @@ import static se.artcomputer.game.GameState.STOPPED;
 
 public class Main {
     public static void main(String[] args) {
-        long seed = 1337;
+        long seed = 123456789;
         Game game = new Game(new GameInputImpl(), new Random(seed));
         while (game.gameState != STOPPED) {
             game.step();
