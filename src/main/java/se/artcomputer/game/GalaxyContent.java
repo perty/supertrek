@@ -27,7 +27,7 @@ public class GalaxyContent {
         return String.format("Klingons: %d, Bases: %d", klingons, bases);
     }
 
-    public void init(int q1, int q2, int klingons, int bases, int stars) {
+    public void initQuadrant(int q1, int q2, int klingons, int bases, int stars) {
         if (q1 < 1 || q1 > 8 || q2 < 1 || q2 > 8) {
             System.err.printf("Quadrant of bounds %d,%d%n", q1, q2);
         } else {

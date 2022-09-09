@@ -10,6 +10,7 @@ import static se.artcomputer.game.QuadrantContent.*;
  * Super Star Trek - May, 16 1978 - Requires 24k memory
  */
 public class Game {
+
     GameState gameState = INITIAL;
     private final GameInput scanner;
 
@@ -38,18 +39,15 @@ public class Game {
     //private final float[][] Z = new float[9][9]; // 330
     private GalaxyContent cumulativeContent;
 
-    /**
-     * Damage
-     * 1 = Warp engines
-     * 2 = Short range sensors
-     * 3 = Long range sensors
-     * 4 = phasers
-     * 5 = torpedoes
-     * 6 = damage control
-     * 7 = shield control
-     * 8 = computer
-     */
-    private final float[] D = new float[9]; // 330
+    private final float[] damage = new float[9]; // 330
+    private static final int DAMAGE_WARP_ENGINES = 1;
+    private static final int DAMAGE_SHORT_RANGE_SENSORS = 2;
+    private static final int DAMAGE_LONG_RANGE_SENSORS = 3;
+    private static final int DAMAGE_PHASER_CONTROL = 4;
+    private static final int DAMAGE_TORPEDOES = 5;
+    private static final int DAMAGE_DAMAGE_CONTROL = 6;
+    private static final int DAMAGE_SHIELD_CONTROL = 7;
+    private static final int DAMAGE_COMPUTER = 8;
     /**
      * Current day
      */
@@ -69,8 +67,8 @@ public class Game {
     /**
      * Energy available
      */
-    private float E = 3000; // 370
-    private final float E0 = E; // 370
+    private float energy = 3000; // 370
+    private final float E0 = energy; // 370
 
     /**
      * Photon torpedoes
@@ -81,7 +79,7 @@ public class Game {
     /**
      * Shield energy
      */
-    private float S = 0; // 440
+    private float shieldLevel = 0; // 440
     /**
      * Number of starbases
      */
@@ -219,7 +217,7 @@ public class Game {
 
         // 670 FOR I=1TO8:D(I)=0:NEXT I
         for (int I = 1; I <= 8; I++) {
-            D[I] = 0;
+            damage[I] = 0;
         }
         cumulativeContent = new GalaxyContent();
     }
@@ -258,7 +256,7 @@ public class Game {
                 }
                 // 1040 G(I,J)=K3*100+B3*10+FNR(1):NEXTJ:NEXTI:IFK9>T9 THEN T9=K9+1
                 //G[I][J] = K3 * 100 + B3 * 10 + fnr();
-                galaxyContent.init(I, J, K3, B3, fnr());
+                galaxyContent.initQuadrant(I, J, K3, B3, fnr());
             }
         }
         if (K9 > missionDays) {
@@ -355,7 +353,7 @@ public class Game {
             if (K3 != 0) {
                 // 1560 Print "COMBAT AREA    CONDITION RED": IF S>200 THEN 1590
                 println("COMBAT AREA CONDITION RED");
-                if (S <= 200) {
+                if (shieldLevel <= 200) {
                     // 1580 Print "     Shields dangerously low"
                     println("     SHIELDS DANGEROUSLY LOW");
                 }
@@ -406,8 +404,8 @@ public class Game {
 
     private void command() {
         // 1990 IF S+E > 10 THEN IF E>10 OR D[7]=0 THEN 2060
-        if (S + E <= 10) {
-            if (E <= 10 && D[7] != 0) {
+        if (shieldLevel + energy <= 10) {
+            if (energy <= 10 && damage[DAMAGE_SHIELD_CONTROL] != 0) {
                 // 2020 2030 2040 2050
                 println("");
                 println("** FATAL ERROR ** YOU'VE JUST STRANDED YOUR SHIP IN ");
@@ -453,25 +451,25 @@ public class Game {
             println(" LT. SULU REPORTS 'INCORRECT COURSE DATA, SIR!'");
         } else {
             X$ = "8"; // 2350 NSeF"DCG1)<8OTH"ENX:S=L"ge2"
-            if (D[1] < 0) {
+            if (damage[DAMAGE_WARP_ENGINES] < 0) {
                 X$ = "0.2";
             }
             // 2360
             W1 = inputF("WARP FACTOR (0 - " + X$ + "): ");
             if (W1 != 0) {
-                if (D[1] < 0 && W1 > 0.200001) {
+                if (damage[DAMAGE_WARP_ENGINES] < 0 && W1 > 0.200001) {
                     // 2470
                     println("WARP ENGINES ARE DAMAGED, MAXIMUM SPEED = WARP 0.2");
                 } else {
                     if (W1 > 0 && W1 <= 8) {
                         // 2490
                         int stepsN = intFloor(W1 * 8 + 0.5);
-                        if (E - stepsN < 0) {
+                        if (energy - stepsN < 0) {
                             println("ENGINEERING REPORTS 'INSUFFICIENT ENERGY AVAILABLE");
                             println("  FOR MANEUVERING AT WARP " + W1 + "!");
                             // 2530
-                            if (!(S < stepsN - E || D[7] > 0)) {
-                                println("DEFLECTOR CONTROL ROOM ACKNOWLEDGES " + S + " UNITS OF ENERGY");
+                            if (!(shieldLevel < stepsN - energy || damage[DAMAGE_DAMAGE_CONTROL] > 0)) {
+                                println("DEFLECTOR CONTROL ROOM ACKNOWLEDGES " + shieldLevel + " UNITS OF ENERGY");
                                 println("  PRESENTLY DEPLOYED TO SHIELDS.");
                             }
                         }
@@ -505,20 +503,20 @@ public class Game {
             D6 = 1;
         }
         // 2770 FORI=1TO8:IFD(I)>=0THEN2880
-        for (int I = 1; I <= 8; I++) {
-            if (D[I] < 0) {
+        for (int index = 1; index <= 8; index++) {
+            if (damage[index] < 0) {
                 // 2790 D(I)=D(I)+D6:IFD(I)>-.1 AND D(I)<0 THEN D(I)=.1 : GOTO 2880
-                D[I] = D[I] + D6;
-                if (D[I] > -0.1 && D[I] < 0) {
-                    D[I] = -0.1F;
+                damage[index] = damage[index] + D6;
+                if (damage[index] > -0.1 && damage[index] < 0) {
+                    damage[index] = -0.1F;
                 } else {
-                    if (D[I] >= 0) {
+                    if (damage[index] >= 0) {
                         if (D1 != 1) {
                             D1 = 1;
                         }
                         println("DAMAGE CONTROL REPORT:  ");
                         println("\t\t\t\t\t\t\t");
-                        R1 = I;
+                        R1 = index;
                         deviceName8790();
                         println(G2$);
                         println(" REPAIR COMPLETED.");
@@ -530,12 +528,12 @@ public class Game {
             R1 = fnr(); // 2910
             int index = intFloor(R1);
             if (random.nextFloat() < 0.6) {
-                D[index] = D[index] - (random.nextFloat() * 5 + 1);
+                damage[index] = damage[index] - (random.nextFloat() * 5 + 1);
                 println("DAMAGE CONTROL REPORT: " + deviceName8790(index) + " DAMAGED");
                 println("");
             } else {
                 // 3000
-                D[index] = D[index] + (random.nextFloat() * 3 + 1);
+                damage[index] = damage[index] + (random.nextFloat() * 3 + 1);
                 println("DAMAGE CONTROL REPORT: " + deviceName8790(index) + " STATE OF REPAIR IMPROVED.");
                 println("");
             }
@@ -682,13 +680,13 @@ public class Game {
         //        3930 PRINT"SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER."
         //        3940 S=S+E: E=0: IFS<=0THEN S=0
         //        3980 RETURN
-        E = E - stepsN - 10;
-        if (E < 0) {
+        energy = energy - stepsN - 10;
+        if (energy < 0) {
             println("SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER.");
-            S = S + E;
-            E = 0;
-            if (S <= 0) {
-                S = 0;
+            shieldLevel = shieldLevel + energy;
+            energy = 0;
+            if (shieldLevel <= 0) {
+                shieldLevel = 0;
             }
         }
     }
@@ -696,7 +694,7 @@ public class Game {
     private void longRangeSensors() {
         //  3990 REM LONG RANGE SENSOR SCAN CODE
         //  4000 IFD(3)<0 THEN PRINT "LONG RANGE SENSORS ARE INOPERABLE'":GOT0 1990
-        if (D[3] < 0) {
+        if (damage[DAMAGE_LONG_RANGE_SENSORS] < 0) {
             println("LONG RANGE SENSORS ARE INOPERABLE'");
         } else {
             //  4030 PRINT"LONG RANGE SCAN FOR QUADRANT";Q1;",";Q2
@@ -757,7 +755,7 @@ public class Game {
      */
     private void phaserControl() {
         // 4260 IFD(4)<0THENPRINT'PHASERS INOPERATI VE":GOTO1996
-        if (D[4] < 0) {
+        if (damage[DAMAGE_PHASER_CONTROL] < 0) {
             println("PHASERS INOPERATIVE");
             return;
         }
@@ -768,24 +766,24 @@ public class Game {
         }
 
         // 4330 IFDCS)<@THEN PRINT "COMPUTER FAILURE HANPERS ACCURACY"
-        if (D[8] < 0) {
+        if (damage[DAMAGE_COMPUTER] < 0) {
             println("COMPUTER FAILURE HAMPERS ACCURACY");
         }
         // 4350 PRINT"PHASERS LOCKED ON TARGETS "3
         println("PHASERS LOCKED ON TARGETS ");
         do {
             // 4360 PRINT" ENERGY AVAILABLE =";E; "UNITS"
-            println(" ENERGY AVAILABLE =" + E + "UNITS");
+            println(" ENERGY AVAILABLE =" + energy + "UNITS");
             // 4370 INPUT'NUMBER OF UNITS TO FIRE";X:IF X<=0 THEN 1990
             X = input("NUMBER OF UNITS TO FIRE: ");
             if (X <= 0) {
                 return;
             }
             // 4400 IFE-X<0THEN 4360
-        } while (E - X < 0);
+        } while (energy - X < 0);
         // 4410 E=E-X:1FDC7)<6THEN K=XRN*DC1)
-        E = E - X;
-        if (D[7] < 0) {
+        energy = energy - X;
+        if (damage[DAMAGE_SHIELD_CONTROL] < 0) {
             X = X * random.nextFloat();
         }
         // 4450 HI=INT(X/K3) :FORI= 1T03: IFK(I,3)<=0 THEN 4670
@@ -842,7 +840,7 @@ public class Game {
             return;
         }
         // 4730 IF D(5) < 0 THEN
-        if (D[5] < 0) {
+        if (damage[DAMAGE_TORPEDOES] < 0) {
             println("PHOTON TUBES ARE NOT OPERATIONAL");
             return;
         }
@@ -858,7 +856,7 @@ public class Game {
         // 4850 X1=C(C1,1)..
         int C1int = intFloor(C1);
         X1 = C[C1int][1] + (C[C1int + 1][1] - C[C1int][1]) * (C1 - C1int);
-        E = E - 2;
+        energy = energy - 2;
         P = P - 1;
         X2 = C[C1int][2] + (C[C1int + 1][2] - C[C1int][2]) * (C1 - C1int);
         X = S1;
@@ -942,30 +940,30 @@ public class Game {
     private void gotoSHE5530() {
         // REM 5520 SHIELD CONTROL
         // 5530 IFD( 79<0THENPRINT’ SHIELD CONTROL INOPERABLE: GOTO199G
-        if (D[7] < 0) {
+        if (damage[DAMAGE_SHIELD_CONTROL] < 0) {
             println("SHIELD CONTROL INOPERABLE");
             return;
         }
         // 5562 PRINT ENERGY AVAILABLE ="J E+S;:1NPUT"NUMBER OF UNITS TO SHI ELDS"3x%
-        println("ENERGY AVAILABLE = " + (E + S));
-        float X = inputF("NUMBER OF UNITS TO SHIELDS: ");
-        if (X < 0 || S == X) {
+        println("ENERGY AVAILABLE = " + (energy + shieldLevel));
+        float newShieldLevel = inputF("NUMBER OF UNITS TO SHIELDS: ");
+        if (newShieldLevel < 0 || shieldLevel == newShieldLevel) {
             println("<SHIELDS UNCHANGED>");
             return;
         }
-        if (X > E + S) {
+        if (newShieldLevel > energy + shieldLevel) {
             println("SHIELD CONTROL REPORTS 'THIS IS NOT THE FEDERATION TREASURY'");
             println("<SHIELDS UNCHANGED>");
             return;
         }
-        E = E + S - X;
-        S = X;
+        energy = energy + shieldLevel - newShieldLevel;
+        shieldLevel = newShieldLevel;
         println("DEFLECTOR ROOM CONTROL REPORT:");
-        println("   'SHIELDS NOW AT " + intFloor(S) + " UNITS PER YOUR COMMAND.'");
+        println("   'SHIELDS NOW AT " + intFloor(shieldLevel) + " UNITS PER YOUR COMMAND.'");
     }
 
     private void gotoDAM5690() {
-        if (D[6] < 0) {
+        if (damage[DAMAGE_DAMAGE_CONTROL] < 0) {
             println("DAMAGE CONTROL NOT AVAILABLE");
             if (!docked) {
                 return;
@@ -974,8 +972,8 @@ public class Game {
         if (docked) {
             // 5720
             float repairCost = 0;
-            for (int I = 1; I <= 8; I++) {
-                if (D[I] < 0) {
+            for (int index = 1; index <= 8; index++) {
+                if (damage[index] < 0) {
                     repairCost = repairCost + 0.1f;
                 }
             }
@@ -991,8 +989,8 @@ public class Game {
                 String answer = input$("WILL YOU AUTHORIZE THE REPAIR ORDER (Y/N)");
                 if (answer.equalsIgnoreCase("y")) {
                     for (int I = 1; I <= 8; I++) {
-                        if (D[I] < 0) {
-                            D[I] = 0;
+                        if (damage[I] < 0) {
+                            damage[I] = 0;
                         }
                     }
                     currentDate = currentDate + repairCost + 0.1f;
@@ -1004,7 +1002,7 @@ public class Game {
         println("");
         println(String.format("%20s %s", "DEVICE", "STATE OF REPAIR"));
         for (int I = 1; I <= 8; I++) {
-            println(String.format("%20s %3f", deviceName8790(I), intFloor(D[I] * 100) * 0.01));
+            println(String.format("%20s %3f", deviceName8790(I), intFloor(damage[I] * 100) * 0.01));
         }
         println("");
     }
@@ -1026,27 +1024,27 @@ public class Game {
             if (K[I][3] > 0) {
                 // 6060 H=INTCCKCEs 3) /FNDC 1) *C24+PNDC 120): SsS-HikCls 3=KCLs 3) /C3+RND(0)
                 H = intFloor((K[I][3] / fnd()) * 2 + random.nextFloat());
-                S = S - H;
+                shieldLevel = shieldLevel - H;
                 K[I][3] = K[I][3] / (3 + random.nextFloat()); // Here RND(0) is in the code as opposed to RND(1).
                 // 6080 PRINT H;"UNIT HIT ON ENTERPRISE FROM SECTOR";K(I,1);",";K(I,2)"
                 println(H + "UNIT HIT ON ENTERPRISE FROM SECTOR " + intFloor(K[I][1]) + "," + intFloor(K[I][2]));
                 // 6090 IFS<=0 THEN 6240
-                if (S <= 0) {
+                if (shieldLevel <= 0) {
                     enterpriseDestroyed6240(); // Ouch, we're done
                 } else {
                     // 6100 PRINT" <SHIELDS DOWN TO"S Ss “UNL TS> "3 :IFH<20 THEN 6200
-                    println(" <SHIELDS DOWN TO " + S + " UNITS> ");
+                    println(" <SHIELDS DOWN TO " + shieldLevel + " UNITS> ");
                     if (H < 20) {
                         continue;
                     }
                     // 6120 IF RND(1)>.60 OR H/S<=.02 THEN 6200
-                    if (random.nextFloat() > 0.6 || H / S <= 0.02) {
+                    if (random.nextFloat() > 0.6 || H / shieldLevel <= 0.02) {
                         continue;
                     }
                     // 6140 R1=FNR(1):D(R1)= FNRC1) 2DORI = DCRL) -H/S- «S*PNDC 1) :GOSUB 8790
                     R1 = fnr();
                     int index = intFloor(R1);
-                    D[index] = D[index] - H / S - 0.5F * random.nextFloat();
+                    damage[index] = damage[index] - H / shieldLevel - 0.5F * random.nextFloat();
                     // 6170 PRINT"DAMAGE CONTROL REPORTS ‘";G2$;" DAMAGED BY THE HIT'"
                     println("DAMAGE CONTROL REPORTS ‘" + deviceName8790(index) + " DAMAGED BY THE HIT'");
                 }
@@ -1102,7 +1100,7 @@ public class Game {
 
     private void gotoCOM7290() {
         // 7286 REM LIBRARY COMPUTER CODE
-        if (D[8] < 0) {
+        if (damage[DAMAGE_COMPUTER] < 0) {
             println("COMPUTER DISABLED");
             return;
         }
@@ -1371,7 +1369,7 @@ public class Game {
     private void shortRangeSensors6430() {
         Condition condition = condition();
         // 6720 ILFDC 2) >= G@THEN 6770
-        if (D[2] < 0) {
+        if (damage[DAMAGE_SHORT_RANGE_SENSORS] < 0) {
             // 6730 PRINT: PRINT #*# SHORT RANGE SENSORS ARE OUT #4##": PRENT: RETURN
             println("");
             println("*** SHORT RANGE SENSORS ARE OUT ***");
@@ -1396,8 +1394,8 @@ public class Game {
                 case 3 -> println("     QUADRANT           " + Q1 + "," + Q2);
                 case 4 -> println("     SECTOR             " + S1 + "," + S2);
                 case 5 -> println("     PHOTON TORPEDOES   " + intFloor(P));
-                case 6 -> println("     TOTAL ENERGY       " + intFloor(E + S));
-                case 7 -> println("     SHIELDS            " + intFloor(S));
+                case 6 -> println("     TOTAL ENERGY       " + intFloor(energy + shieldLevel));
+                case 7 -> println("     SHIELDS            " + intFloor(shieldLevel));
                 case 8 -> println("     KLINGONS REMAINING " + intFloor(K9));
             }
         }
@@ -1469,7 +1467,7 @@ public class Game {
     private void quadrantName9030() {
         // 9010 REM Quadrant name in G2$ from Z4,Z5 = G(Q1,Q2)
         // 9030 IF Z5<=4 THEN ON Z4 GOTO 9040,9050,9060,9070,9070,9080,9100,9110
-        if (Z5 < 4) {
+        if (Z5 <= 4) {
             G2$ = quadrantName1[Z4];
         } else {
             G2$ = quadrantName2[Z4];
@@ -1478,10 +1476,10 @@ public class Game {
         // 9210 IF G5 <> 1 ON Z5 GOTO ...
         if (G5 != 1) {
             switch (Z5) {
-                case 0 -> G2$ += " I";
-                case 1 -> G2$ += " II";
-                case 2 -> G2$ += " III";
-                case 3 -> G2$ += " IV";
+                case 1, 5 -> G2$ += " I";
+                case 2, 6 -> G2$ += " II";
+                case 3, 7 -> G2$ += " III";
+                case 4, 8 -> G2$ += " IV";
             }
         }
     }
@@ -1571,23 +1569,23 @@ public class Game {
             } else {
                 // 6660 CS="GREEN"':iFE<EG*«1THENCS="YELLOW"
                 result = Condition.GREEN;
-                if (E < E0 * 0.1) {
+                if (energy < E0 * 0.1) {
                     result = Condition.YELLOW;
                 }
             }
         } else {
             // 6580 D0=1:C$="DOCKED":E=E0:P=P0
             result = Condition.DOCKED;
-            E = E0;
+            energy = E0;
             P = P0;
             // 6620 PRINT'SHIELDS DROPPED FOP DOCKING PURPOSES": S=0:GOTO 6720
             println("SHIELDS DROPPED FOP DOCKING PURPOSES");
-            S = 0;
+            shieldLevel = 0;
         }
         return result;
     }
 
     public float shields() {
-        return S;
+        return shieldLevel;
     }
 }
