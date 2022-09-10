@@ -19,7 +19,7 @@ public class Game {
     GameState gameState = INITIAL;
     private final GameInput scanner;
 
-    private final Random random;
+    private final GameRandom random;
 
     // Try adding one to the size of each array and use 1 based index, as in Basic.
     // 338 DIM G(8,8),C(9,2),K(3.3),N(3),Z(8,8),D(8)
@@ -78,7 +78,7 @@ public class Game {
     /**
      * Photon torpedoes
      */
-    private int torpedoes;
+    int torpedoes;
     /**
      * Shield energy
      */
@@ -127,7 +127,7 @@ public class Game {
     private int H8; // 7400
     private float A; // 8120
 
-    public Game(GameInput scanner, Random random) {
+    public Game(GameInput scanner, GameRandom random) {
         this.scanner = scanner;
         this.random = random;
     }
@@ -325,10 +325,7 @@ public class Game {
         Z4 = Q1;
         Z5 = Q2;
         K3 = 0;
-        /**
-         * Stars in the quadrant
-         */
-        double s3 = 0;
+        int stars = 0;
         G5 = 0;
         D4 = 0.5f * random.nextFloat();
         cumulativeContent.setQuadrant(Q1, Q2, galaxyContent.getQuadrant(Q1, Q2));
@@ -351,7 +348,7 @@ public class Game {
             K3 = galaxyContent.getKlingons(Q1, Q2);
             B3 = galaxyContent.getBases(Q1, Q2);
             // 1540 S3=G[Q1][Q2]-100 * K3 - 10 * B3: IF K3=0 THEN 1590
-            s3 = galaxyContent.getStars(Q1, Q2);
+            stars = galaxyContent.getStars(Q1, Q2);
             if (K3 != 0) {
                 // 1560 Print "COMBAT AREA    CONDITION RED": IF S>200 THEN 1590
                 println("COMBAT AREA CONDITION RED");
@@ -396,7 +393,7 @@ public class Game {
             insertIconInQuadrantString8670(R1, R2, STARBASE_ICON);
         }
         // 1910 FOR I=1TOS3:GOSUB 8590:A$=" * ":Z1=R1:Z2=R2:GOSUB 8670:NEXTI
-        for (int I = 1; I <= s3; I++) {
+        for (int I = 1; I <= stars; I++) {
             findEmptyPlaceInQuadrant8590();
             insertIconInQuadrantString8670(R1, R2, STAR_ICON);
         }
@@ -1580,6 +1577,10 @@ public class Game {
 
     public float shields() {
         return shieldLevel;
+    }
+
+    public int torpedoes() {
+        return torpedoes;
     }
 
     public float totalEnergy() {
