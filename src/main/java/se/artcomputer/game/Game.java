@@ -11,7 +11,11 @@ import static se.artcomputer.game.QuadrantContent.*;
  */
 public class Game {
 
-    public static final int INITIAL_ENERGY = 3000;
+    private static final int INITIAL_ENERGY = 3000;
+    private static final String GALAXY_MAP_DIVIDER = "  ----- ----- ----- ----- ----- ----- ----- ----- ";
+    private static final int INITIAL_TORPEDOES = 10;
+    private static final String LRS_DIVIDER = "-------------------";
+    private static final String SRS_DELIMITER = String.join("", Collections.nCopies(24, "-"));
     GameState gameState = INITIAL;
     private final GameInput scanner;
 
@@ -56,7 +60,7 @@ public class Game {
     /**
      * Start day
      */
-    private final float startDate; // 370
+    private float startDate; // 370
     /**
      * Days for mission
      */
@@ -74,9 +78,7 @@ public class Game {
     /**
      * Photon torpedoes
      */
-    private int P = 10; // 440
-    private final int P0 = P; // 440
-    private int S9 = 200; // 440
+    private int torpedoes;
     /**
      * Shield energy
      */
@@ -128,19 +130,15 @@ public class Game {
     public Game(GameInput scanner, Random random) {
         this.scanner = scanner;
         this.random = random;
-        currentDate = intFloor(random.nextFloat() * 20 + 20) * 100; // 370
-        startDate = currentDate;
-        missionDays = 25 + intFloor(random.nextFloat() * 10); // 370
-        Q1 = fnr();
-        Q2 = fnr();
-        S1 = fnr();
-        S2 = fnr();
     }
 
+    /***
+     * Distance to Klingon[I].
+     * @return distance
+     */
     private double fnd() { // 470
         return Math.sqrt(Math.pow(K[I][1] - S1, 2) + Math.pow(K[I][2] - S2, 2));
     }
-
 
     /**
      * Generate a random in 1-8
@@ -177,26 +175,27 @@ public class Game {
      */
     private int B3;
     /**
-     * Stars in the quadrant
-     */
-    private double S3;
-    /**
-     * String representation of the current quadrant.
      * A quadrant has 8x8 positions. Each position is 3 characters, therefore the string is
      * 8 X 8 x 3 = 192 characters.
      * To index into it, multiply by 3 for one dimension and then by 24 (8 * 3) for the other.
      */
-    //private String Q$; // 1600
     private QuadrantContent quadrantContent = new QuadrantContent();
 
     private String A$; // 1680
-
     private float Z1, Z2; // 1680
     private float B4, B5; // 1880
 
     private void initValues() {
         energy = INITIAL_ENERGY; // 370
         shieldLevel = 0;
+        currentDate = intFloor(random.nextFloat() * 20 + 20) * 100; // 370
+        startDate = currentDate;
+        missionDays = 25 + intFloor(random.nextFloat() * 10); // 370
+        torpedoes = INITIAL_TORPEDOES; // 440
+        Q1 = fnr();
+        Q2 = fnr();
+        S1 = fnr();
+        S2 = fnr();
         for (int I = 1; I <= 9; I++) { // 530 FOR I=1TO9
             C[I][1] = 0;
             C[I][2] = 0;
@@ -261,9 +260,7 @@ public class Game {
                 galaxyContent.initQuadrant(I, J, K3, B3, fnr());
             }
         }
-        if (K9 > missionDays) {
-            missionDays = K9 + 1; // Mission is at least one day more than the number of Klingons.
-        }
+        missionDays = Math.max(missionDays, galaxyContent.getTotalKlingons() + 1);
         // 1100 IF B9 <> 0 THEN 1200
         if (B9 == 0) {
             // 1150 IF G(Q1,Q2)<200 THEN G(Q1,Q2)=G(Q1,Q2)+120:K9=K9+1
@@ -328,7 +325,10 @@ public class Game {
         Z4 = Q1;
         Z5 = Q2;
         K3 = 0;
-        S3 = 0;
+        /**
+         * Stars in the quadrant
+         */
+        double s3 = 0;
         G5 = 0;
         D4 = 0.5f * random.nextFloat();
         cumulativeContent.setQuadrant(Q1, Q2, galaxyContent.getQuadrant(Q1, Q2));
@@ -351,7 +351,7 @@ public class Game {
             K3 = galaxyContent.getKlingons(Q1, Q2);
             B3 = galaxyContent.getBases(Q1, Q2);
             // 1540 S3=G[Q1][Q2]-100 * K3 - 10 * B3: IF K3=0 THEN 1590
-            S3 = galaxyContent.getStars(Q1, Q2);
+            s3 = galaxyContent.getStars(Q1, Q2);
             if (K3 != 0) {
                 // 1560 Print "COMBAT AREA    CONDITION RED": IF S>200 THEN 1590
                 println("COMBAT AREA CONDITION RED");
@@ -384,7 +384,7 @@ public class Game {
                 insertIconInQuadrantString8670(R1, R2, KLINGON_ICON);
                 K[I][1] = R1;
                 K[I][2] = R2;
-                K[I][3] = S9 * 0.5F + random.nextFloat();
+                K[I][3] = 200 * 0.5F + random.nextFloat();
             }
         }
         // 1820 IF B3<1 THEN 1910
@@ -396,7 +396,7 @@ public class Game {
             insertIconInQuadrantString8670(R1, R2, STARBASE_ICON);
         }
         // 1910 FOR I=1TOS3:GOSUB 8590:A$=" * ":Z1=R1:Z2=R2:GOSUB 8670:NEXTI
-        for (int I = 1; I <= S3; I++) {
+        for (int I = 1; I <= s3; I++) {
             findEmptyPlaceInQuadrant8590();
             insertIconInQuadrantString8670(R1, R2, STAR_ICON);
         }
@@ -703,8 +703,7 @@ public class Game {
             //  4030 PRINT"LONG RANGE SCAN FOR QUADRANT";Q1;",";Q2
             //  4040 O1$="-------------------":PRINT O1$
             println("LONG RANGE SCAN FOR QUADRANT " + Q1 + "," + Q2);
-            O1$ = "-------------------";
-            println(O1$);
+            println(LRS_DIVIDER);
             //  4060 FOR I=Q1-1 TO Q1+1:N(1)=-1:N(2)=-2:N(3)=-3:FOR J=Q2-1T0Q2+1
             float[] N = new float[4]; // Why an array with same name as a single?
             for (int I = Q1 - 1; I <= Q1 + 1; I++) {
@@ -731,7 +730,7 @@ public class Game {
 
                 }
                 println(":");
-                println(O1$);
+                println(LRS_DIVIDER);
             }
         }
     }
@@ -838,7 +837,7 @@ public class Game {
     private void photonTorpedo() {
         // 4690 REM PHOTON TORPEDO CODE BEGINS HERE
         // 4700 IF P<=0 THEN PRINT"ALL PHOTON TORPEDOES EXPENDED":
-        if (P <= 0) {
+        if (torpedoes <= 0) {
             println("ALL PHOTON TORPEDOES EXPENDED");
             return;
         }
@@ -860,7 +859,7 @@ public class Game {
         int C1int = intFloor(C1);
         X1 = C[C1int][1] + (C[C1int + 1][1] - C[C1int][1]) * (C1 - C1int);
         energy = energy - 2;
-        P = P - 1;
+        torpedoes = torpedoes - 1;
         X2 = C[C1int][2] + (C[C1int + 1][2] - C[C1int][2]) * (C1 - C1int);
         X = S1;
         Y = S2;
@@ -1139,8 +1138,7 @@ public class Game {
 
     private void goto7550() {
         println("    1     2     3     4     5     6     7     8");
-        O1$ = "  ----- ----- ----- ----- ----- ----- ----- ----- ";
-        println(O1$);
+        println(GALAXY_MAP_DIVIDER);
         for (int I = 1; I <= 8; I++) {
             print(String.format("%d ", I));
             // IF H8 = 0 THEN 7740
@@ -1155,21 +1153,17 @@ public class Game {
                 } // 7720
             } else {
                 // 7740 24-122S=12GOSUB9G30:5*JLENG(G=25)I):NPTRINCTT1ABC5IB~)3.G25
-                Z4 = 1;
+                Z4 = I;
                 Z5 = 1;
                 quadrantName9030();
-                int J0 = intFloor(15 - 0.5 * G2$.length());
-                printTab(J0);
-                print(G2$);
+                print(String.format("%-24s", G2$));
                 Z5 = 5;
                 quadrantName9030();
-                J0 = intFloor(39 - 0.5 * G2$.length());
-                printTab(J0);
-                print(G2$);
+                print(String.format("%-24s", G2$));
             }
             // 7850
             println("");
-            println(O1$);
+            println(GALAXY_MAP_DIVIDER);
         }
     }
 
@@ -1381,8 +1375,7 @@ public class Game {
             return;
         }
         // 6770 Oss" “sPRINTOL :FOR I=1T08
-        O1$ = String.join("", Collections.nCopies(24, "-"));
-        println(O1$);
+        println(SRS_DELIMITER);
         for (int I = 1; I <= 8; I++) {
             // 6820 FORJ=(I-1)*24im Le 24+ 1TOCI-4) *24+ 22STEP3:PRINT" “;MID$(QS,I, J);:NEXTJ
             // for (int J = (I - 1) * 24 + 1; J <= (I - 1) * 24 + 22; J += 3) {
@@ -1397,13 +1390,13 @@ public class Game {
                 case 2 -> println("     CONDITION          " + condition.toString());
                 case 3 -> println("     QUADRANT           " + Q1 + "," + Q2);
                 case 4 -> println("     SECTOR             " + S1 + "," + S2);
-                case 5 -> println("     PHOTON TORPEDOES   " + intFloor(P));
+                case 5 -> println("     PHOTON TORPEDOES   " + torpedoes);
                 case 6 -> println("     TOTAL ENERGY       " + intFloor(energy + shieldLevel));
                 case 7 -> println("     SHIELDS            " + intFloor(shieldLevel));
                 case 8 -> println("     KLINGONS REMAINING " + intFloor(K9));
             }
         }
-        println(O1$);
+        println(SRS_DELIMITER);
     }
 
     private void insertIconInQuadrantString8670(int S1, int S2, String icon) {
@@ -1533,10 +1526,6 @@ public class Game {
         System.out.print(s);
     }
 
-    private void printTab(int tab) {
-        print("Tab" + tab);
-    }
-
     public int totalKlingons() {
         return galaxyContent.getTotalKlingons();
     }
@@ -1581,7 +1570,7 @@ public class Game {
             // 6580 D0=1:C$="DOCKED":E=E0:P=P0
             result = Condition.DOCKED;
             energy = INITIAL_ENERGY;
-            P = P0;
+            torpedoes = INITIAL_TORPEDOES;
             // 6620 PRINT'SHIELDS DROPPED FOP DOCKING PURPOSES": S=0:GOTO 6720
             println("SHIELDS DROPPED FOP DOCKING PURPOSES");
             shieldLevel = 0;

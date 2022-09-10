@@ -114,6 +114,7 @@ class GameTest {
         command("LRS");
         command("COM", "0");
         command("COM", "1");
+        command("COM", "5");
         command("NAV", "5", "1");
         assertEquals(new Position(7, 1), game.currentQuadrant());
         command("NAV", "3", "0.1");
@@ -125,6 +126,9 @@ class GameTest {
         assertEquals(STOPPED, game.gameState);
     }
 
+    /**
+     * We do a catastrophic start and lose. Try again.
+     */
     @Test
     void scenario666() {
         game = new Game(scanner, new Random(666));
