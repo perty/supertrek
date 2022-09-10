@@ -12,10 +12,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static se.artcomputer.game.Condition.DOCKED;
 import static se.artcomputer.game.GameState.RUNNING;
+import static se.artcomputer.game.GameState.STOPPED;
 
 class GameTest {
 
     private GameInputImpl scanner;
+    private Game game;
 
     @BeforeEach
     void setUp() {
@@ -27,26 +29,27 @@ class GameTest {
      */
     @Test
     void scenario1337() {
-        Game game = new Game(scanner, new Random(1337));
-        game.step();
+        game = new Game(scanner, new Random(1337));
+        command("");
         assertEquals(RUNNING, game.gameState);
         int klingons = game.totalKlingons();
-        command(game,"NAV", "2", "1");
-        command(game, "TOR", "4");
+        command("NAV", "2", "1");
+        command("COM", "2");
+        command("TOR", "4");
         assertEquals(klingons - 1, game.totalKlingons());
         Position position = game.currentSector();
-        command(game,"NAV", "2", "1");
+        command("NAV", "2", "1");
         assertEquals(position, game.currentSector());
         for (int i = 0; i < 8; i++) {
-            command(game,"NAV", "4", "0.2");
+            command("NAV", "4", "0.2");
         }
-        assertEquals(new Position(3,6), game.currentQuadrant());
-        command(game,"NAV", "3", "0.2");
-        command(game,"NAV", "3", "0.2");
-        command(game,"NAV", "5", "0.1");
+        assertEquals(new Position(3, 6), game.currentQuadrant());
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        command("NAV", "5", "0.1");
         assertEquals(DOCKED, game.condition());
-        command(game, "DAM", "Y");
-        command(game,"SRS");
+        command("DAM", "Y");
+        command("SRS");
     }
 
     /**
@@ -55,20 +58,73 @@ class GameTest {
      */
     @Test
     void scenario123456789() {
-        Game game = new Game(scanner, new Random(123456789));
-        game.step();
-        command(game,"LRS");
-        command(game,"NAV", "3", "1");
-        command(game, "SHE", "1000");
+        game = new Game(scanner, new Random(123456789));
+        command("");
+        command("LRS");
+        command("NAV", "3", "1");
+        command("SHE", "1000");
         int klingons = game.totalKlingons();
-        command(game, "PHA", "100");
+        command("PHA", "100");
         float shields = game.shields();
         assertTrue(shields < 1000);
-        command(game, "PHA", "100");
+        command("PHA", "100");
         assertEquals(klingons - 1, game.totalKlingons());
     }
 
-    private void command(Game game, String... command) {
+    /**
+     * We start at far right middle quadrant: 4,8. Roam around the galaxy.
+     */
+    @Test
+    void scenario471108() {
+        game = new Game(scanner, new Random(471108));
+        command("");
+        assertEquals(new Position(4, 8), game.currentQuadrant());
+        command("SHE", "1000");
+        command("LRS");
+        command("COM", "0");
+        command("NAV", "5", "3");
+        assertEquals(new Position(4, 5), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "5", "3");
+        assertEquals(new Position(4, 2), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "3", "2");
+        assertEquals(new Position(2, 2), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "3", "0.2");
+        command("NAV", "1", "3");
+        assertEquals(new Position(2, 5), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "7", "0.2");
+        command("NAV", "8", "0.2");
+        command("NAV", "7", "0.5");
+        command("NAV", "9", "2");
+        assertEquals(new Position(2, 7), game.currentQuadrant());
+        command("LRS");
+        command("PHA", "2000", "1500"); // Too much
+        command("NAV", "7", "5");
+        assertEquals(new Position(7, 7), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "5", "3");
+        assertEquals(new Position(7, 4), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "5", "2");
+        assertEquals(new Position(7, 2), game.currentQuadrant());
+        command("LRS");
+        command("COM", "0");
+        command("COM", "1");
+        command("NAV", "5", "1");
+        assertEquals(new Position(7, 1), game.currentQuadrant());
+        command("NAV", "3", "0.1");
+        command("NAV", "1", "4");
+        assertEquals(new Position(7, 5), game.currentQuadrant());
+        command("NAV", "2", "0.5");
+        command("NAV", "3", "0.2");
+        command("TOR", "5", "no"); // Starbase blows up
+        assertEquals(STOPPED, game.gameState);
+    }
+
+    private void command(String... command) {
         scanner.setLines(command);
         game.step();
     }
@@ -79,7 +135,7 @@ class GameTest {
         @Override
         public String nextLine() {
             if (line.isEmpty()) {
-                return "";
+                throw new RuntimeException("Empty buffer.");
             }
             return line.poll();
         }

@@ -1494,13 +1494,13 @@ public class Game {
 
     private String input$(String prompt) {
         System.out.print(prompt);
-        return scanner.nextLine();
+        return scanner.nextLine().trim();
     }
 
     private int input(String prompt) {
         do {
             System.out.print(prompt);
-            String string = scanner.nextLine();
+            String string = scanner.nextLine().trim();
             try {
                 return Integer.parseInt(string);
             } catch (NumberFormatException e) {
