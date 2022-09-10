@@ -11,6 +11,7 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static se.artcomputer.game.Condition.DOCKED;
+import static se.artcomputer.game.Condition.RED;
 import static se.artcomputer.game.GameState.RUNNING;
 import static se.artcomputer.game.GameState.STOPPED;
 
@@ -122,6 +123,20 @@ class GameTest {
         command("NAV", "3", "0.2");
         command("TOR", "5", "no"); // Starbase blows up
         assertEquals(STOPPED, game.gameState);
+    }
+
+    @Test
+    void scenario666() {
+        game = new Game(scanner, new Random(666));
+        command("");
+        assertEquals(3000, game.totalEnergy());
+        command("LRS");
+        command("NAV", "5", "1");
+        assertEquals(RED, game.condition());
+        command("NAV", "4", "0.1", "AYE"); // Die and restart'
+        command("");
+        assertEquals(0, game.shields(), "Restore shields");
+        assertEquals(3000, game.totalEnergy(), "Restore energy");
     }
 
     private void command(String... command) {

@@ -11,6 +11,7 @@ import static se.artcomputer.game.QuadrantContent.*;
  */
 public class Game {
 
+    public static final int INITIAL_ENERGY = 3000;
     GameState gameState = INITIAL;
     private final GameInput scanner;
 
@@ -67,8 +68,8 @@ public class Game {
     /**
      * Energy available
      */
-    private float energy = 3000; // 370
-    private final float E0 = energy; // 370
+    private float energy; // 370
+    //private final float E0 = energy; // 370
 
     /**
      * Photon torpedoes
@@ -110,7 +111,6 @@ public class Game {
      * Warp factor
      */
     private float W1; // 2360
-    private float D1, D6; // 2700
     private float X1, X, Y; // 3110
     private float X2, Q4, Q5; // 3140
     private float T8; // 3370
@@ -195,6 +195,8 @@ public class Game {
     private float B4, B5; // 1880
 
     private void initValues() {
+        energy = INITIAL_ENERGY; // 370
+        shieldLevel = 0;
         for (int I = 1; I <= 9; I++) { // 530 FOR I=1TO9
             C[I][1] = 0;
             C[I][2] = 0;
@@ -497,22 +499,23 @@ public class Game {
             }
         } // 2700 NEXT I: GOSUB 6000
         klingonsShooting6000();
-        D1 = 0;
-        D6 = W1;
+        float d1 = 0;
+        // 2700
+        float d6 = W1;
         if (W1 >= 1) {
-            D6 = 1;
+            d6 = 1;
         }
         // 2770 FORI=1TO8:IFD(I)>=0THEN2880
         for (int index = 1; index <= 8; index++) {
             if (damage[index] < 0) {
                 // 2790 D(I)=D(I)+D6:IFD(I)>-.1 AND D(I)<0 THEN D(I)=.1 : GOTO 2880
-                damage[index] = damage[index] + D6;
+                damage[index] = damage[index] + d6;
                 if (damage[index] > -0.1 && damage[index] < 0) {
                     damage[index] = -0.1F;
                 } else {
                     if (damage[index] >= 0) {
-                        if (D1 != 1) {
-                            D1 = 1;
+                        if (d1 != 1) {
+                            d1 = 1;
                         }
                         println("DAMAGE CONTROL REPORT:  ");
                         println("\t\t\t\t\t\t\t");
@@ -1031,6 +1034,7 @@ public class Game {
                 // 6090 IFS<=0 THEN 6240
                 if (shieldLevel <= 0) {
                     enterpriseDestroyed6240(); // Ouch, we're done
+                    return;
                 } else {
                     // 6100 PRINT" <SHIELDS DOWN TO"S Ss “UNL TS> "3 :IFH<20 THEN 6200
                     println(" <SHIELDS DOWN TO " + shieldLevel + " UNITS> ");
@@ -1569,14 +1573,14 @@ public class Game {
             } else {
                 // 6660 CS="GREEN"':iFE<EG*«1THENCS="YELLOW"
                 result = Condition.GREEN;
-                if (energy < E0 * 0.1) {
+                if (energy < INITIAL_ENERGY * 0.1) {
                     result = Condition.YELLOW;
                 }
             }
         } else {
             // 6580 D0=1:C$="DOCKED":E=E0:P=P0
             result = Condition.DOCKED;
-            energy = E0;
+            energy = INITIAL_ENERGY;
             P = P0;
             // 6620 PRINT'SHIELDS DROPPED FOP DOCKING PURPOSES": S=0:GOTO 6720
             println("SHIELDS DROPPED FOP DOCKING PURPOSES");
@@ -1587,5 +1591,9 @@ public class Game {
 
     public float shields() {
         return shieldLevel;
+    }
+
+    public float totalEnergy() {
+        return shieldLevel + energy;
     }
 }
