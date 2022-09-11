@@ -7,8 +7,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static se.artcomputer.game.Condition.DOCKED;
-import static se.artcomputer.game.Condition.RED;
+import static se.artcomputer.game.Condition.*;
 import static se.artcomputer.game.GameState.RUNNING;
 import static se.artcomputer.game.GameState.STOPPED;
 
@@ -70,6 +69,93 @@ class GameTest {
     }
 
     /**
+     * Roam the galaxy until we run out of energy.
+     */
+    @Test
+    void roaming() {
+        GameRandom random = new GameStaticImpl(new int[]
+                {5, 1, 7, 2, 0, 6, 1, 0, 7, 2, 6, 1, 6, 1, 5, 5, 4},
+                new float[]
+                        {0.5f, 0.9f, 0.8f, 0.7f, 0.01f, 0.3f, 0.7f, 0.2f}
+        );
+        game = new Game(scanner, random);
+        command("");
+        command("LRS");
+        command("SHE", "1000");
+        int klingons1 = game.totalKlingons();
+        command("PHA", "9999", "1000");
+        assertEquals(klingons1 - 1, game.totalKlingons());
+        command("COM", "0");
+        command("NAV", "3", "3");
+        command("LRS");
+        command("NAV", "3", "1");
+        assertEquals(new Position(2, 2), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "1", "3");
+        assertEquals(new Position(2, 5), game.currentQuadrant());
+        command("LRS");
+        int klingons2 = game.totalKlingons();
+        command("COM", "2");
+        command("TOR", "4");
+        assertEquals(klingons2 - 1, game.totalKlingons());
+        command("NAV", "1", "2");
+        assertEquals(new Position(2, 7), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "7", "3");
+        assertEquals(new Position(5, 7), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "7", "2");
+        assertEquals(new Position(7, 7), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "5", "3");
+        assertEquals(new Position(7, 4), game.currentQuadrant());
+        command("LRS");
+        command("COM"); // Computer has randomly broken down
+        command("NAV", "4", "1");
+        command("NAV", "5", "1");
+        assertEquals(new Position(6, 2), game.currentQuadrant());
+        command("NAV", "4", "0.1");
+        assertEquals(DOCKED, game.condition());
+        command("DAM", "Y");
+        command("COM", "0");
+        command("NAV", "7", "1");
+        command("LRS");
+        command("NAV", "5", "1");
+        command("LRS");
+        command("SRS");
+        command("PHA", "2000"); // Spend lots of energy
+        command("NAV", "7", "1");
+        command("SHE", "900");
+        command("TOR", "2");
+        command("NAV", "2", "1");
+        assertEquals(YELLOW, game.condition());
+        command("NAV", "6", "1");
+        command("COM", "4", "8", "1", "5", "4");
+        command("NAV", "1", "0.2");
+        command("NAV", "2", "3");
+        assertEquals(new Position(5, 4), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "1", "1");
+        assertEquals(new Position(5, 5), game.currentQuadrant());
+        command("NAV", "1", "1");
+        assertEquals(new Position(5, 6), game.currentQuadrant());
+        command("NAV", "1", "1");
+        assertEquals(new Position(5, 7), game.currentQuadrant());
+        command("NAV", "5", "1");
+        assertEquals(new Position(5, 6), game.currentQuadrant());
+        command("NAV", "5", "1");
+        assertEquals(new Position(5, 5), game.currentQuadrant());
+        command("SHE", "0");
+        command("PHA", "700");
+        command("NAV", "1", "1");
+        assertEquals(new Position(5, 6), game.currentQuadrant());
+        command("NAV", "1", "1");
+        assertEquals(new Position(5, 7), game.currentQuadrant());
+        command("AYE");  // We have spent all energy.
+        command("LRS");
+    }
+
+    /**
      * We start at far right middle quadrant: 4,8. Roam around the galaxy.
      */
     @Test
@@ -128,7 +214,11 @@ class GameTest {
      */
     @Test
     void scenario666() {
-        GameRandom random = new GameStaticImpl();
+        GameRandom random = new GameStaticImpl(new int[]
+                {5, 1, 7, 2, 0, 6, 1, 0, 7, 2, 6, 1, 6, 1, 5, 5, 4},
+                new float[]
+                        {0.69F, 0.449F, 0.123F, 0.77F, 0.3F, 0.99F, 0.75F, 0.019F, 0.63F, 0.315F, 0.38F, 0.53F, 0.096F, 0.89F, 0.29F, 0.97F, 0.79F, 0.44F, 0.44F, 0.19F, 0.49F, 0.44F, 0.22F, 0.79F, 0.53F, 0.37F, 0.42F, 0.17F, 0.85F, 0.186F, 0.398F, 0.896F, 0.1039F, 0.707F, 0.211F, 0.077F, 0.438F, 0.655F, 0.129F, 0.672F, 0.174F, 0.289F, 0.80F, 0.F, 0.036F, 0.43F, 0.54F, 0.51F, 0.802F, 0.189F, 0.843F, 0.272F, 0.55F, 0.2F, 0.333F, 0.067F, 0.324F, 0.396F, 0.311F, 0.69F, 0.252F, 0.8F, 0.43F, 0.195F, 0.82F, 0.328F, 0.199F, 0.120F, 0.261F, 0.451F, 0.5F, 0.498F, 0.01212F, 0.57F, 0.61F, 0.522F, 0.808F, 0.284F, 0.513F, 0.074F, 0.92F, 0.62F, 0.903F, 0.785F, 0.692F, 0.211F, 0.203F, 0.76F, 0.16F, 0.84F, 0.61F, 0.0701F, 0.62F, 0.903F, 0.62F, 0.479F, 0.209F, 0.7F, 0.143F, 0.698F, 0.8F, 0.525F, 0.97F, 0.234F, 0.0832F, 0.960F, 0.65F, 0.42F, 0.121F, 0.458F, 0.44F, 0.355F, 0.443F, 0.38F, 0.80F, 0.147F, 0.0554F, 0.464F, 0.45F, 0.96F, 0.51F, 0.64F, 0.73F, 0.6F, 0.300F, 0.F, 0.289F, 0.F, 0.195F, 0.31F, 0.47F, 0.7F, 0.271F, 0.296F, 0.574F, 0.994F, 0.86F, 0.82F, 0.00151F, 0.66F, 0.518F, 0.52F, 0.14F, 0.58F, 0.65F, 0.233F, 0.73F, 0.251F, 0.216F, 0.047F, 0.463F, 0.933F, 0.304F, 0.045F, 0.736F, 0.904F, 0.715F, 0.153F, 0.88F, 0.748F, 0.59F, 0.336F, 0.53F, 0.389F, 0.56F, 0.99F, 0.85F, 0.52F, 0.104F, 0.1018F, 0.57F, 0.155F, 0.59F, 0.164F, 0.475F, 0.114F, 0.922F, 0.169F, 0.059F, 0.134F, 0.756F, 0.503F, 0.914F, 0.94F, 0.60F, 0.515F, 0.472F, 0.81F, 0.177F, 0.12F, 0.296F, 0.228F, 0.316F, 0.68F, 0.839F, 0.62F, 0.86F, 0.972F, 0.206F, 0.78F, 0.709F, 0.141F, 0.0360F, 0.83F, 0.28F, 0.249F, 0.178F, 0.197F, 0.35F, 0.210F, 0.278F, 0.390F, 0.73F, 0.386F, 0.161F, 0.721F, 0.0988F, 0.239F, 0.82F, 0.292F, 0.628F, 0.307F, 0.52F, 0.188F, 0.213F, 0.56F, 0.0440F, 0.79F, 0.350F, 0.834F, 0.392F, 0.658F, 0.0286F, 0.547F, 0.97F, 0.691F, 0.736F, 0.818F, 0.65F, 0.439F, 0.716F, 0.938F, 0.379F, 0.655F, 0.88F, 0.74F, 0.64F, 0.7F, 0.388F, 0.59F, 0.80F, 0.584F, 0.639F, 0.5F, 0.381F, 0.58F, 0.168F, 0.756F, 0.490F, 0.392F, 0.525F, 0.074F, 0.30F, 0.88F, 0.87F, 0.86F, 0.27F, 0.7687722F}
+        );
         game = new Game(scanner, random);
         command("");
         assertEquals(3000, game.totalEnergy());
@@ -196,33 +286,5 @@ class GameTest {
         }
     }
 
-    private static class GameStaticImpl implements GameRandom {
-        private final int[] intSerie;
-        int intIndex = 0;
-        private final float[] floatSerie;
-        int floatIndex = 0;
 
-
-        private GameStaticImpl() {
-            intSerie = new int[]
-                    {5, 1, 7, 2, 0, 6, 1, 0, 7, 2, 6, 1, 6, 1, 5, 5, 4};
-            floatSerie = new float[]
-                    {0.69746435F, 0.4494903F, 0.12317139F, 0.7728827F, 0.3042043F, 0.99736434F, 0.7500327F, 0.01985526F, 0.6313651F, 0.3158186F, 0.38277715F, 0.5313312F, 0.09699732F, 0.89311F, 0.29491454F, 0.9767721F, 0.7919281F, 0.43776292F, 0.42682332F, 0.19410717F, 0.4941737F, 0.44373834F, 0.22057855F, 0.7979292F, 0.5360546F, 0.37094784F, 0.41733837F, 0.17070818F, 0.8502881F, 0.18683225F, 0.39838427F, 0.89684564F, 0.103982806F, 0.70750123F, 0.21154153F, 0.07778102F, 0.43857723F, 0.65539396F, 0.12983912F, 0.67268825F, 0.17423093F, 0.28940177F, 0.8089972F, 0.89241F, 0.03645587F, 0.4353758F, 0.5450497F, 0.5130649F, 0.80246836F, 0.18973655F, 0.84320164F, 0.27297616F, 0.5568574F, 0.277052F, 0.33311975F, 0.06745446F, 0.32417488F, 0.39607692F, 0.31121665F, 0.6926265F, 0.25266463F, 0.800995F, 0.4369923F, 0.19543666F, 0.8208922F, 0.32811397F, 0.19932169F, 0.12016165F, 0.26191437F, 0.45130074F, 0.508779F, 0.49830323F, 0.0121282935F, 0.5775894F, 0.6193893F, 0.52257043F, 0.80847347F, 0.28401166F, 0.51357543F, 0.07451761F, 0.9261741F, 0.6254739F, 0.90357435F, 0.78550756F, 0.69230276F, 0.21183568F, 0.20359403F, 0.7678109F, 0.1624921F, 0.8483863F, 0.6196246F, 0.070121944F, 0.6204344F, 0.90353066F, 0.6205176F, 0.47975594F, 0.20957166F, 0.749389F, 0.14319342F, 0.69854146F, 0.878965F, 0.52589226F, 0.9795065F, 0.23416287F, 0.083218515F, 0.96039087F, 0.6563895F, 0.4221537F, 0.12165707F, 0.45818102F, 0.4473828F, 0.35564268F, 0.44354665F, 0.3841611F, 0.8047179F, 0.14708167F, 0.055455625F, 0.46496832F, 0.4511469F, 0.9656499F, 0.5112215F, 0.6400143F, 0.7307143F, 0.624841F, 0.30007762F, 0.21756F, 0.28900194F, 0.72205F, 0.19589901F, 0.3120377F, 0.4769929F, 0.702805F, 0.27103484F, 0.29688996F, 0.57483894F, 0.99406344F, 0.8627974F, 0.8232066F, 0.0015163422F, 0.6697341F, 0.51899505F, 0.5269334F, 0.1455282F, 0.5869727F, 0.6558099F, 0.23300242F, 0.7341475F, 0.25144643F, 0.21646953F, 0.04797077F, 0.46393824F, 0.93303746F, 0.30409294F, 0.04542035F, 0.73642266F, 0.90429455F, 0.71543443F, 0.15375775F, 0.8815106F, 0.74858004F, 0.5941601F, 0.33681762F, 0.5358744F, 0.38965857F, 0.5673068F, 0.9951484F, 0.8566227F, 0.5298048F, 0.10444963F, 0.101826906F, 0.5719037F, 0.15567166F, 0.5918182F, 0.16430157F, 0.47564828F, 0.11422831F, 0.92288095F, 0.16996115F, 0.05908811F, 0.13452917F, 0.75653297F, 0.50385445F, 0.91476184F, 0.9449041F, 0.6072892F, 0.51568604F, 0.47234905F, 0.8150352F, 0.17733067F, 0.1281271F, 0.29655492F, 0.22881567F, 0.31660032F, 0.6859924F, 0.83974975F, 0.6226613F, 0.8637975F, 0.97231764F, 0.20649296F, 0.7884202F, 0.70948064F, 0.14106911F, 0.036071062F, 0.8399101F, 0.2819031F, 0.24922174F, 0.17881495F, 0.19700325F, 0.3572538F, 0.21023452F, 0.27859962F, 0.39086163F, 0.7324881F, 0.38615817F, 0.16126537F, 0.72123265F, 0.098879874F, 0.23980135F, 0.8233649F, 0.29249722F, 0.62862635F, 0.30723614F, 0.5232433F, 0.18858695F, 0.21309483F, 0.5639345F, 0.044012606F, 0.7981922F, 0.35038912F, 0.83445996F, 0.39212567F, 0.65806365F, 0.028627276F, 0.54760873F, 0.9796006F, 0.69146883F, 0.73633933F, 0.81890845F, 0.6566184F, 0.43900704F, 0.71686023F, 0.93814176F, 0.37924677F, 0.65588975F, 0.8835155F, 0.7407021F, 0.6423291F, 0.798656F, 0.38835233F, 0.5960104F, 0.8024873F, 0.58443314F, 0.63988805F, 0.590907F, 0.38103312F, 0.5821222F, 0.16813433F, 0.75616723F, 0.49056816F, 0.39275855F, 0.52532434F, 0.07402313F, 0.3083942F, 0.8813374F, 0.8743778F, 0.8691504F, 0.2761854F, 0.7687722F};
-        }
-
-        @Override
-        public int nextInt(int max) {
-            int i = intSerie[intIndex++];
-            intIndex = intIndex % intSerie.length;
-            return i;
-        }
-
-        @Override
-        public float nextFloat() {
-            float v = floatSerie[floatIndex++];
-            floatIndex = floatIndex % floatSerie.length;
-            return v;
-        }
-
-    }
 }

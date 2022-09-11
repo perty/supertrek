@@ -404,7 +404,7 @@ public class Game {
     private void command() {
         // 1990 IF S+E > 10 THEN IF E>10 OR D[7]=0 THEN 2060
         if (shieldLevel + energy <= 10) {
-            if (energy <= 10 && damage[DAMAGE_SHIELD_CONTROL] != 0) {
+            if (energy <= 10 ) {
                 // 2020 2030 2040 2050
                 println("");
                 println("** FATAL ERROR ** YOU'VE JUST STRANDED YOUR SHIP IN ");
@@ -415,6 +415,7 @@ public class Game {
                 println("-CIRCUITING ENGINE ROOM");
                 // GOTO 6220
                 goto6220();
+                return;
             }
         }
         // 2060 INPUT "COMMAND"; A$
