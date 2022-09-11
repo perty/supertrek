@@ -1,7 +1,6 @@
 package se.artcomputer.game;
 
 import java.util.Collections;
-import java.util.Random;
 
 import static se.artcomputer.game.GameState.*;
 import static se.artcomputer.game.QuadrantContent.*;
@@ -115,17 +114,9 @@ public class Game {
     private float W1; // 2360
     private float X1, X, Y; // 3110
     private float X2, Q4, Q5; // 3140
-    private float T8; // 3370
-    private int X5; // 3620
-    private String O1$; // 4040
-    private int H1; // 4450
     private float H; // 4480
-    private int S8; // 8670
     private int Z3; // 8590
-    private String C$; // 6580
-    private int X3, Y3; // 4920
     private int H8; // 7400
-    private float A; // 8120
 
     public Game(GameInput scanner, GameRandom random) {
         this.scanner = scanner;
@@ -183,7 +174,7 @@ public class Game {
 
     private String A$; // 1680
     private float Z1, Z2; // 1680
-    private float B4, B5; // 1880
+    private int B4, B5; // 1880
 
     private void initValues() {
         energy = INITIAL_ENERGY; // 370
@@ -404,7 +395,7 @@ public class Game {
     private void command() {
         // 1990 IF S+E > 10 THEN IF E>10 OR D[7]=0 THEN 2060
         if (shieldLevel + energy <= 10) {
-            if (energy <= 10 ) {
+            if (energy <= 10) {
                 // 2020 2030 2040 2050
                 println("");
                 println("** FATAL ERROR ** YOU'VE JUST STRANDED YOUR SHIP IN ");
@@ -588,12 +579,13 @@ public class Game {
         // 3370
         insertIconInQuadrantString8670(S1, S2, STARSHIP_ICON);
         maneuverEnergy3910(stepsN);
-        T8 = 1;
+        // 3370
+        float timeUsed = 1;
         if (W1 < 1) {
-            T8 = 0.1F * intFloor(10 * W1);
+            timeUsed = 0.1F * intFloor(10 * W1);
         }
         // 3450 T=T+T8:IFT>T0+T9 THEN 6220
-        currentDate = currentDate + intFloor(T8);
+        currentDate = currentDate + intFloor(timeUsed);
         if (currentDate > startDate + missionDays) {
             goto6220(); // Ran out of time
         }
@@ -622,32 +614,33 @@ public class Game {
             S2 = 8;
         }
         // 3620 X5=0:IF Q1<1 THEN X5=1:Q1=1:S1=1
-        X5 = 0;
+        // 3620
+        int x5 = 0;
         if (Q1 < 1) {
-            X5 = 1;
+            x5 = 1;
             Q1 = 1;
             S1 = 1;
         }
         // 3670 IF Q1>8 THEN X5=1:Q1=8:S1=8
         if (Q1 > 8) {
-            X5 = 1;
+            x5 = 1;
             Q1 = 8;
             S1 = 8;
         }
         // 3710 IF Q2<1 THEN X5=1:Q2=1:S2=1
         if (Q2 < 1) {
-            X5 = 1;
+            x5 = 1;
             Q2 = 1;
             S2 = 1;
         }
         // 3750 IF Q2>8 THEN X5=1:Q2=8:S2=8
         if (Q2 > 8) {
-            X5 = 1;
+            x5 = 1;
             Q2 = 8;
             S2 = 8;
         }
         // 3790 IF X5=0 THEN 3860
-        if (X5 != 0) {
+        if (x5 != 0) {
             // 3800 PRINT"LT-UHURA REPORTS MESSAGE FROM STARFLEET COMMAND:"
             // 3810 PRINT"’ PERMISSION TO ATTEMPT CROSSING OF GALACTIC PERIMETER"
             // 3820 PRINT" IS HEREBY *DENIED*. SHUT DOWN YOUR ENGINES.'"
@@ -787,11 +780,12 @@ public class Game {
             X = X * random.nextFloat();
         }
         // 4450 HI=INT(X/K3) :FORI= 1T03: IFK(I,3)<=0 THEN 4670
-        H1 = intFloor(X / K3);
+        // 4450
+        int h1 = intFloor(X / K3);
         for (int I = 1; I <= 3; I++) {
             if (K[I][3] > 0) {
                 // 4480 H=INT((H1/FND(0)))*CRN2D1FCH>.11S*)KC+Ls23)THEN 4530
-                H = intFloor((H1 / fnd()) * (random.nextFloat() + 2));
+                H = intFloor((h1 / fnd()) * (random.nextFloat() + 2));
                 if (H <= 0.15 * K[I][3]) {
                     // 4500 PRINT"SENSORS SHOW NO DAMAGE TO ENEMY AT";K(I,1);",";K(I,2):GOTO 4670
                     println("SENSORS SHOW NO DAMAGE TO ENEMY AT " + K[I][1] + "," + K[I][2]);
@@ -865,15 +859,18 @@ public class Game {
         println("TORPEDO TRACK:");
         // 4920
         boolean missed = false;
+        // 4920
+        int y3;
+        int x3;
         do {
             X = X + X1;
             Y = Y + X2;
-            X3 = intFloor(X + 0.5);
-            Y3 = intFloor(Y + 0.5);
+            x3 = intFloor(X + 0.5);
+            y3 = intFloor(Y + 0.5);
             // 4960 IFX3<1ORX3>8 ... THEN 5490
-            if (!(X3 < 1 || X3 > 8 || Y3 < 1 || Y3 > 8)) {
+            if (!(x3 < 1 || x3 > 8 || y3 < 1 || y3 > 8)) {
                 // 5000 PRINT "  ...
-                println("        " + X3 + "," + Y3);
+                println("        " + x3 + "," + y3);
                 // 5050 IF Z3 <> 0 THEN 4920
             } else {
                 missed = true;
@@ -895,7 +892,7 @@ public class Game {
                 }
                 boolean breakOut = false;
                 for (I = 1; I <= 3; I++) {
-                    if (X3 == K[I][1] && Y3 == K[I][2]) {
+                    if (x3 == K[I][1] && y3 == K[I][2]) {
                         breakOut = true;
                         break;
                     }
@@ -907,7 +904,7 @@ public class Game {
                 K[I][3] = 0;
             }
             case STAR_ICON -> {
-                println("STAR AT " + X3 + "," + Y3 + " ABSORBED TORPEDO ENERGY.");
+                println("STAR AT " + x3 + "," + y3 + " ABSORBED TORPEDO ENERGY.");
                 klingonsShooting6000();
                 return;
             }
@@ -1201,16 +1198,7 @@ public class Game {
         H8 = 0;
         for (int I = 1; I <= 3; I++) {
             if (K[I][3] > 0) {
-                W1 = K[I][1];
-                X = K[I][2];
-                C1 = S1;
-                A = S2; // GOTO 8220
-                goto8220();
-                // 8460 PRINT"DISTANCE="3SQRCXt2+At2)31FH1TSHEN=IO9
-                println("DISTANCE = " + (Math.sqrt(Math.pow(X, 2) + Math.pow(A, 2))));
-                if (H8 == 1) {
-                    break;
-                }
+                println("DISTANCE " + new Position(S1, S2).distanceTo(new Position(intFloor(K[I][1]), intFloor(K[I][2]))));
             }
             // 8480
         }
@@ -1221,78 +1209,26 @@ public class Game {
         println("DIRECTION ON/DISTANCE CALCULATOR:");
         println("YOU ARE AT QUADRANT " + Q1 + "," + Q2 + " SECTOR " + S1 + "," + S2);
         println("PLEASE ENTER");
-        println("INITIAL COORDINATES (X,Y)");
-        C1 = input("X: ");
-        A = input("Y: ");
-        println("FINAL COORDINATES (X,Y)");
-        W1 = input("X: ");
-        X = input("Y: ");
-        goto8220();
-    }
-
-    private void goto8220() {
-        // 8220
-        X = X - A;
-        A = C1 - W1;
-        if (X >= 0) { // else 8350
-            if (A >= 0) { // else 8410
-                if (X <= 0) { // else 8280
-                    if (A == 0) {
-                        C1 = 5;
-                    } else {
-                        C1 = 1; // 8280
-                    }
-                } else {
-                    C1 = 1; // 8280
-                }
-                goto8290();
-            } else {  // 8410
-                C1 = 7;
-                goto8420();
-            }
-        } else {
-            // 8350
-            if (A > 0) {
-                C1 = 3;
-                goto8420();
-            } else {
-                if (X != 0) {
-                    C1 = 5;
-                    goto8290();
-                } else {
-                    C1 = 7;
-                    goto8420();
-                }
-            }
-        }
-    }
-
-    private void goto8290() {
-        if (!(Math.abs(A) <= Math.abs(X))) { // else 8330
-            // 8310  PRINT" DIRECTION ="3C1+¢(CABSC A) -ABS(X) )+ABSCA)) /ABSCA)) :GO0T08 4
-            println("DIRECTION = " + (C1 + ((Math.abs(A) - Math.abs(X) + Math.abs(A)) / Math.abs(A))));
-        } else { // 8330
-            println("DIRECTION = " + (C1 + Math.abs(A) / Math.abs(X)));
-        }  // GOTO 8460
-    }
-
-    private void goto8420() {
-        if (Math.abs(A) < Math.abs(X)) {  // else 8450
-            println("DIRECTION = " + (C1 + ((Math.abs(X) - Math.abs(A) + Math.abs(X)) / Math.abs(X))));
-        } else {
-            println("DIRECTION = " + (C1 + Math.abs(X) / Math.abs(A)));
-        }
+        println("INITIAL COORDINATES");
+        int row1 = input("ROW: ");
+        int col1 = input("COLUMN: ");
+        Position pos1 = new Position(row1, col1);
+        println("FINAL COORDINATES )");
+        int row2 = input("ROW: ");
+        int col2= input("COLUMN: ");
+        Position pos2 = new Position(row2, col2);
+        println("DISTANCE " + pos1.distanceTo(pos2));
+        println("DIRECTION " + pos1.directionTo(pos2));
     }
 
     private void starbaseNavData8500() {
         // 8500 LFB3<>@THENPRINT! FROM ENTERPRISE TO STARBASE:": ¥1=B4:X=B5:G0TO1286
         if (B3 != 0) {
             println("FROM ENTERPRISE TO STARBASE:");
-            W1 = B4;
-            X = B5; // GOTO 8120
-            C1 = S1;
-            A = S2;
-            goto8220();
+            Position base = new Position(B4, B5);
+            Position enterprise = new Position(S1, S2);
+            println("DISTANCE " + enterprise.distanceTo(base)) ;
+            println("DIRECTION " + enterprise.directionTo(base)) ;
         } else {
             // 8510 PFINT"MR. SPOCK REPOPTSs ‘SENSORS SHOW NO STARBASES IN THI S"3
             print("MR. SPOCK REPORTS, ‘SENSORS SHOW NO STARBASES IN THIS");
