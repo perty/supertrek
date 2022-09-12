@@ -1230,7 +1230,7 @@ public class Game {
             println("DISTANCE " + enterprise.distanceTo(base)) ;
             println("DIRECTION " + enterprise.directionTo(base)) ;
         } else {
-            // 8510 PFINT"MR. SPOCK REPOPTSs ‘SENSORS SHOW NO STARBASES IN THI S"3
+            // 8510
             print("MR. SPOCK REPORTS, ‘SENSORS SHOW NO STARBASES IN THIS");
             println(" QUADRANT.'");
         }
@@ -1311,11 +1311,7 @@ public class Game {
         // 6770 Oss" “sPRINTOL :FOR I=1T08
         println(SRS_DELIMITER);
         for (int I = 1; I <= 8; I++) {
-            // 6820 FORJ=(I-1)*24im Le 24+ 1TOCI-4) *24+ 22STEP3:PRINT" “;MID$(QS,I, J);:NEXTJ
-            // for (int J = (I - 1) * 24 + 1; J <= (I - 1) * 24 + 22; J += 3) {
-            //     print(mid$(Q$, J, 3));
-            // }
-            //String line = mid$(Q$, (I - 1) * 24 + 1, 24);
+            // 6820
             String line = quadrantContent.getRow(I);
             print(line);
             // 6830 ON I GOTO

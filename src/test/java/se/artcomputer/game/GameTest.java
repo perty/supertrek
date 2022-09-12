@@ -31,6 +31,8 @@ class GameTest {
         assertEquals(RUNNING, game.gameState);
         int klingons = game.totalKlingons();
         command("NAV", "2", "1");
+        command("?"); // Invoke help
+        command("COM", "9"); // Invoke help
         command("COM", "2");
         command("TOR", "4");
         assertEquals(klingons - 1, game.totalKlingons());
@@ -97,6 +99,7 @@ class GameTest {
         int klingons2 = game.totalKlingons();
         command("COM", "2");
         command("TOR", "4");
+        command("COM", "2");
         assertEquals(klingons2 - 1, game.totalKlingons());
         command("NAV", "1", "2");
         assertEquals(new Position(2, 7), game.currentQuadrant());
@@ -223,6 +226,7 @@ class GameTest {
         command("");
         assertEquals(3000, game.totalEnergy());
         command("LRS");
+        command("NAV", "0", "1");  // Incorrect
         command("NAV", "5", "1");
         assertEquals(RED, game.condition());
         command("NAV", "4", "0.1", "AYE"); // Die and restart'
@@ -230,6 +234,194 @@ class GameTest {
         assertEquals(0, game.shields(), "Restore shields");
         assertEquals(10, game.torpedoes(), "Restore torpedoes");
         assertEquals(3000, game.totalEnergy(), "Restore energy");
+    }
+
+    /**
+     *  Give up
+     */
+    @Test
+    void resign() {
+        game = new Game(scanner, new GameRandomImpl(1337));
+        command("");
+        command("XXX", "no");
+    }
+
+    /**
+     * We hunt down the last Klingon and win!
+     */
+    @Test
+    void ftw() {
+        GameRandom random = new GameStaticImpl(new int[]
+                {5, 1, 7, 2, 0, 6, 1, 0, 7, 2, 6, 1, 6, 1, 5, 5, 4},
+                new float[]
+                        {0.5f, 0.9f, 0.8f, 0.7f, 0.01f, 0.3f, 0.7f, 0.2f}
+        );
+        game = new Game(scanner, random);
+        command("");
+        command("LRS");
+        command("COM", "2");
+        command("COM", "1");
+        command("COM", "3");
+        command("COM", "4", "8", "3", "1", "7");
+        command("TOR", "2.34");
+        command("NAV", "7", "1");
+        command("LRS");
+        command("NAV", "6", "1");
+        assertEquals(new Position(8, 1), game.currentQuadrant());
+        command("LRS");
+        command("SHE", "500");
+        command("PHA", "320");
+        command("NAV", "3", "1");
+        assertEquals(new Position(7, 1), game.currentQuadrant());
+        command("LRS");
+        command("PHA", "320");
+        command("NAV", "3", "1");
+        assertEquals(new Position(6, 1), game.currentQuadrant());
+        command("LRS");
+        command("PHA", "320");
+        command("PHA", "100");
+        command("NAV", "3", "1");
+        assertEquals(new Position(5, 1), game.currentQuadrant());
+        command("LRS");
+        command("PHA", "320");
+        command("PHA", "100");
+        command("NAV", "3", "1");
+        assertEquals(new Position(4, 1), game.currentQuadrant());
+        command("LRS");
+        command("PHA", "320");
+        command("NAV", "3", "1");
+        assertEquals(new Position(3, 1), game.currentQuadrant());
+        command("LRS");
+        command("PHA", "320");
+        command("NAV", "8", "1");
+        assertEquals(new Position(4, 2), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "7", "2");
+        assertEquals(new Position(6, 2), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "2", "0.6");
+        assertEquals(DOCKED, game.condition());
+        command("DAM", "Y");
+        command("COM", "0");
+        command("NAV", "3", "4");
+        assertEquals(new Position(2, 2), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "4", "1");
+        assertEquals(new Position(1, 1), game.currentQuadrant());
+        command("TOR", "6");
+        command("NAV", "8.5", "3");
+        assertEquals(new Position(2, 4), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "2", "1");
+        assertEquals(new Position(1, 5), game.currentQuadrant());
+        command("LRS");
+        command("SHE", "500");
+        command("PHA", "500");
+        command("NAV", "7", "1");
+        assertEquals(new Position(2, 5), game.currentQuadrant());
+        command("LRS");
+        command("TOR", "5");
+        command("DAM");
+        command("NAV", "7", "0.2");
+        assertEquals(new Position(3, 5), game.currentQuadrant());
+        command("LRS");
+        command("TOR", "6"); // Miss
+        command("PHA", "300");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        assertEquals(new Position(4, 5), game.currentQuadrant());
+        command("LRS");
+        command("TOR", "5");
+        command("NAV", "6", "0.1");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        assertEquals(new Position(5, 5), game.currentQuadrant());
+        command("LRS");
+        command("COM", "4", "2", "7", "3", "1");
+        command("TOR", "5.21");
+        command("DAM");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        assertEquals(new Position(6, 5), game.currentQuadrant());
+        command("LRS");
+        command("TOR", "7");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        assertEquals(new Position(7, 5), game.currentQuadrant());
+        command("LRS");
+        command("TOR", "7");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        command("NAV", "7", "0.2");
+        assertEquals(new Position(8, 5), game.currentQuadrant());
+        command("LRS");
+        command("TOR", "5");
+        command("NAV", "2", "0.2");
+        assertEquals(new Position(7, 6), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "2", "0.2");
+        command("NAV", "1", "0.2");
+        command("NAV", "1", "0.2");
+        command("NAV", "1", "0.2");
+        assertEquals(new Position(7, 7), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "1", "0.2");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        assertEquals(new Position(6, 7), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        assertEquals(new Position(5, 7), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        assertEquals(new Position(4, 7), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        assertEquals(new Position(3, 7), game.currentQuadrant());
+        command("LRS");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        command("NAV", "3", "0.2");
+        assertEquals(new Position(2, 7), game.currentQuadrant());
+        command("DAM");
+        command("NAV", "5", "6");
+        assertEquals(new Position(2, 1), game.currentQuadrant());
+        command("PHA", "500", "no");  // Victory
+    }
+
+    @Test
+    void leaveGalaxy() {
+        GameRandom random = new GameStaticImpl(new int[]
+                {5, 1, 7, 2, 0, 6, 1, 0, 7, 2, 6, 1, 6, 1, 5, 5, 4},
+                new float[]
+                        {0.5f, 0.9f, 0.8f, 0.7f, 0.01f, 0.3f, 0.7f, 0.2f}
+        );
+        game = new Game(scanner, random);
+        command("");
+        command("SHE", "1000");
+        assertEquals(new Position(6, 2), game.currentQuadrant());
+        command("NAV", "5", "3");
+        assertEquals(new Position(6, 1), game.currentQuadrant());
     }
 
     private void command(String... command) {
@@ -256,8 +448,8 @@ class GameTest {
     private static class GameRandomImpl implements GameRandom {
         private final Random random;
 
-        private List<Integer> intSerie = new ArrayList<>();
-        private List<Float> floatSerie = new ArrayList<>();
+        private final List<Integer> intSerie = new ArrayList<>();
+        private final List<Float> floatSerie = new ArrayList<>();
 
         private GameRandomImpl(long seed) {
             this.random = new Random(seed);
