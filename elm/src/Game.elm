@@ -335,12 +335,19 @@ totalBases matrix =
 
 parseCommand : Model -> String -> Model
 parseCommand model command =
-    case command of
-        "SRS" ->
-            shortRangeSensors model
+    if model.state /= AwaitCommand then
+        { model
+            | state = AwaitCommand
+            , terminalLines = model.terminalLines |> commandPrompt
+        }
 
-        _ ->
-            helpCommand model
+    else
+        case command of
+            "SRS" ->
+                shortRangeSensors model
+
+            _ ->
+                helpCommand model
 
 
 shortRangeSensors : Model -> Model
