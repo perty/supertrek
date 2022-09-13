@@ -1,7 +1,7 @@
 module Game exposing (Model, Msg(..), Position, init, update)
 
 import Array exposing (Array)
-import Extra exposing (foldl)
+import Extra exposing (foldl, slice)
 import Matrix exposing (Matrix)
 import Random
 
@@ -42,6 +42,7 @@ type Msg
 
 type alias Damage =
     { shortRangeSensors : Float
+    , longRangeSensors : Float
     }
 
 
@@ -90,7 +91,7 @@ init =
       , sector = Position 0 0
       , energy = initialEnergy
       , shieldLevel = 0
-      , damage = Damage 0
+      , damage = Damage 0 0
       , currentDate = 0
       , startDate = 0
       , missionDays = 0
@@ -346,6 +347,9 @@ parseCommand model command =
             "SRS" ->
                 shortRangeSensors model
 
+            "LRS" ->
+                longRangeSensors model
+
             "GRS" ->
                 galaxySensor model
 
@@ -485,14 +489,44 @@ commandPrompt strings =
     strings |> print "COMMAND "
 
 
+longRangeSensors : Model -> Model
+longRangeSensors model =
+    if model.damage.longRangeSensors < 0 then
+        { model
+            | terminalLines =
+                model.terminalLines
+                    |> println "LONG RANGE SENSORS ARE INOPERABLE"
+                    |> commandPrompt
+        }
+
+    else
+        let
+            headLine =
+                "LONG RANGE SCAN FOR QUADDRANT " ++ posToString model.quadrant
+
+            sliced : Matrix Quadrant
+            sliced =
+                slice (model.quadrant.row - 2) (model.quadrant.col - 2) (model.quadrant.row + 1) (model.quadrant.col + 1) model.galaxy
+
+            neighbours =
+                Matrix.map (\q -> quadrantToString q "") sliced
+                    |> Array.toList
+                    |> List.map (Array.toList >> String.join " :")
+        in
+        { model
+            | terminalLines =
+                List.foldl (\str lines -> lines |> println str)
+                    model.terminalLines
+                    (([ "", headLine ] ++ neighbours) ++ [])
+                    |> commandPrompt
+        }
+
+
 galaxySensor : Model -> Model
 galaxySensor model =
     let
         headLine =
             List.range 1 8 |> List.map paddedInt |> String.join ""
-
-        _ =
-            Debug.log "fold" <| foldl (\quadrant acc -> quadrantToString quadrant acc) "" (\s1 s2 -> s1 ++ "|" ++ s2) model.galaxy
 
         galaxyStrings : List String
         galaxyStrings =
