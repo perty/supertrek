@@ -1,6 +1,7 @@
 module Game exposing (Model, Msg(..), Position, init, update)
 
 import Array exposing (Array)
+import Extra exposing (foldl)
 import Matrix exposing (Matrix)
 import Random
 
@@ -9,6 +10,7 @@ type alias Model =
     { state : GameState
     , terminalLines : Array String
     , quadrant : Position
+    , quadrantContent : QuadrantContent
     , sector : Position
     , energy : Float
     , shieldLevel : Float
@@ -25,18 +27,34 @@ type alias Model =
 
 type GameState
     = Initial
+    | SetUpCurrentQuadrant
     | AwaitCommand
 
 
 type Msg
     = Enter String
-    | SetPosition ToPosition ( Int, Int )
-    | SetFloat FloatField Float
-    | SetQuadrant (List Float)
+    | InitPosition ToPosition ( Int, Int )
+    | InitFloat FloatField Float
+    | InitQuadrant (List Float)
+    | InitKlingon Cell
+    | InitStar ( Int, Int )
 
 
 type alias Damage =
     { shortRangeSensors : Float
+    }
+
+
+type Cell
+    = KlingonCell Int Int Float
+    | StarbaseCell
+    | StarCell
+    | StarshipCell
+    | EmptyCell
+
+
+type alias QuadrantContent =
+    { content : Matrix Cell
     }
 
 
@@ -68,6 +86,7 @@ init =
     ( { state = Initial
       , terminalLines = initialScreen
       , quadrant = Position 0 0
+      , quadrantContent = QuadrantContent (Matrix.repeat 8 8 EmptyCell)
       , sector = Position 0 0
       , energy = initialEnergy
       , shieldLevel = 0
@@ -81,11 +100,11 @@ init =
       , setUpProgress = 0
       }
     , Cmd.batch
-        [ Random.generate (SetPosition QuadrantPosition) randomPosition
-        , Random.generate (SetPosition SectorPosition) randomPosition
-        , Random.generate (SetFloat CurrentDate) randomFloat
-        , Random.generate (SetFloat MissionDays) randomFloat
-        , Random.generate SetQuadrant randomQuadrant
+        [ Random.generate (InitPosition QuadrantPosition) randomPosition
+        , Random.generate (InitPosition SectorPosition) randomPosition
+        , Random.generate (InitFloat CurrentDate) randomFloat
+        , Random.generate (InitFloat MissionDays) randomFloat
+        , Random.generate InitQuadrant randomQuadrant
         ]
     )
 
@@ -98,6 +117,14 @@ randomFloat =
 randomPosition : Random.Generator ( Int, Int )
 randomPosition =
     Random.pair (Random.int 1 8) (Random.int 1 8)
+
+
+randomKlingon : Random.Generator Cell
+randomKlingon =
+    Random.map3 (\row col health -> KlingonCell row col (100 + health))
+        (Random.int 1 8)
+        (Random.int 1 8)
+        (Random.float 0 1)
 
 
 randomQuadrant : Random.Generator (List Float)
@@ -161,15 +188,20 @@ update msg model =
         Enter command ->
             ( parseCommand model command, Cmd.none )
 
-        SetPosition toPosition ( row, col ) ->
+        InitPosition toPosition ( row, col ) ->
             case toPosition of
                 QuadrantPosition ->
                     ( { model | quadrant = Position row col }, Cmd.none )
 
                 SectorPosition ->
-                    ( { model | sector = Position row col }, Cmd.none )
+                    ( { model
+                        | sector = Position row col
+                        , quadrantContent = insertIconInQuadrant model.quadrantContent row col StarshipCell
+                      }
+                    , Cmd.none
+                    )
 
-        SetFloat floatField value ->
+        InitFloat floatField value ->
             case floatField of
                 CurrentDate ->
                     let
@@ -185,24 +217,56 @@ update msg model =
                     in
                     ( { model | missionDays = date }, Cmd.none )
 
-        SetQuadrant floats ->
+        InitQuadrant floats ->
             let
                 newGalaxy =
                     addQuadrant floats model.galaxy model.galaxySetup
             in
             if model.galaxySetup > 63 then
+                let
+                    currentQuadrant : Quadrant
+                    currentQuadrant =
+                        Matrix.get model.galaxy model.quadrant.row model.quadrant.col |> Maybe.withDefault (Quadrant 0 0 0)
+
+                    klingons =
+                        List.range 0 currentQuadrant.klingons
+                            |> List.map (\_ -> Random.generate InitKlingon randomKlingon)
+
+                    stars =
+                        List.range 0 currentQuadrant.stars
+                            |> List.map (\_ -> Random.generate InitStar randomPosition)
+                in
                 ( { model
                     | galaxy = newGalaxy
-                    , state = AwaitCommand
+                    , state = SetUpCurrentQuadrant
                     , terminalLines = afterInitial model
                   }
-                , Cmd.none
+                , Cmd.batch (klingons ++ stars)
                 )
 
             else
                 ( { model | galaxy = newGalaxy, galaxySetup = model.galaxySetup + 1 }
-                , Random.generate SetQuadrant randomQuadrant
+                , Random.generate InitQuadrant randomQuadrant
                 )
+
+        InitStar ( row, col ) ->
+            if not <| checkForIcon model.quadrantContent row col EmptyCell then
+                ( model, Random.generate InitStar randomPosition )
+
+            else
+                ( { model | quadrantContent = insertIconInQuadrant model.quadrantContent row col StarCell }, Cmd.none )
+
+        InitKlingon cell ->
+            case cell of
+                KlingonCell row col _ ->
+                    if not <| checkForIcon model.quadrantContent row col EmptyCell then
+                        ( model, Random.generate InitKlingon randomKlingon )
+
+                    else
+                        ( { model | quadrantContent = insertIconInQuadrant model.quadrantContent row col cell }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 addQuadrant : List Float -> Matrix Quadrant -> Int -> Matrix Quadrant
@@ -295,15 +359,54 @@ shortRangeSensors model =
         let
             srsMap =
                 List.range 1 8
-                    |> List.map String.fromInt
+                    |> List.map
+                        (\n ->
+                            quadrantRowAsString model.quadrantContent n
+                                ++ srsRight model n
+                        )
         in
         { model
             | terminalLines =
                 List.foldl (\str lines -> lines |> println str)
                     model.terminalLines
-                    ("..." :: srsMap)
+                    (("" :: srsDelimiter :: srsMap) ++ [ srsDelimiter ])
                     |> commandPrompt
         }
+
+
+srsDelimiter =
+    String.repeat 24 "-"
+
+
+srsRight : Model -> Int -> String
+srsRight model int =
+    case int of
+        1 ->
+            "     STARDATE           " ++ String.fromInt (intFloor ((model.currentDate * 10) * 0.1))
+
+        2 ->
+            "     CONDITION          " ++ "TODO"
+
+        3 ->
+            "     QUADRANT           " ++ posToString model.quadrant
+
+        4 ->
+            "     SECTOR             " ++ posToString model.sector
+
+        5 ->
+            "     PHOTON TORPEDOES   " ++ String.fromInt model.torpedoes
+
+        6 ->
+            "     TOTAL ENERGY       " ++ String.fromInt (intFloor (model.energy + model.shieldLevel))
+
+        7 ->
+            "     SHIELDS            " ++ String.fromInt (intFloor model.shieldLevel)
+
+        8 ->
+            "     KLINGONS REMAINING " ++ String.fromInt (totalKlingons model.galaxy)
+
+        _ ->
+            "?"
 
 
 helpCommand : Model -> Model
@@ -330,6 +433,54 @@ commandPrompt strings =
     strings |> print "COMMAND "
 
 
-foldl : (a -> b -> b) -> b -> (b -> b -> b) -> Matrix.Matrix a -> b
-foldl function acc accJoin matrix =
-    Array.foldl (\ma a -> Array.foldl function acc ma |> accJoin a) acc matrix
+insertIconInQuadrant : QuadrantContent -> Int -> Int -> Cell -> QuadrantContent
+insertIconInQuadrant content s1 s2 icon =
+    { content
+        | content = Matrix.set content.content (s1 - 1) (s2 - 1) icon
+    }
+
+
+checkForIcon : QuadrantContent -> Int -> Int -> Cell -> Bool
+checkForIcon quadrantContent row col cell =
+    case Matrix.get quadrantContent.content (row - 1) (col - 1) of
+        Just c ->
+            c == cell
+
+        Nothing ->
+            False
+
+
+quadrantRowAsString : QuadrantContent -> Int -> String
+quadrantRowAsString quadrantContent row =
+    Matrix.getXs quadrantContent.content (row - 1)
+        |> Array.map cellToString
+        |> Array.toList
+        |> String.join ""
+
+
+cellToString : Cell -> String
+cellToString cell =
+    case cell of
+        EmptyCell ->
+            "   "
+
+        KlingonCell _ _ _ ->
+            "+K+"
+
+        StarbaseCell ->
+            "<!>"
+
+        StarCell ->
+            " * "
+
+        StarshipCell ->
+            "<*>"
+
+
+posToString : Position -> String
+posToString position =
+    String.fromInt position.row ++ "," ++ String.fromInt position.col
+
+
+intFloor f =
+    Basics.floor f
