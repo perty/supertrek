@@ -338,13 +338,16 @@ parseCommand model command =
     if model.state /= AwaitCommand then
         { model
             | state = AwaitCommand
-            , terminalLines = model.terminalLines |> commandPrompt
         }
+            |> shortRangeSensors
 
     else
         case command of
             "SRS" ->
                 shortRangeSensors model
+
+            "GRS" ->
+                galaxySensor model
 
             _ ->
                 helpCommand model
@@ -480,6 +483,46 @@ helpCommand model =
 
 commandPrompt strings =
     strings |> print "COMMAND "
+
+
+galaxySensor : Model -> Model
+galaxySensor model =
+    let
+        headLine =
+            List.range 1 8 |> List.map paddedInt |> String.join ""
+
+        _ =
+            Debug.log "fold" <| foldl (\quadrant acc -> quadrantToString quadrant acc) "" (\s1 s2 -> s1 ++ "|" ++ s2) model.galaxy
+
+        galaxyStrings : List String
+        galaxyStrings =
+            foldl (\quadrant acc -> quadrantToString quadrant acc) "" (\s1 s2 -> s1 ++ "|" ++ s2) model.galaxy
+                |> String.split "|"
+                |> List.tail
+                |> Maybe.withDefault []
+                |> List.indexedMap (\n s -> String.fromInt (n + 1) ++ s)
+    in
+    { model
+        | terminalLines =
+            List.foldl (\str lines -> lines |> println str)
+                model.terminalLines
+                (([ "", headLine ] ++ galaxyStrings) ++ [])
+                |> commandPrompt
+    }
+
+
+quadrantToString : Quadrant -> String -> String
+quadrantToString quadrant acc =
+    acc
+        ++ " "
+        ++ (String.fromInt (quadrant.klingons * 100 + quadrant.bases + quadrant.stars) |> String.padLeft 3 '0')
+
+
+paddedInt : Int -> String
+paddedInt int =
+    int
+        |> String.fromInt
+        |> String.padLeft 4 ' '
 
 
 insertIconInQuadrant : QuadrantContent -> Int -> Int -> Cell -> QuadrantContent
