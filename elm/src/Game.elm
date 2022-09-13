@@ -392,7 +392,7 @@ srsRight model int =
             "     STARDATE           " ++ String.fromInt (intFloor ((model.currentDate * 10) * 0.1))
 
         2 ->
-            "     CONDITION          " ++ "TODO"
+            "     CONDITION          " ++ condition model
 
         3 ->
             "     QUADRANT           " ++ posToString model.quadrant
@@ -414,6 +414,48 @@ srsRight model int =
 
         _ ->
             "?"
+
+
+condition : Model -> String
+condition model =
+    let
+        docked =
+            Matrix.neighbours model.quadrantContent.content model.sector.row model.sector.col
+                |> Array.foldl
+                    (\cell baseSeen ->
+                        if baseSeen then
+                            True
+
+                        else
+                            cell == Just StarbaseCell
+                    )
+                    False
+
+        klingons =
+            foldl
+                (\cell n ->
+                    case cell of
+                        KlingonCell _ _ _ ->
+                            n + 1
+
+                        _ ->
+                            n
+                )
+                0
+                (+)
+                model.quadrantContent.content
+    in
+    if docked then
+        "DOCKED"
+
+    else if klingons > 0 then
+        "RED"
+
+    else if model.energy < initialEnergy * 0.1 then
+        "YELLOW"
+
+    else
+        "GREEN"
 
 
 helpCommand : Model -> Model
