@@ -227,14 +227,14 @@ update msg model =
                 let
                     currentQuadrant : Quadrant
                     currentQuadrant =
-                        Matrix.get model.galaxy model.quadrant.row model.quadrant.col |> Maybe.withDefault (Quadrant 0 0 0)
+                        Matrix.get model.galaxy (model.quadrant.row - 1) (model.quadrant.col - 1) |> Maybe.withDefault (Quadrant 0 0 0)
 
                     klingons =
-                        List.range 0 currentQuadrant.klingons
+                        List.range 1 currentQuadrant.klingons
                             |> List.map (\_ -> Random.generate InitKlingon randomKlingon)
 
                     stars =
-                        List.range 0 currentQuadrant.stars
+                        List.range 1 currentQuadrant.stars
                             |> List.map (\_ -> Random.generate InitStar randomPosition)
                 in
                 ( { model
