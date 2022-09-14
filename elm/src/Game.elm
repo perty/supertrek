@@ -22,6 +22,7 @@ type alias Model =
     , galaxy : Matrix Quadrant
     , galaxySetup : Int
     , setUpProgress : Int
+    , route : Float
     }
 
 
@@ -29,6 +30,8 @@ type GameState
     = Initial
     | SetUpCurrentQuadrant
     | AwaitCommand
+    | AwaitRoute
+    | AwaitWarp
 
 
 type Msg
@@ -41,7 +44,8 @@ type Msg
 
 
 type alias Damage =
-    { shortRangeSensors : Float
+    { warpEngines : Float
+    , shortRangeSensors : Float
     , longRangeSensors : Float
     }
 
@@ -91,7 +95,7 @@ init =
       , sector = Position 0 0
       , energy = initialEnergy
       , shieldLevel = 0
-      , damage = Damage 0 0
+      , damage = Damage 0 0 0
       , currentDate = 0
       , startDate = 0
       , missionDays = 0
@@ -99,6 +103,7 @@ init =
       , galaxy = Matrix.repeat 8 8 (Quadrant -1 -1 -1)
       , galaxySetup = 0
       , setUpProgress = 0
+      , route = -1
       }
     , Cmd.batch
         [ Random.generate (InitPosition QuadrantPosition) randomPosition
@@ -187,7 +192,14 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Enter command ->
-            ( parseCommand model command, Cmd.none )
+            let
+                lastLine =
+                    Array.get 23 model.terminalLines |> Maybe.withDefault ""
+
+                commandAdded =
+                    { model | terminalLines = Array.set 23 (lastLine ++ command) model.terminalLines }
+            in
+            ( parseCommand commandAdded command, Cmd.none )
 
         InitPosition toPosition ( row, col ) ->
             case toPosition of
@@ -336,25 +348,122 @@ totalBases matrix =
 
 parseCommand : Model -> String -> Model
 parseCommand model command =
-    if model.state /= AwaitCommand then
-        { model
-            | state = AwaitCommand
-        }
-            |> shortRangeSensors
+    case model.state of
+        AwaitCommand ->
+            case command of
+                "NAV" ->
+                    routePrompt model
+
+                "SRS" ->
+                    shortRangeSensors model
+
+                "LRS" ->
+                    longRangeSensors model
+
+                "GRS" ->
+                    galaxySensor model
+
+                _ ->
+                    helpCommand model
+
+        Initial ->
+            model
+
+        SetUpCurrentQuadrant ->
+            { model | state = AwaitCommand } |> shortRangeSensors
+
+        AwaitRoute ->
+            let
+                errorCase =
+                    { model
+                        | state = AwaitCommand
+                        , terminalLines =
+                            model.terminalLines
+                                |> println " LT. SULU REPORTS 'INCORRECT COURSE DATA, SIR!'"
+                                |> commandPrompt
+                    }
+            in
+            case String.toFloat command of
+                Nothing ->
+                    errorCase
+
+                Just route ->
+                    if route < 1 || route > 8 then
+                        errorCase
+
+                    else
+                        warpPrompt route model
+
+        AwaitWarp ->
+            let
+                errorCase =
+                    { model
+                        | state = AwaitCommand
+                        , terminalLines =
+                            model.terminalLines
+                                |> commandPrompt
+                    }
+            in
+            case String.toFloat command of
+                Nothing ->
+                    errorCase
+
+                Just warp ->
+                    if warp <= 0 || warp > maxWarp model then
+                        errorCase
+
+                    else
+                        navigate warp model
+
+
+routePrompt : Model -> Model
+routePrompt model =
+    { model
+        | state = AwaitRoute
+        , terminalLines = model.terminalLines |> println "" |> print "COURSE (1-8): "
+    }
+
+
+warpPrompt : Float -> Model -> Model
+warpPrompt route model =
+    { model
+        | state = AwaitWarp
+        , route = route
+        , terminalLines = model.terminalLines |> println "" |> print ("WARP FACTOR (0 - " ++ (String.fromFloat <| maxWarp model) ++ "): ")
+    }
+
+
+maxWarp : Model -> Float
+maxWarp model =
+    if model.damage.warpEngines < 0 then
+        0.2
 
     else
-        case command of
-            "SRS" ->
-                shortRangeSensors model
+        8
 
-            "LRS" ->
-                longRangeSensors model
 
-            "GRS" ->
-                galaxySensor model
+navigate : Float -> Model -> Model
+navigate warp model =
+    let
+        stepsN =
+            intFloor (warp * 8 + 0.5)
+    in
+    model
+        |> klingonsMoveAndFire
+        |> moveStarShip stepsN
 
-            _ ->
-                helpCommand model
+
+klingonsMoveAndFire : Model -> Model
+klingonsMoveAndFire model =
+    model
+
+
+moveStarShip : Int -> Model -> Model
+moveStarShip stepsN model =
+    { model
+        | state = AwaitCommand
+        , terminalLines = model.terminalLines |> println "" |> commandPrompt
+    }
 
 
 shortRangeSensors : Model -> Model
