@@ -39,6 +39,7 @@ type Msg
     | InitPosition ToPosition ( Int, Int )
     | InitFloat FloatField Float
     | InitQuadrant (List Float)
+    | NewQuadrant (List Float)
     | InitKlingon Cell
     | InitStar ( Int, Int )
 
@@ -91,7 +92,7 @@ init =
     ( { state = Initial
       , terminalLines = initialScreen
       , quadrant = Position 0 0
-      , quadrantContent = QuadrantContent (Matrix.repeat 8 8 EmptyCell)
+      , quadrantContent = initQuadrant
       , sector = Position 0 0
       , energy = initialEnergy
       , shieldLevel = 0
@@ -113,6 +114,11 @@ init =
         , Random.generate InitQuadrant randomQuadrant
         ]
     )
+
+
+initQuadrant : QuadrantContent
+initQuadrant =
+    QuadrantContent (Matrix.repeat 8 8 EmptyCell)
 
 
 randomFloat : Random.Generator Float
@@ -199,7 +205,7 @@ update msg model =
                 commandAdded =
                     { model | terminalLines = Array.set 23 (lastLine ++ command) model.terminalLines }
             in
-            ( parseCommand commandAdded command, Cmd.none )
+            parseCommand commandAdded command
 
         InitPosition toPosition ( row, col ) ->
             case toPosition of
@@ -261,6 +267,26 @@ update msg model =
                 ( { model | galaxy = newGalaxy, galaxySetup = model.galaxySetup + 1 }
                 , Random.generate InitQuadrant randomQuadrant
                 )
+
+        NewQuadrant floats ->
+            let
+                currentQuadrant : Quadrant
+                currentQuadrant =
+                    Matrix.get model.galaxy (model.quadrant.row - 1) (model.quadrant.col - 1) |> Maybe.withDefault (Quadrant 0 0 0)
+
+                klingons =
+                    List.range 1 currentQuadrant.klingons
+                        |> List.map (\_ -> Random.generate InitKlingon randomKlingon)
+
+                stars =
+                    List.range 1 currentQuadrant.stars
+                        |> List.map (\_ -> Random.generate InitStar randomPosition)
+            in
+            ( { model
+                | state = SetUpCurrentQuadrant
+              }
+            , Cmd.batch (klingons ++ stars)
+            )
 
         InitStar ( row, col ) ->
             if not <| checkForIcon model.quadrantContent row col EmptyCell then
@@ -346,7 +372,7 @@ totalBases matrix =
     foldl (\q a -> q.bases + a) 0 (+) matrix
 
 
-parseCommand : Model -> String -> Model
+parseCommand : Model -> String -> ( Model, Cmd Msg )
 parseCommand model command =
     case model.state of
         AwaitCommand ->
@@ -367,7 +393,7 @@ parseCommand model command =
                     helpCommand model
 
         Initial ->
-            model
+            ( model, Cmd.none )
 
         SetUpCurrentQuadrant ->
             { model | state = AwaitCommand } |> shortRangeSensors
@@ -385,11 +411,11 @@ parseCommand model command =
             in
             case String.toFloat command of
                 Nothing ->
-                    errorCase
+                    ( errorCase, Cmd.none )
 
                 Just route ->
                     if route < 1 || route > 8 then
-                        errorCase
+                        ( errorCase, Cmd.none )
 
                     else
                         warpPrompt route model
@@ -406,31 +432,35 @@ parseCommand model command =
             in
             case String.toFloat command of
                 Nothing ->
-                    errorCase
+                    ( errorCase, Cmd.none )
 
                 Just warp ->
                     if warp <= 0 || warp > maxWarp model then
-                        errorCase
+                        ( errorCase, Cmd.none )
 
                     else
                         navigate warp model
 
 
-routePrompt : Model -> Model
+routePrompt : Model -> ( Model, Cmd Msg )
 routePrompt model =
-    { model
+    ( { model
         | state = AwaitRoute
         , terminalLines = model.terminalLines |> println "" |> print "COURSE (1-8): "
-    }
+      }
+    , Cmd.none
+    )
 
 
-warpPrompt : Float -> Model -> Model
+warpPrompt : Float -> Model -> ( Model, Cmd Msg )
 warpPrompt route model =
-    { model
+    ( { model
         | state = AwaitWarp
         , route = route
         , terminalLines = model.terminalLines |> println "" |> print ("WARP FACTOR (0 - " ++ (String.fromFloat <| maxWarp model) ++ "): ")
-    }
+      }
+    , Cmd.none
+    )
 
 
 maxWarp : Model -> Float
@@ -442,7 +472,7 @@ maxWarp model =
         8
 
 
-navigate : Float -> Model -> Model
+navigate : Float -> Model -> ( Model, Cmd Msg )
 navigate warp model =
     let
         stepsN =
@@ -458,17 +488,213 @@ klingonsMoveAndFire model =
     model
 
 
-moveStarShip : Int -> Model -> Model
+moveStarShip : Int -> Model -> ( Model, Cmd Msg )
 moveStarShip stepsN model =
-    { model
-        | state = AwaitCommand
-        , terminalLines = model.terminalLines |> println "" |> commandPrompt
-    }
+    let
+        _ =
+            Debug.log "move ship" model.sector
+    in
+    if stepsN <= 0 then
+        ( { model
+            | state = AwaitCommand
+            , terminalLines =
+                model.terminalLines
+                    |> println ""
+                    |> commandPrompt
+          }
+        , Cmd.none
+        )
+
+    else
+        let
+            iroute =
+                model.route |> Basics.round
+
+            x1 =
+                cfaktor iroute 1 + (cfaktor (iroute + 1) 1 - cfaktor iroute 1) * (model.route - Basics.toFloat iroute)
+
+            x2 =
+                cfaktor iroute 2 + (cfaktor (iroute + 1) 2 - cfaktor iroute 2) * (model.route - Basics.toFloat iroute)
+
+            newSector =
+                Debug.log "newSector" <|
+                    Position (model.sector.row + Basics.floor x1) (model.sector.col + Basics.floor x2)
+        in
+        if newSector.row > 8 || newSector.col > 8 || newSector.row < 1 || newSector.col < 1 then
+            exceededQuadrantLimits newSector model
+
+        else
+            { model | sector = newSector }
+                |> moveStarShip (stepsN - 1)
 
 
-shortRangeSensors : Model -> Model
+cfaktor : Int -> Int -> Float
+cfaktor route xory =
+    case ( route, xory ) of
+        ( 3, 1 ) ->
+            -1
+
+        ( 2, 1 ) ->
+            -1
+
+        ( 4, 1 ) ->
+            -1
+
+        ( 4, 2 ) ->
+            -1
+
+        ( 5, 2 ) ->
+            -1
+
+        ( 6, 2 ) ->
+            -1
+
+        ( 1, 2 ) ->
+            1
+
+        ( 2, 2 ) ->
+            1
+
+        ( 6, 1 ) ->
+            1
+
+        ( 7, 1 ) ->
+            1
+
+        ( 8, 1 ) ->
+            1
+
+        ( 8, 2 ) ->
+            1
+
+        ( 9, 2 ) ->
+            1
+
+        _ ->
+            0
+
+
+exceededQuadrantLimits : Position -> Model -> ( Model, Cmd Msg )
+exceededQuadrantLimits newSector model =
+    let
+        rowOffset =
+            case newSector.row of
+                0 ->
+                    -1
+
+                9 ->
+                    1
+
+                _ ->
+                    0
+
+        colOffset =
+            case newSector.col of
+                0 ->
+                    -1
+
+                9 ->
+                    1
+
+                _ ->
+                    0
+
+        newQuadrant =
+            Position (model.quadrant.row + rowOffset) (model.quadrant.col + colOffset)
+    in
+    if newQuadrant.row > 8 || newQuadrant.col > 8 || newQuadrant.row < 1 || newQuadrant.col < 1 then
+        exceededGalaxyLimits model
+
+    else
+        newQuadrantEntered { model | quadrant = newQuadrant }
+
+
+exceededGalaxyLimits : Model -> ( Model, Cmd Msg )
+exceededGalaxyLimits model =
+    ( model, Cmd.none )
+
+
+newQuadrantEntered : Model -> ( Model, Cmd Msg )
+newQuadrantEntered model =
+    ( { model
+        | quadrantContent = insertIconInQuadrant initQuadrant model.sector.row model.sector.col StarshipCell
+        , terminalLines =
+            model.terminalLines
+                |> println ""
+                |> println ("Now entering quadrant " ++ quadrantName model.quadrant)
+      }
+    , Random.generate NewQuadrant randomQuadrant
+    )
+
+
+quadrantName : Position -> String
+quadrantName quadrant =
+    let
+        pos =
+            posToString quadrant
+    in
+    if quadrant.col <= 4 then
+        case quadrant.row of
+            1 ->
+                "ANTARES"
+
+            2 ->
+                "RIGEL"
+
+            3 ->
+                "PROCYON"
+
+            4 ->
+                "VEGA"
+
+            5 ->
+                "CANOPUS"
+
+            6 ->
+                "ALTAIR"
+
+            7 ->
+                "SAGITTARIUS"
+
+            8 ->
+                "POLLUX"
+
+            _ ->
+                "??"
+
+    else
+        case quadrant.row of
+            1 ->
+                "SIRIUS"
+
+            2 ->
+                "DENEB"
+
+            3 ->
+                "CAPELLA"
+
+            4 ->
+                "BETELGEUSE"
+
+            5 ->
+                "ALDEBARAN"
+
+            6 ->
+                "REGULUS"
+
+            7 ->
+                "ARCTURUS"
+
+            8 ->
+                "SPICA"
+
+            _ ->
+                "??"
+
+
+shortRangeSensors : Model -> ( Model, Cmd Msg )
 shortRangeSensors model =
-    if model.damage.shortRangeSensors < 0 then
+    ( if model.damage.shortRangeSensors < 0 then
         { model
             | terminalLines =
                 model.terminalLines
@@ -478,7 +704,7 @@ shortRangeSensors model =
                     |> commandPrompt
         }
 
-    else
+      else
         let
             srsMap =
                 List.range 1 8
@@ -495,6 +721,8 @@ shortRangeSensors model =
                     (("" :: srsDelimiter :: srsMap) ++ [ srsDelimiter ])
                     |> commandPrompt
         }
+    , Cmd.none
+    )
 
 
 srsDelimiter =
@@ -574,9 +802,9 @@ condition model =
         "GREEN"
 
 
-helpCommand : Model -> Model
+helpCommand : Model -> ( Model, Cmd Msg )
 helpCommand model =
-    { model
+    ( { model
         | terminalLines =
             model.terminalLines
                 |> println "ENTER ONE OF THE FOLLOWING:"
@@ -591,16 +819,18 @@ helpCommand model =
                 |> println "  XXX (TO RESIGN YOUR COMMAND)"
                 |> println ""
                 |> commandPrompt
-    }
+      }
+    , Cmd.none
+    )
 
 
 commandPrompt strings =
     strings |> print "COMMAND "
 
 
-longRangeSensors : Model -> Model
+longRangeSensors : Model -> ( Model, Cmd Msg )
 longRangeSensors model =
-    if model.damage.longRangeSensors < 0 then
+    ( if model.damage.longRangeSensors < 0 then
         { model
             | terminalLines =
                 model.terminalLines
@@ -608,7 +838,7 @@ longRangeSensors model =
                     |> commandPrompt
         }
 
-    else
+      else
         let
             headLine =
                 "LONG RANGE SCAN FOR QUADDRANT " ++ posToString model.quadrant
@@ -629,9 +859,11 @@ longRangeSensors model =
                     (([ "", headLine ] ++ neighbours) ++ [])
                     |> commandPrompt
         }
+    , Cmd.none
+    )
 
 
-galaxySensor : Model -> Model
+galaxySensor : Model -> ( Model, Cmd Msg )
 galaxySensor model =
     let
         headLine =
@@ -645,13 +877,15 @@ galaxySensor model =
                 |> Maybe.withDefault []
                 |> List.indexedMap (\n s -> String.fromInt (n + 1) ++ s)
     in
-    { model
+    ( { model
         | terminalLines =
             List.foldl (\str lines -> lines |> println str)
                 model.terminalLines
                 (([ "", headLine ] ++ galaxyStrings) ++ [])
                 |> commandPrompt
-    }
+      }
+    , Cmd.none
+    )
 
 
 quadrantToString : Quadrant -> String -> String
