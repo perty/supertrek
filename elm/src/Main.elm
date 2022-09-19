@@ -108,7 +108,15 @@ killLastChar string =
 
 view : Model -> Html Msg
 view model =
-    div []
+    div
+        [ style "background-color" "antiquewhite"
+        , style "width" "fit-content"
+        , style "border-color" "lightgray"
+        , style "border-style" "inset"
+        , style "border-width" "5px"
+        , style "border-radius" "5px"
+        , style "margin" "15px"
+        ]
         [ textarea
             [ cols 80
             , rows 24
@@ -116,9 +124,11 @@ view model =
             , readonly True
             , style "background-color" "black"
             , style "color" "lightgreen"
-            , style "border-style" "solid"
+            , style "border-style" "inset"
+            , style "border-width" "10px"
             , style "border-radius" "15px"
             , style "font-family" "monospace"
+            , style "margin" "25px"
             ]
             ((Array.map (\s -> text s) model.gameModel.terminalLines |> Array.toList) ++ [ text model.inputString ])
         ]

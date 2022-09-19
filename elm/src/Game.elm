@@ -19,7 +19,7 @@ type alias Model =
     , startDate : Float
     , missionDays : Float
     , torpedoes : Int
-    , galaxy : Matrix Quadrant
+    , galaxy : Galaxy
     , galaxySetup : Int
     , setUpProgress : Int
     , route : Float
@@ -33,26 +33,28 @@ type GameState
     | AwaitCommand
     | AwaitRoute
     | AwaitWarp
+    | AwaitTorpedoCourse
 
 
 type Msg
     = Enter String
-    | InitPosition ToPosition ( Int, Int )
+    | InitPosition ToPosition Position
     | InitFloat FloatField Float
     | InitQuadrant (List Float)
     | InitKlingon Cell
-    | InitStar ( Int, Int )
+    | InitStar Position
 
 
 type alias Damage =
     { warpEngines : Float
     , shortRangeSensors : Float
     , longRangeSensors : Float
+    , torpedoes : Float
     }
 
 
 type Cell
-    = KlingonCell Int Int Float
+    = KlingonCell Position Float
     | StarbaseCell
     | StarCell
     | StarshipCell
@@ -80,6 +82,10 @@ type alias Position =
     }
 
 
+type alias Galaxy =
+    Matrix Quadrant
+
+
 type alias Quadrant =
     { klingons : Int
     , bases : Int
@@ -96,7 +102,7 @@ init =
       , sector = Position 0 0
       , energy = initialEnergy
       , shieldLevel = 0
-      , damage = Damage 0 0 0
+      , damage = Damage 0 0 0 0
       , currentDate = 0
       , startDate = 0
       , missionDays = 0
@@ -126,14 +132,16 @@ randomFloat =
     Random.float 0 1
 
 
-randomPosition : Random.Generator ( Int, Int )
+randomPosition : Random.Generator Position
 randomPosition =
-    Random.pair (Random.int 1 8) (Random.int 1 8)
+    Random.map2 Position
+        (Random.int 1 8)
+        (Random.int 1 8)
 
 
 randomKlingon : Random.Generator Cell
 randomKlingon =
-    Random.map3 (\row col health -> KlingonCell row col (100 + health))
+    Random.map3 (\row col health -> KlingonCell (Position row col) (100 + health))
         (Random.int 1 8)
         (Random.int 1 8)
         (Random.float 0 1)
@@ -207,15 +215,15 @@ update msg model =
             in
             parseCommand commandAdded command
 
-        InitPosition toPosition ( row, col ) ->
+        InitPosition toPosition pos ->
             case toPosition of
                 QuadrantPosition ->
-                    ( { model | quadrant = Position row col }, Cmd.none )
+                    ( { model | quadrant = pos }, Cmd.none )
 
                 SectorPosition ->
                     ( { model
-                        | sector = Position row col
-                        , quadrantContent = insertIconInQuadrant model.quadrantContent row col StarshipCell
+                        | sector = pos
+                        , quadrantContent = insertIconInQuadrant model.quadrantContent pos StarshipCell
                       }
                     , Cmd.none
                     )
@@ -255,13 +263,13 @@ update msg model =
                 , Random.generate InitQuadrant randomQuadrant
                 )
 
-        InitStar ( row, col ) ->
-            if not <| checkForIcon model.quadrantContent row col EmptyCell then
+        InitStar pos ->
+            if not <| checkForIcon model.quadrantContent pos EmptyCell then
                 ( model, Random.generate InitStar randomPosition )
 
             else
                 ( { model
-                    | quadrantContent = insertIconInQuadrant model.quadrantContent row col StarCell
+                    | quadrantContent = insertIconInQuadrant model.quadrantContent pos StarCell
                   }
                     |> countDownSetUpCurrentQuadrant
                 , Cmd.none
@@ -269,13 +277,13 @@ update msg model =
 
         InitKlingon cell ->
             case cell of
-                KlingonCell row col _ ->
-                    if not <| checkForIcon model.quadrantContent row col EmptyCell then
+                KlingonCell pos _ ->
+                    if not <| checkForIcon model.quadrantContent pos EmptyCell then
                         ( model, Random.generate InitKlingon randomKlingon )
 
                     else
                         ( { model
-                            | quadrantContent = insertIconInQuadrant model.quadrantContent row col cell
+                            | quadrantContent = insertIconInQuadrant model.quadrantContent pos cell
                           }
                             |> countDownSetUpCurrentQuadrant
                         , Cmd.none
@@ -308,7 +316,7 @@ countDownSetUpCurrentQuadrant model =
             |> shortRangeSensors
 
 
-addQuadrant : List Float -> Matrix Quadrant -> Int -> Matrix Quadrant
+addQuadrant : List Float -> Galaxy -> Int -> Galaxy
 addQuadrant floats matrix galaxySetup =
     let
         array =
@@ -358,16 +366,40 @@ addQuadrant floats matrix galaxySetup =
     Matrix.set matrix setX setY q
 
 
+removeKlingonFromQuadrant : Galaxy -> Position -> Galaxy
+removeKlingonFromQuadrant galaxy position =
+    let
+        quadrant =
+            Debug.log "get quadrant" <|
+                getQuadrant galaxy position
+
+        newQuadrant =
+            { quadrant | klingons = quadrant.klingons - 1 }
+    in
+    setQuadrant galaxy position newQuadrant
+
+
+getQuadrant : Galaxy -> Position -> Quadrant
+getQuadrant galaxy position =
+    Matrix.get galaxy (position.row - 1) (position.col - 1)
+        |> Maybe.withDefault (Quadrant 0 0 0)
+
+
+setQuadrant : Galaxy -> Position -> Quadrant -> Galaxy
+setQuadrant galaxy position newQuadrant =
+    Matrix.set galaxy (position.row - 1) (position.col - 1) newQuadrant
+
+
 fnr r =
     r * 8 + 1 |> Basics.round
 
 
-totalKlingons : Matrix Quadrant -> Int
+totalKlingons : Galaxy -> Int
 totalKlingons matrix =
     foldl (\q a -> q.klingons + a) 0 (+) matrix
 
 
-totalBases : Matrix Quadrant -> Int
+totalBases : Galaxy -> Int
 totalBases matrix =
     foldl (\q a -> q.bases + a) 0 (+) matrix
 
@@ -386,6 +418,9 @@ parseCommand model command =
                 "LRS" ->
                     ( longRangeSensors model, Cmd.none )
 
+                "TOR" ->
+                    ( photonTorpedo model, Cmd.none )
+
                 "GRS" ->
                     ( galaxySensor model, Cmd.none )
 
@@ -402,68 +437,57 @@ parseCommand model command =
             ( model, Cmd.none )
 
         AwaitRoute ->
-            let
-                errorCase =
-                    { model
-                        | state = AwaitCommand
-                        , terminalLines =
-                            model.terminalLines
-                                |> println " LT. SULU REPORTS 'INCORRECT COURSE DATA, SIR!'"
-                                |> commandPrompt
-                    }
-            in
-            case String.toFloat command of
-                Nothing ->
-                    ( errorCase, Cmd.none )
-
-                Just route ->
-                    if route < 1 || route > 8 then
-                        ( errorCase, Cmd.none )
-
-                    else
-                        warpPrompt route model
+            ( warpPrompt command model, Cmd.none )
 
         AwaitWarp ->
-            let
-                errorCase =
-                    { model
-                        | state = AwaitCommand
-                        , terminalLines =
-                            model.terminalLines
-                                |> commandPrompt
-                    }
-            in
-            case String.toFloat command of
-                Nothing ->
-                    ( errorCase, Cmd.none )
+            navigate command model
 
-                Just warp ->
-                    if warp <= 0 || warp > maxWarp model then
-                        ( errorCase, Cmd.none )
-
-                    else
-                        navigate warp model
+        AwaitTorpedoCourse ->
+            ( sendTorpedo command model, Cmd.none )
 
 
 routePrompt : Model -> ( Model, Cmd Msg )
 routePrompt model =
     ( { model
         | state = AwaitRoute
-        , terminalLines = model.terminalLines |> println "" |> print "COURSE (1-8): "
+        , terminalLines =
+            model.terminalLines
+                |> println ""
+                |> print "COURSE (1-8): "
       }
     , Cmd.none
     )
 
 
-warpPrompt : Float -> Model -> ( Model, Cmd Msg )
-warpPrompt route model =
-    ( { model
-        | state = AwaitWarp
-        , route = route
-        , terminalLines = model.terminalLines |> println "" |> print ("WARP FACTOR (0 - " ++ (String.fromFloat <| maxWarp model) ++ "): ")
-      }
-    , Cmd.none
-    )
+warpPrompt : String -> Model -> Model
+warpPrompt command model =
+    let
+        errorCase =
+            { model
+                | state = AwaitCommand
+                , terminalLines =
+                    model.terminalLines
+                        |> println " LT. SULU REPORTS 'INCORRECT COURSE DATA, SIR!'"
+                        |> commandPrompt
+            }
+    in
+    case String.toFloat command of
+        Nothing ->
+            errorCase
+
+        Just route ->
+            if route < 1 || route > 8 then
+                errorCase
+
+            else
+                { model
+                    | state = AwaitWarp
+                    , route = route
+                    , terminalLines =
+                        model.terminalLines
+                            |> println ""
+                            |> print ("WARP FACTOR (0 - " ++ (String.fromFloat <| maxWarp model) ++ "): ")
+                }
 
 
 maxWarp : Model -> Float
@@ -475,21 +499,39 @@ maxWarp model =
         8
 
 
-navigate : Float -> Model -> ( Model, Cmd Msg )
-navigate warp model =
+navigate : String -> Model -> ( Model, Cmd Msg )
+navigate command model =
     let
-        stepsN =
-            intFloor (warp * 8 + 0.5)
-
-        removedShip =
+        errorCase =
             { model
-                | quadrantContent = insertIconInQuadrant model.quadrantContent model.sector.row model.sector.col EmptyCell
+                | state = AwaitCommand
+                , terminalLines =
+                    model.terminalLines
+                        |> commandPrompt
             }
     in
-    removedShip
-        |> klingonsMoveAndFire
-        |> moveStarShip stepsN
-        |> appendCommandPrompt
+    case String.toFloat command of
+        Nothing ->
+            ( errorCase, Cmd.none )
+
+        Just warp ->
+            if warp <= 0 || warp > maxWarp model then
+                ( errorCase, Cmd.none )
+
+            else
+                let
+                    stepsN =
+                        intFloor (warp * 8 + 0.5)
+
+                    removedShip =
+                        { model
+                            | quadrantContent = insertIconInQuadrant model.quadrantContent model.sector EmptyCell
+                        }
+                in
+                removedShip
+                    |> klingonsMoveAndFire
+                    |> moveStarShip stepsN
+                    |> appendCommandPrompt
 
 
 appendCommandPrompt : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
@@ -514,7 +556,7 @@ moveStarShip stepsN model =
     if stepsN <= 0 then
         ( { model
             | state = AwaitCommand
-            , quadrantContent = insertIconInQuadrant model.quadrantContent model.sector.row model.sector.col StarshipCell
+            , quadrantContent = insertIconInQuadrant model.quadrantContent model.sector StarshipCell
           }
         , Cmd.none
         )
@@ -537,7 +579,7 @@ moveStarShip stepsN model =
         if newSector.row > 8 || newSector.col > 8 || newSector.row < 1 || newSector.col < 1 then
             exceededQuadrantLimits newSector model
 
-        else if not <| checkForIcon model.quadrantContent newSector.row newSector.col EmptyCell then
+        else if not <| checkForIcon model.quadrantContent newSector EmptyCell then
             ( crashedInto model, Cmd.none )
 
         else
@@ -663,8 +705,7 @@ newQuadrantEntered model =
     let
         currentQuadrant : Quadrant
         currentQuadrant =
-            Matrix.get model.galaxy (model.quadrant.row - 1) (model.quadrant.col - 1)
-                |> Maybe.withDefault (Quadrant 0 0 0)
+            getQuadrant model.galaxy model.quadrant
 
         klingons =
             List.range 1 currentQuadrant.klingons
@@ -676,7 +717,7 @@ newQuadrantEntered model =
     in
     ( { model
         | state = SetUpCurrentQuadrant (currentQuadrant.klingons + currentQuadrant.stars)
-        , quadrantContent = insertIconInQuadrant initQuadrant model.sector.row model.sector.col StarshipCell
+        , quadrantContent = insertIconInQuadrant initQuadrant model.sector StarshipCell
         , terminalLines =
             model.terminalLines
                 |> println ""
@@ -836,7 +877,7 @@ condition model =
             foldl
                 (\cell n ->
                     case cell of
-                        KlingonCell _ _ _ ->
+                        KlingonCell _ _ ->
                             n + 1
 
                         _ ->
@@ -920,6 +961,122 @@ longRangeSensors model =
         }
 
 
+photonTorpedo : Model -> Model
+photonTorpedo model =
+    if model.torpedoes <= 0 then
+        { model
+            | terminalLines =
+                model.terminalLines
+                    |> println ""
+                    |> println "ALL PHOTON TORPEDOES EXPENDED"
+        }
+
+    else if model.damage.torpedoes < 0 then
+        { model
+            | terminalLines =
+                model.terminalLines
+                    |> println ""
+                    |> println "PHOTON TUBES ARE NOT OPERATIONAL"
+        }
+
+    else
+        { model
+            | state = AwaitTorpedoCourse
+            , terminalLines =
+                model.terminalLines
+                    |> println ""
+                    |> print "PHOTON TORPEDO COURSE (1-9): "
+        }
+
+
+sendTorpedo : String -> Model -> Model
+sendTorpedo command model =
+    case String.toFloat command of
+        Nothing ->
+            { model
+                | state = AwaitCommand
+                , terminalLines =
+                    model.terminalLines
+                        |> commandPrompt
+            }
+
+        Just course ->
+            if course < 1 || course > 9 then
+                { model
+                    | state = AwaitCommand
+                    , terminalLines =
+                        model.terminalLines
+                            |> println ""
+                            |> println "ENSIGN CHEKOV REPORTS, 'INCORRECT COURSE DATA, SIR!'"
+                            |> commandPrompt
+                }
+
+            else
+                sendTorpedoHelper model.sector
+                    course
+                    { model
+                        | torpedoes = model.torpedoes - 1
+                        , terminalLines =
+                            model.terminalLines
+                                |> println "TORPEDO COURSE"
+                    }
+
+
+sendTorpedoHelper : Position -> Float -> Model -> Model
+sendTorpedoHelper pos course model =
+    let
+        iroute =
+            course |> Basics.round
+
+        x1 =
+            cfaktor iroute 1 + (cfaktor (iroute + 1) 1 - cfaktor iroute 1) * (course - Basics.toFloat iroute)
+
+        x2 =
+            cfaktor iroute 2 + (cfaktor (iroute + 1) 2 - cfaktor iroute 2) * (course - Basics.toFloat iroute)
+
+        newPos =
+            Position (pos.row + Basics.floor x1) (pos.col + Basics.floor x2)
+    in
+    if pos.row < 1 || pos.row > 8 || pos.col < 1 || pos.col > 8 then
+        { model
+            | state = AwaitCommand
+            , terminalLines =
+                model.terminalLines
+                    |> println ""
+                    |> println "TORPEDO MISSED"
+                    |> commandPrompt
+        }
+
+    else
+        case getIconInQuadrant model.quadrantContent newPos of
+            EmptyCell ->
+                sendTorpedoHelper newPos
+                    course
+                    { model
+                        | terminalLines =
+                            model.terminalLines
+                                |> println (posToString newPos)
+                    }
+
+            KlingonCell _ _ ->
+                { model
+                    | terminalLines =
+                        model.terminalLines
+                            |> println "*** KLINGON DESTROYED ***"
+                    , quadrantContent = insertIconInQuadrant model.quadrantContent newPos EmptyCell
+                    , galaxy = removeKlingonFromQuadrant model.galaxy model.quadrant
+                }
+
+            StarbaseCell ->
+                model
+
+            StarCell ->
+                model
+
+            StarshipCell ->
+                model
+
+
 galaxySensor : Model -> Model
 galaxySensor model =
     let
@@ -965,21 +1122,31 @@ paddedInt int =
         |> String.padLeft 4 ' '
 
 
-insertIconInQuadrant : QuadrantContent -> Int -> Int -> Cell -> QuadrantContent
-insertIconInQuadrant content s1 s2 icon =
+insertIconInQuadrant : QuadrantContent -> Position -> Cell -> QuadrantContent
+insertIconInQuadrant content pos icon =
     { content
-        | content = Matrix.set content.content (s1 - 1) (s2 - 1) icon
+        | content = Matrix.set content.content (pos.row - 1) (pos.col - 1) icon
     }
 
 
-checkForIcon : QuadrantContent -> Int -> Int -> Cell -> Bool
-checkForIcon quadrantContent row col cell =
-    case Matrix.get quadrantContent.content (row - 1) (col - 1) of
+checkForIcon : QuadrantContent -> Position -> Cell -> Bool
+checkForIcon quadrantContent pos cell =
+    case Matrix.get quadrantContent.content (pos.row - 1) (pos.col - 1) of
         Just c ->
             c == cell
 
         Nothing ->
             False
+
+
+getIconInQuadrant : QuadrantContent -> Position -> Cell
+getIconInQuadrant quadrantContent pos =
+    case Matrix.get quadrantContent.content (pos.row - 1) (pos.col - 1) of
+        Just c ->
+            c
+
+        Nothing ->
+            EmptyCell
 
 
 quadrantRowAsString : QuadrantContent -> Int -> String
@@ -996,7 +1163,7 @@ cellToString cell =
         EmptyCell ->
             "   "
 
-        KlingonCell _ _ _ ->
+        KlingonCell _ _ ->
             "+K+"
 
         StarbaseCell ->
