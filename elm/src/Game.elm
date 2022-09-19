@@ -370,11 +370,22 @@ removeKlingonFromQuadrant : Galaxy -> Position -> Galaxy
 removeKlingonFromQuadrant galaxy position =
     let
         quadrant =
-            Debug.log "get quadrant" <|
-                getQuadrant galaxy position
+            getQuadrant galaxy position
 
         newQuadrant =
             { quadrant | klingons = quadrant.klingons - 1 }
+    in
+    setQuadrant galaxy position newQuadrant
+
+
+removeStarbaseFromQuadrant : Galaxy -> Position -> Galaxy
+removeStarbaseFromQuadrant galaxy position =
+    let
+        quadrant =
+            getQuadrant galaxy position
+
+        newQuadrant =
+            { quadrant | bases = quadrant.bases - 1 }
     in
     setQuadrant galaxy position newQuadrant
 
@@ -440,10 +451,10 @@ parseCommand model command =
             ( warpPrompt command model, Cmd.none )
 
         AwaitWarp ->
-            navigate command model
+            navigate command model |> appendCommandPrompt
 
         AwaitTorpedoCourse ->
-            ( sendTorpedo command model, Cmd.none )
+            ( sendTorpedo command model, Cmd.none ) |> appendCommandPrompt
 
 
 routePrompt : Model -> ( Model, Cmd Msg )
@@ -501,22 +512,19 @@ maxWarp model =
 
 navigate : String -> Model -> ( Model, Cmd Msg )
 navigate command model =
-    let
-        errorCase =
-            { model
-                | state = AwaitCommand
-                , terminalLines =
-                    model.terminalLines
-                        |> commandPrompt
-            }
-    in
     case String.toFloat command of
         Nothing ->
-            ( errorCase, Cmd.none )
+            ( model, Cmd.none )
 
         Just warp ->
             if warp <= 0 || warp > maxWarp model then
-                ( errorCase, Cmd.none )
+                ( { model
+                    | terminalLines =
+                        model.terminalLines
+                            |> println ("WARP MUST BE GREATER THAN ZERO AND MAXIMUM " ++ String.fromFloat (maxWarp model))
+                  }
+                , Cmd.none
+                )
 
             else
                 let
@@ -531,13 +539,13 @@ navigate command model =
                 removedShip
                     |> klingonsMoveAndFire
                     |> moveStarShip stepsN
-                    |> appendCommandPrompt
 
 
 appendCommandPrompt : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 appendCommandPrompt ( model, cmd ) =
     ( { model
-        | terminalLines =
+        | state = AwaitCommand
+        , terminalLines =
             model.terminalLines
                 |> println ""
                 |> commandPrompt
@@ -563,14 +571,14 @@ moveStarShip stepsN model =
 
     else
         let
-            iroute =
+            iRoute =
                 model.route |> Basics.round
 
             x1 =
-                cfaktor iroute 1 + (cfaktor (iroute + 1) 1 - cfaktor iroute 1) * (model.route - Basics.toFloat iroute)
+                cFaktor iRoute 1 + (cFaktor (iRoute + 1) 1 - cFaktor iRoute 1) * (model.route - Basics.toFloat iRoute)
 
             x2 =
-                cfaktor iroute 2 + (cfaktor (iroute + 1) 2 - cfaktor iroute 2) * (model.route - Basics.toFloat iroute)
+                cFaktor iRoute 2 + (cFaktor (iRoute + 1) 2 - cFaktor iRoute 2) * (model.route - Basics.toFloat iRoute)
 
             newSector =
                 Debug.log "newSector" <|
@@ -587,9 +595,9 @@ moveStarShip stepsN model =
                 |> moveStarShip (stepsN - 1)
 
 
-cfaktor : Int -> Int -> Float
-cfaktor route xory =
-    case ( route, xory ) of
+cFaktor : Int -> Int -> Float
+cFaktor route xOrY =
+    case ( route, xOrY ) of
         ( 3, 1 ) ->
             -1
 
@@ -993,12 +1001,7 @@ sendTorpedo : String -> Model -> Model
 sendTorpedo command model =
     case String.toFloat command of
         Nothing ->
-            { model
-                | state = AwaitCommand
-                , terminalLines =
-                    model.terminalLines
-                        |> commandPrompt
-            }
+            model
 
         Just course ->
             if course < 1 || course > 9 then
@@ -1008,7 +1011,6 @@ sendTorpedo command model =
                         model.terminalLines
                             |> println ""
                             |> println "ENSIGN CHEKOV REPORTS, 'INCORRECT COURSE DATA, SIR!'"
-                            |> commandPrompt
                 }
 
             else
@@ -1018,6 +1020,7 @@ sendTorpedo command model =
                         | torpedoes = model.torpedoes - 1
                         , terminalLines =
                             model.terminalLines
+                                |> println ""
                                 |> println "TORPEDO COURSE"
                     }
 
@@ -1029,18 +1032,17 @@ sendTorpedoHelper pos course model =
             course |> Basics.round
 
         x1 =
-            cfaktor iroute 1 + (cfaktor (iroute + 1) 1 - cfaktor iroute 1) * (course - Basics.toFloat iroute)
+            cFaktor iroute 1 + (cFaktor (iroute + 1) 1 - cFaktor iroute 1) * (course - Basics.toFloat iroute)
 
         x2 =
-            cfaktor iroute 2 + (cfaktor (iroute + 1) 2 - cfaktor iroute 2) * (course - Basics.toFloat iroute)
+            cFaktor iroute 2 + (cFaktor (iroute + 1) 2 - cFaktor iroute 2) * (course - Basics.toFloat iroute)
 
         newPos =
             Position (pos.row + Basics.floor x1) (pos.col + Basics.floor x2)
     in
     if pos.row < 1 || pos.row > 8 || pos.col < 1 || pos.col > 8 then
         { model
-            | state = AwaitCommand
-            , terminalLines =
+            | terminalLines =
                 model.terminalLines
                     |> println ""
                     |> println "TORPEDO MISSED"
@@ -1068,13 +1070,48 @@ sendTorpedoHelper pos course model =
                 }
 
             StarbaseCell ->
-                model
+                let
+                    newModel =
+                        { model
+                            | terminalLines =
+                                model.terminalLines
+                                    |> println "*** STARBASE DESTROYED ***"
+                            , quadrantContent = insertIconInQuadrant model.quadrantContent newPos EmptyCell
+                            , galaxy = removeStarbaseFromQuadrant model.galaxy model.quadrant
+                        }
+                in
+                if totalBases newModel.galaxy <= 0 then
+                    { newModel
+                        | terminalLines =
+                            newModel.terminalLines
+                                |> println "THAT DOES IT, CAPTAIN!! YOU ARE HEREBY RELIEVED OF COMMAND"
+                                |> println "AND SENTENCED TO 99 STARDATES AT HARD LABOR ON CYGNUS 12!!"
+                    }
+                        |> gotoXXX6270
+
+                else
+                    { newModel
+                        | terminalLines =
+                            newModel.terminalLines
+                                |> println "STARFLEET COMMAND REVIEWING YOUR RECORD TO CONSIDER"
+                                |> println "COURT MARTIAL!"
+                    }
 
             StarCell ->
-                model
+                { model
+                    | terminalLines =
+                        model.terminalLines
+                            |> println ("STAR AT " ++ posToString newPos ++ " ABSORBED TORPEDO ENERGY.")
+                }
+                    |> klingonsMoveAndFire
 
             StarshipCell ->
                 model
+
+
+gotoXXX6270 : Model -> Model
+gotoXXX6270 model =
+    model
 
 
 galaxySensor : Model -> Model
