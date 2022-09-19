@@ -39,7 +39,6 @@ type Msg
     | InitPosition ToPosition ( Int, Int )
     | InitFloat FloatField Float
     | InitQuadrant (List Float)
-    | NewQuadrant (List Float)
     | InitKlingon Cell
     | InitStar ( Int, Int )
 
@@ -242,51 +241,17 @@ update msg model =
                     addQuadrant floats model.galaxy model.galaxySetup
             in
             if model.galaxySetup > 63 then
-                let
-                    currentQuadrant : Quadrant
-                    currentQuadrant =
-                        Matrix.get model.galaxy (model.quadrant.row - 1) (model.quadrant.col - 1) |> Maybe.withDefault (Quadrant 0 0 0)
-
-                    klingons =
-                        List.range 1 currentQuadrant.klingons
-                            |> List.map (\_ -> Random.generate InitKlingon randomKlingon)
-
-                    stars =
-                        List.range 1 currentQuadrant.stars
-                            |> List.map (\_ -> Random.generate InitStar randomPosition)
-                in
-                ( { model
+                { model
                     | galaxy = newGalaxy
                     , state = SetUpCurrentQuadrant
                     , terminalLines = afterInitial model
-                  }
-                , Cmd.batch (klingons ++ stars)
-                )
+                }
+                    |> newQuadrantEntered
 
             else
                 ( { model | galaxy = newGalaxy, galaxySetup = model.galaxySetup + 1 }
                 , Random.generate InitQuadrant randomQuadrant
                 )
-
-        NewQuadrant floats ->
-            let
-                currentQuadrant : Quadrant
-                currentQuadrant =
-                    Matrix.get model.galaxy (model.quadrant.row - 1) (model.quadrant.col - 1) |> Maybe.withDefault (Quadrant 0 0 0)
-
-                klingons =
-                    List.range 1 currentQuadrant.klingons
-                        |> List.map (\_ -> Random.generate InitKlingon randomKlingon)
-
-                stars =
-                    List.range 1 currentQuadrant.stars
-                        |> List.map (\_ -> Random.generate InitStar randomPosition)
-            in
-            ( { model
-                | state = SetUpCurrentQuadrant
-              }
-            , Cmd.batch (klingons ++ stars)
-            )
 
         InitStar ( row, col ) ->
             if not <| checkForIcon model.quadrantContent row col EmptyCell then
@@ -481,6 +446,18 @@ navigate warp model =
     model
         |> klingonsMoveAndFire
         |> moveStarShip stepsN
+        |> appendCommandPrompt
+
+
+appendCommandPrompt : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+appendCommandPrompt ( model, cmd ) =
+    ( { model
+        | terminalLines =
+            model.terminalLines
+                |> commandPrompt
+      }
+    , cmd
+    )
 
 
 klingonsMoveAndFire : Model -> Model
@@ -616,23 +593,34 @@ exceededGalaxyLimits model =
 
 newQuadrantEntered : Model -> ( Model, Cmd Msg )
 newQuadrantEntered model =
+    let
+        currentQuadrant : Quadrant
+        currentQuadrant =
+            Matrix.get model.galaxy (model.quadrant.row - 1) (model.quadrant.col - 1)
+                |> Maybe.withDefault (Quadrant 0 0 0)
+
+        klingons =
+            List.range 1 currentQuadrant.klingons
+                |> List.map (\_ -> Random.generate InitKlingon randomKlingon)
+
+        stars =
+            List.range 1 currentQuadrant.stars
+                |> List.map (\_ -> Random.generate InitStar randomPosition)
+    in
     ( { model
-        | quadrantContent = insertIconInQuadrant initQuadrant model.sector.row model.sector.col StarshipCell
+        | state = SetUpCurrentQuadrant
+        , quadrantContent = insertIconInQuadrant initQuadrant model.sector.row model.sector.col StarshipCell
         , terminalLines =
             model.terminalLines
                 |> println ""
-                |> println ("Now entering quadrant " ++ quadrantName model.quadrant)
+                |> println ("NOW ENTERING QUADRANT " ++ quadrantName model.quadrant)
       }
-    , Random.generate NewQuadrant randomQuadrant
+    , Cmd.batch (klingons ++ stars)
     )
 
 
 quadrantName : Position -> String
 quadrantName quadrant =
-    let
-        pos =
-            posToString quadrant
-    in
     if quadrant.col <= 4 then
         case quadrant.row of
             1 ->

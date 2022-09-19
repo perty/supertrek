@@ -60,24 +60,46 @@ update msg model =
             )
 
         PressedLetter char ->
-            ( { model | inputString = model.inputString ++ String.fromChar char |> String.toUpper }, Cmd.none )
+            ( { model
+                | inputString =
+                    killLastChar model.inputString
+                        ++ String.fromChar char
+                        ++ "_"
+                        |> String.toUpper
+              }
+            , Cmd.none
+            )
 
         Control string ->
             case string of
                 "Enter" ->
                     let
                         ( newModel, newCmd ) =
-                            Game.update (Game.Enter model.inputString) model.gameModel
+                            Game.update (Game.Enter (killLastChar model.inputString)) model.gameModel
                     in
-                    ( { model | inputString = "", gameModel = newModel }
+                    ( { model | inputString = "_", gameModel = newModel }
                     , Cmd.map GameMsg newCmd
                     )
 
                 "Backspace" ->
-                    ( { model | inputString = String.slice 0 (String.length model.inputString - 1) model.inputString }, Cmd.none )
+                    ( { model
+                        | inputString =
+                            (model.inputString
+                                |> killLastChar
+                                |> killLastChar
+                            )
+                                ++ "_"
+                      }
+                    , Cmd.none
+                    )
 
                 _ ->
                     ( model, Cmd.none )
+
+
+killLastChar : String -> String
+killLastChar string =
+    String.slice 0 (String.length string - 1) string
 
 
 
@@ -96,6 +118,7 @@ view model =
             , style "color" "lightgreen"
             , style "border-style" "solid"
             , style "border-radius" "15px"
+            , style "font-family" "monospace"
             ]
             ((Array.map (\s -> text s) model.gameModel.terminalLines |> Array.toList) ++ [ text model.inputString ])
         ]
