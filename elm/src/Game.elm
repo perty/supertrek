@@ -1,7 +1,7 @@
 module Game exposing (Model, Msg(..), Position, init, update)
 
 import Array exposing (Array)
-import Extra exposing (foldl, slice)
+import Extra exposing (foldl, sliceMaybe)
 import Matrix exposing (Matrix)
 import Random
 
@@ -771,6 +771,10 @@ srsDelimiter =
     String.repeat 24 "-"
 
 
+lrsDelimiter =
+    String.repeat 19 "-"
+
+
 srsRight : Model -> Int -> String
 srsRight model int =
     case int of
@@ -885,20 +889,22 @@ longRangeSensors model =
             headLine =
                 "LONG RANGE SCAN FOR QUADDRANT " ++ posToString model.quadrant
 
-            sliced : Matrix Quadrant
+            sliced : Matrix (Maybe Quadrant)
             sliced =
-                slice (model.quadrant.row - 2) (model.quadrant.col - 2) (model.quadrant.row + 1) (model.quadrant.col + 1) model.galaxy
+                sliceMaybe (model.quadrant.row - 2) (model.quadrant.col - 2) model.quadrant.row model.quadrant.col model.galaxy
 
+            neighbours : List String
             neighbours =
-                Matrix.map (\q -> quadrantToString q "") sliced
+                Matrix.map maybeQuadrantToString sliced
                     |> Array.toList
-                    |> List.map (Array.toList >> String.join " :")
+                    |> List.map (Array.toList >> String.join " : ")
+                    |> List.map (\s -> ": " ++ s ++ " :")
         in
         { model
             | terminalLines =
                 List.foldl (\str lines -> lines |> println str)
                     model.terminalLines
-                    (([ "", headLine ] ++ neighbours) ++ [])
+                    (([ "", headLine, lrsDelimiter ] ++ neighbours) ++ [ lrsDelimiter ])
                     |> commandPrompt
         }
     , Cmd.none
@@ -913,7 +919,7 @@ galaxySensor model =
 
         galaxyStrings : List String
         galaxyStrings =
-            foldl (\quadrant acc -> quadrantToString quadrant acc) "" (\s1 s2 -> s1 ++ "|" ++ s2) model.galaxy
+            foldl (\quadrant acc -> acc ++ " " ++ quadrantToString quadrant) "" (\s1 s2 -> s1 ++ "|" ++ s2) model.galaxy
                 |> String.split "|"
                 |> List.tail
                 |> Maybe.withDefault []
@@ -930,11 +936,19 @@ galaxySensor model =
     )
 
 
-quadrantToString : Quadrant -> String -> String
-quadrantToString quadrant acc =
-    acc
-        ++ " "
-        ++ (String.fromInt (quadrant.klingons * 100 + quadrant.bases + quadrant.stars) |> String.padLeft 3 '0')
+quadrantToString : Quadrant -> String
+quadrantToString quadrant =
+    String.fromInt (quadrant.klingons * 100 + quadrant.bases + quadrant.stars) |> String.padLeft 3 '0'
+
+
+maybeQuadrantToString : Maybe Quadrant -> String
+maybeQuadrantToString maybeQuadrant =
+    case maybeQuadrant of
+        Just q ->
+            quadrantToString q
+
+        Nothing ->
+            "***"
 
 
 paddedInt : Int -> String
