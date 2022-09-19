@@ -28,7 +28,8 @@ type alias Model =
 
 type GameState
     = Initial
-    | SetUpCurrentQuadrant
+    | AwaitFirstEnter
+    | SetUpCurrentQuadrant Int
     | AwaitCommand
     | AwaitRoute
     | AwaitWarp
@@ -241,12 +242,13 @@ update msg model =
                     addQuadrant floats model.galaxy model.galaxySetup
             in
             if model.galaxySetup > 63 then
-                { model
+                ( { model
                     | galaxy = newGalaxy
-                    , state = SetUpCurrentQuadrant
+                    , state = AwaitFirstEnter
                     , terminalLines = afterInitial model
-                }
-                    |> newQuadrantEntered
+                  }
+                , Cmd.none
+                )
 
             else
                 ( { model | galaxy = newGalaxy, galaxySetup = model.galaxySetup + 1 }
@@ -258,7 +260,12 @@ update msg model =
                 ( model, Random.generate InitStar randomPosition )
 
             else
-                ( { model | quadrantContent = insertIconInQuadrant model.quadrantContent row col StarCell }, Cmd.none )
+                ( { model
+                    | quadrantContent = insertIconInQuadrant model.quadrantContent row col StarCell
+                  }
+                    |> countDownSetUpCurrentQuadrant
+                , Cmd.none
+                )
 
         InitKlingon cell ->
             case cell of
@@ -267,10 +274,38 @@ update msg model =
                         ( model, Random.generate InitKlingon randomKlingon )
 
                     else
-                        ( { model | quadrantContent = insertIconInQuadrant model.quadrantContent row col cell }, Cmd.none )
+                        ( { model
+                            | quadrantContent = insertIconInQuadrant model.quadrantContent row col cell
+                          }
+                            |> countDownSetUpCurrentQuadrant
+                        , Cmd.none
+                        )
 
                 _ ->
                     ( model, Cmd.none )
+
+
+countDownSetUpCurrentQuadrant : Model -> Model
+countDownSetUpCurrentQuadrant model =
+    let
+        remaining =
+            case model.state of
+                SetUpCurrentQuadrant n ->
+                    n - 1
+
+                _ ->
+                    0
+    in
+    if remaining > 0 then
+        { model
+            | state = SetUpCurrentQuadrant remaining
+        }
+
+    else
+        { model
+            | state = AwaitCommand
+        }
+            |> shortRangeSensors
 
 
 addQuadrant : List Float -> Matrix Quadrant -> Int -> Matrix Quadrant
@@ -346,7 +381,7 @@ parseCommand model command =
                     routePrompt model
 
                 "SRS" ->
-                    shortRangeSensors model
+                    ( shortRangeSensors model, Cmd.none )
 
                 "LRS" ->
                     longRangeSensors model
@@ -360,8 +395,11 @@ parseCommand model command =
         Initial ->
             ( model, Cmd.none )
 
-        SetUpCurrentQuadrant ->
-            { model | state = AwaitCommand } |> shortRangeSensors
+        AwaitFirstEnter ->
+            newQuadrantEntered model
+
+        SetUpCurrentQuadrant _ ->
+            ( model, Cmd.none )
 
         AwaitRoute ->
             let
@@ -588,6 +626,10 @@ exceededQuadrantLimits newSector model =
 
 exceededGalaxyLimits : Model -> ( Model, Cmd Msg )
 exceededGalaxyLimits model =
+    let
+        _ =
+            Debug.log "exceed galaxy" model.quadrant
+    in
     ( model, Cmd.none )
 
 
@@ -608,7 +650,7 @@ newQuadrantEntered model =
                 |> List.map (\_ -> Random.generate InitStar randomPosition)
     in
     ( { model
-        | state = SetUpCurrentQuadrant
+        | state = SetUpCurrentQuadrant (currentQuadrant.klingons + currentQuadrant.stars)
         , quadrantContent = insertIconInQuadrant initQuadrant model.sector.row model.sector.col StarshipCell
         , terminalLines =
             model.terminalLines
@@ -680,9 +722,9 @@ quadrantName quadrant =
                 "??"
 
 
-shortRangeSensors : Model -> ( Model, Cmd Msg )
+shortRangeSensors : Model -> Model
 shortRangeSensors model =
-    ( if model.damage.shortRangeSensors < 0 then
+    if model.damage.shortRangeSensors < 0 then
         { model
             | terminalLines =
                 model.terminalLines
@@ -692,7 +734,7 @@ shortRangeSensors model =
                     |> commandPrompt
         }
 
-      else
+    else
         let
             srsMap =
                 List.range 1 8
@@ -709,8 +751,6 @@ shortRangeSensors model =
                     (("" :: srsDelimiter :: srsMap) ++ [ srsDelimiter ])
                     |> commandPrompt
         }
-    , Cmd.none
-    )
 
 
 srsDelimiter =
