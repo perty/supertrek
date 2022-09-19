@@ -384,10 +384,10 @@ parseCommand model command =
                     ( shortRangeSensors model, Cmd.none )
 
                 "LRS" ->
-                    longRangeSensors model
+                    ( longRangeSensors model, Cmd.none )
 
                 "GRS" ->
-                    galaxySensor model
+                    ( galaxySensor model, Cmd.none )
 
                 _ ->
                     helpCommand model
@@ -644,7 +644,18 @@ exceededGalaxyLimits model =
         _ =
             Debug.log "exceed galaxy" model.quadrant
     in
-    ( model, Cmd.none )
+    ( { model
+        | terminalLines =
+            model.terminalLines
+                |> println ""
+                |> println "LT-UHURA REPORTS MESSAGE FROM STARFLEET COMMAND:"
+                |> println "’ PERMISSION TO ATTEMPT CROSSING OF GALACTIC PERIMETER"
+                |> println " IS HEREBY *DENIED*. SHUT DOWN YOUR ENGINES.'"
+                |> println "CHIEF ENGINEER SCOTT REPORTS ‘WARP ENGINES SHUT DOWN'"
+                |> println (" AT SECTOR " ++ posToString model.sector ++ " OF QUADRANT " ++ posToString model.quadrant ++ " '")
+      }
+    , Cmd.none
+    )
 
 
 newQuadrantEntered : Model -> ( Model, Cmd Msg )
@@ -874,9 +885,9 @@ commandPrompt strings =
     strings |> print "COMMAND "
 
 
-longRangeSensors : Model -> ( Model, Cmd Msg )
+longRangeSensors : Model -> Model
 longRangeSensors model =
-    ( if model.damage.longRangeSensors < 0 then
+    if model.damage.longRangeSensors < 0 then
         { model
             | terminalLines =
                 model.terminalLines
@@ -884,7 +895,7 @@ longRangeSensors model =
                     |> commandPrompt
         }
 
-      else
+    else
         let
             headLine =
                 "LONG RANGE SCAN FOR QUADDRANT " ++ posToString model.quadrant
@@ -907,11 +918,9 @@ longRangeSensors model =
                     (([ "", headLine, lrsDelimiter ] ++ neighbours) ++ [ lrsDelimiter ])
                     |> commandPrompt
         }
-    , Cmd.none
-    )
 
 
-galaxySensor : Model -> ( Model, Cmd Msg )
+galaxySensor : Model -> Model
 galaxySensor model =
     let
         headLine =
@@ -925,15 +934,13 @@ galaxySensor model =
                 |> Maybe.withDefault []
                 |> List.indexedMap (\n s -> String.fromInt (n + 1) ++ s)
     in
-    ( { model
+    { model
         | terminalLines =
             List.foldl (\str lines -> lines |> println str)
                 model.terminalLines
                 (([ "", headLine ] ++ galaxyStrings) ++ [])
                 |> commandPrompt
-      }
-    , Cmd.none
-    )
+    }
 
 
 quadrantToString : Quadrant -> String
