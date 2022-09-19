@@ -480,8 +480,13 @@ navigate warp model =
     let
         stepsN =
             intFloor (warp * 8 + 0.5)
+
+        removedShip =
+            { model
+                | quadrantContent = insertIconInQuadrant model.quadrantContent model.sector.row model.sector.col EmptyCell
+            }
     in
-    model
+    removedShip
         |> klingonsMoveAndFire
         |> moveStarShip stepsN
         |> appendCommandPrompt
@@ -492,6 +497,7 @@ appendCommandPrompt ( model, cmd ) =
     ( { model
         | terminalLines =
             model.terminalLines
+                |> println ""
                 |> commandPrompt
       }
     , cmd
@@ -505,17 +511,10 @@ klingonsMoveAndFire model =
 
 moveStarShip : Int -> Model -> ( Model, Cmd Msg )
 moveStarShip stepsN model =
-    let
-        _ =
-            Debug.log "move ship" model.sector
-    in
     if stepsN <= 0 then
         ( { model
             | state = AwaitCommand
-            , terminalLines =
-                model.terminalLines
-                    |> println ""
-                    |> commandPrompt
+            , quadrantContent = insertIconInQuadrant model.quadrantContent model.sector.row model.sector.col StarshipCell
           }
         , Cmd.none
         )
@@ -537,6 +536,9 @@ moveStarShip stepsN model =
         in
         if newSector.row > 8 || newSector.col > 8 || newSector.row < 1 || newSector.col < 1 then
             exceededQuadrantLimits newSector model
+
+        else if not <| checkForIcon model.quadrantContent newSector.row newSector.col EmptyCell then
+            ( crashedInto model, Cmd.none )
 
         else
             { model | sector = newSector }
@@ -587,6 +589,18 @@ cfaktor route xory =
 
         _ ->
             0
+
+
+crashedInto : Model -> Model
+crashedInto model =
+    { model
+        | state = AwaitCommand
+        , terminalLines =
+            model.terminalLines
+                |> println ""
+                |> println "WARP ENGINES SHUT DOWN AT"
+                |> println ("SECTOR " ++ posToString model.sector ++ " DUE TO BAD NAVIGATION.")
+    }
 
 
 exceededQuadrantLimits : Position -> Model -> ( Model, Cmd Msg )
