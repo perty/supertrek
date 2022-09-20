@@ -43,6 +43,7 @@ type Msg
     | InitQuadrant (List Float)
     | InitKlingon Cell
     | InitStar Position
+    | InitBase Position
 
 
 type alias Damage =
@@ -270,6 +271,18 @@ update msg model =
             else
                 ( { model
                     | quadrantContent = insertIconInQuadrant model.quadrantContent pos StarCell
+                  }
+                    |> countDownSetUpCurrentQuadrant
+                , Cmd.none
+                )
+
+        InitBase pos ->
+            if not <| checkForIcon model.quadrantContent pos EmptyCell then
+                ( model, Random.generate InitBase randomPosition )
+
+            else
+                ( { model
+                    | quadrantContent = insertIconInQuadrant model.quadrantContent pos StarbaseCell
                   }
                     |> countDownSetUpCurrentQuadrant
                 , Cmd.none
@@ -722,16 +735,20 @@ newQuadrantEntered model =
         stars =
             List.range 1 currentQuadrant.stars
                 |> List.map (\_ -> Random.generate InitStar randomPosition)
+
+        bases =
+            List.range 1 currentQuadrant.bases
+                |> List.map (\_ -> Random.generate InitBase randomPosition)
     in
     ( { model
-        | state = SetUpCurrentQuadrant (currentQuadrant.klingons + currentQuadrant.stars)
+        | state = SetUpCurrentQuadrant (currentQuadrant.klingons + currentQuadrant.stars + currentQuadrant.bases)
         , quadrantContent = insertIconInQuadrant initQuadrant model.sector StarshipCell
         , terminalLines =
             model.terminalLines
                 |> println ""
                 |> println ("NOW ENTERING QUADRANT " ++ quadrantName model.quadrant)
       }
-    , Cmd.batch (klingons ++ stars)
+    , Cmd.batch (klingons ++ stars ++ bases)
     )
 
 
@@ -870,7 +887,7 @@ condition : Model -> String
 condition model =
     let
         docked =
-            Matrix.neighbours model.quadrantContent.content model.sector.row model.sector.col
+            Matrix.neighbours model.quadrantContent.content (model.sector.row - 1) (model.sector.col - 1)
                 |> Array.foldl
                     (\cell baseSeen ->
                         if baseSeen then
@@ -1139,7 +1156,7 @@ galaxySensor model =
 
 quadrantToString : Quadrant -> String
 quadrantToString quadrant =
-    String.fromInt (quadrant.klingons * 100 + quadrant.bases + quadrant.stars) |> String.padLeft 3 '0'
+    String.fromInt (quadrant.klingons * 100 + quadrant.bases * 10 + quadrant.stars) |> String.padLeft 3 '0'
 
 
 maybeQuadrantToString : Maybe Quadrant -> String
