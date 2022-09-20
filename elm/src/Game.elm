@@ -464,7 +464,7 @@ parseCommand model command =
             ( warpPrompt command model, Cmd.none )
 
         AwaitWarp ->
-            navigate command model |> appendCommandPrompt
+            navigate command model
 
         AwaitTorpedoCourse ->
             ( sendTorpedo command model, Cmd.none ) |> appendCommandPrompt
@@ -703,10 +703,6 @@ exceededQuadrantLimits newSector model =
 
 exceededGalaxyLimits : Model -> ( Model, Cmd Msg )
 exceededGalaxyLimits model =
-    let
-        _ =
-            Debug.log "exceed galaxy" model.quadrant
-    in
     ( { model
         | terminalLines =
             model.terminalLines
@@ -815,6 +811,10 @@ quadrantName quadrant =
 
 shortRangeSensors : Model -> Model
 shortRangeSensors model =
+    let
+        _ =
+            Debug.log "srs" model.quadrant
+    in
     if model.damage.shortRangeSensors < 0 then
         { model
             | terminalLines =
