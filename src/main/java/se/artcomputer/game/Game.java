@@ -1329,7 +1329,7 @@ public class Game {
         println(SRS_DELIMITER);
     }
 
-    private void insertIconInQuadrantString8670(int S1, int S2, String icon) {
+    void insertIconInQuadrantString8670(int S1, int S2, String icon) {
         quadrantContent.set(S1, S2, icon);
     }
 
@@ -1518,5 +1518,24 @@ public class Game {
 
     public float totalEnergy() {
         return shieldLevel + energy;
+    }
+    
+    public void setQuadrantContent(QuadrantContent quadrantContent) {
+        this.quadrantContent = quadrantContent;
+    }
+
+    public void setCurrentQuadrant(int row, int col) {
+        Q1 = row;
+        Q2 = col;
+        newQuadrant1320();
+    }
+
+    public void setCurrentSector(int row, int col) {
+        S1 = row;
+        S2 = col;
+    }
+
+    public Position getCurrentSector() {
+        return new Position(S1, S2);
     }
 }

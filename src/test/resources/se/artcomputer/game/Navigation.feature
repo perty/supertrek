@@ -21,5 +21,5 @@ Feature: Navigation
     Given a quadrant at 2,4
     And starship is located at sector 1,1
     When issuing command NAV 1.0 0.5
-    Then starship is moved to sector 1,4
+    Then starship is moved to sector 1,5
 
