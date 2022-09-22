@@ -17,9 +17,12 @@ Feature: Navigation
   If the ship is placed in a position next to a star base, it is
   considered docked.
 
-  Scenario: Moving within the quadrant
+  Scenario Outline: Moving within the quadrant
     Given a quadrant at 2,4
-    And starship is located at sector 1,1
-    When issuing command NAV 1.0 0.5
-    Then starship is moved to sector 1,5
+    And starship is located at sector <start row>,<start col>
+    When issuing command NAV <course> <warp>
+    Then starship is moved to sector <end row>,<end col>
 
+    Examples:
+      | start row | start col | course | warp | end row | end col |
+      | 1         | 1         | 1.0    | 0.5  | 1       | 5       |
