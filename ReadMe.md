@@ -72,3 +72,21 @@ Now that I have got it to work somewhat, I need to start testing more extensivel
 
 The ultimate goal would be to put this online for others to enjoy and get a glimpse of what playing a game would be like back then.
 
+## A new beginning
+
+I discovered that there are other people out there who has this sentiment for these retro games. Actually, the whole book I mentioned has been ported to Vintage Basic. All the programs run in the browser and have been translated to different languages. This game, Super trek, is no exception and has a Java implementation. The author even made a video about the process. He did however, not take it the whole way to well styled Java program, in my opinion. I suspect that there are bugs, I have not verified it fully.
+
+The last thing led to an idea, let's define the game in Gherkin (BDD) and use Cucumber to execute the specification. 
+
+The repository for all games : [https://github.com/coding-horror/basic-computer-games](https://github.com/coding-horror/basic-computer-games)
+
+Another thing, I started is a port to Elm. The challenge is that original program picks up a random number whenever it is needed. In Elm, getting a random number is a side effect which must be requested in a callback fashion. It takes a while to get used to. 
+
+So given that there is a Gherkin specification for the game, I would like to use that with Elm, but I need to find a tool for that. Maybe create one myself.
+
+Checking out [elm-spec](https://package.elm-lang.org/packages/brian-watkins/elm-spec/latest/) which claims to support BDD. It has a different philosophy, though, the specification is written in Elm with the fixture code in the same file. A possible solution would be to translate Gherkin to elm-spec.
+
+Checking out [elm-test-bdd-style](https://package.elm-lang.org/packages/rogeriochaves/elm-test-bdd-style/latest/) which is more of syntactic sugar on top of elm-test. 
+
+How does elm-test really work? It manages to run elm code at least. If I could rely on elm-test, that would feel stable. So an approach could be to do a manual translation of Gherkin -> elm-test and then take it from there.
+
