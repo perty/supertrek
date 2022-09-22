@@ -19,13 +19,8 @@ public class Game {
     private final GameInput scanner;
 
     private final GameRandom random;
+    private final GameOutput output;
 
-    // Try adding one to the size of each array and use 1 based index, as in Basic.
-    // 338 DIM G(8,8),C(9,2),K(3.3),N(3),Z(8,8),D(8)
-    /**
-     * Galaxy in the LRS format.100 * Klingons + 10 * Bases + Stars
-     */
-    // private float[][] G = new float[9][9]; // 330
     private final GalaxyContent galaxyContent = new GalaxyContent();
 
     /**
@@ -38,11 +33,7 @@ public class Game {
      * [3] : hit points remaining
      */
     private final float[][] K = new float[4][4]; // 330
-    //private float[] NA = new float[4]; // 330
-    //private float N; // 3170
-    //private final float[][] Z = new float[9][9]; // 330
     private GalaxyContent cumulativeContent;
-
     private final float[] damage = new float[9]; // 330
     private static final int DAMAGE_WARP_ENGINES = 1;
     private static final int DAMAGE_SHORT_RANGE_SENSORS = 2;
@@ -89,7 +80,6 @@ public class Game {
     /**
      * Total number of Klingons in the galaxy?
      */
-    private int K9 = 0; // 440
     private int K7 = 0; // 1200
     private String X$ = ""; // 440
     private String X0$ = " IS "; // 440
@@ -118,9 +108,10 @@ public class Game {
     private int Z3; // 8590
     private int H8; // 7400
 
-    public Game(GameInput scanner, GameRandom random) {
+    public Game(GameInput scanner, GameRandom random, GameOutput output) {
         this.scanner = scanner;
         this.random = random;
+        this.output = output;
     }
 
     /***
@@ -156,11 +147,6 @@ public class Game {
      */
     private int S2; // 490
 
-    // 815 REM K3 = # Klingons B3 = # Starbases S3 = # Stars
-    /**
-     * No of Klingons in the quadrant
-     */
-    private int K3;
     /**
      * Starbases in the quadrant
      */
@@ -225,30 +211,27 @@ public class Game {
         for (int I = 1; I <= 8; I++) {
             // 820 FOR I=1TO8: FOR J=1TO8:K3=0:Z(I,J)=0:R1=RND(1)
             for (int J = 1; J <= 8; J++) {
-                K3 = 0;
+                int klingons = 0;
                 float randomLevel = random.nextFloat();
                 if (randomLevel > 0.98) {
                     // 850 IFR1>.98 THEN K3=3:K9=K9+3:GOTO 980
-                    K3 = 3;
-                    K9 = K9 + 3;
+                    klingons = 3;
                 } else if (randomLevel > 0.95) {
                     // 860 IFR1>.95 THEN K3=2:K9=K9+2:GOTO 980
-                    K3 = 2;
-                    K9 = K9 + 2;
+                    klingons = 2;
                 } else if (randomLevel > 0.8) {
                     // 870 IFR1>.80 THEN K3=1:K9=K9+1
-                    K3 = 1;
-                    K9 = K9 + 1;
+                    klingons = 1;
                 }
                 // 980 B3=0:IF RND(1) > .96 THEN B3=1:B9=B9+1
-                B3 = 0;
+                int bases = 0;
                 if (random.nextFloat() > 0.96) {
-                    B3 = 1;
+                    bases = 1;
                     B9 = B9 + 1;
                 }
                 // 1040 G(I,J)=K3*100+B3*10+FNR(1):NEXTJ:NEXTI:IFK9>T9 THEN T9=K9+1
                 //G[I][J] = K3 * 100 + B3 * 10 + fnr();
-                galaxyContent.initQuadrant(I, J, K3, B3, fnr());
+                galaxyContent.initQuadrant(I, J, klingons, bases, fnr());
             }
         }
         missionDays = Math.max(missionDays, galaxyContent.getTotalKlingons() + 1);
@@ -259,7 +242,6 @@ public class Game {
             if (galaxyContent.getKlingons(Q1, Q2) < 2) {
                 // G[Q1][Q2] = G[Q1][Q2] + 120;  Note: probably mistake since bases is overwritten
                 galaxyContent.setKlingons(Q1, Q2, galaxyContent.getKlingons(Q1, Q2) + 1);
-                K9 = K9 + 1;
             }
             // 1160 B9=1:G(Q1,Q2)=G(Q1,Q2)+10:Q1=FNR(1):Q2=FNR(1)
             B9 = 1;
@@ -269,7 +251,7 @@ public class Game {
             Q2 = fnr();
         }
         // 1200 K7=K9:IFB9<>1 THEN X$=" S": X0$=" ARE "
-        K7 = K9;
+        K7 = galaxyContent.getTotalKlingons();
         if (B9 != 1) {
             X$ = "S";
             X0$ = " ARE ";
@@ -302,7 +284,7 @@ public class Game {
 
     private void prompt() {
         println("YOUR ORDERS ARE AS FOLLOWS:"); //1230
-        println("  DESTROY THE " + K9 + " KLINGON WARSHIPS WHICH HAS INVADED"); //1240
+        println("  DESTROY THE " + galaxyContent.getTotalKlingons() + " KLINGON WARSHIPS WHICH HAS INVADED"); //1240
         println("  THE GALAXY BEFORE THEY CAN ATTACK FEDERATION HEADQUARTERS"); //1250
         println("  ON STARDATE " + (startDate + missionDays) + ". THIS GIVES YOU " + missionDays + " DAYS. THERE" + X0$); //1260
         println("  " + B9 + " STARBASE" + X$ + " IN THE GALAXY TO RESUPPLY YOUR SHIP."); //1270
@@ -315,7 +297,7 @@ public class Game {
         // 1320 Z4=Q1:Z5=Q2:K3=0:B3=0:S3=0:G5=0:D4=0.5*RND(1):Z(Q1,Q2)=G(Q1,Q2)
         Z4 = Q1;
         Z5 = Q2;
-        K3 = 0;
+        int K3 = 0;
         int stars = 0;
         G5 = 0;
         D4 = 0.5f * random.nextFloat();
@@ -477,7 +459,7 @@ public class Game {
      */
     private void klingons() {
         // 2590 FOR I=1TOK3: IF K(I,3) = 0 THEN 2700
-        for (int I = 1; I <= K3; I++) {
+        for (int I = 1; I <= galaxyContent.getKlingons(Q1, Q2); I++) {
             if (K[I][3] != 0) {
                 // 2610
                 insertIconInQuadrantString8670(K[I][1], K[I][2], EMPTY_ICON);
@@ -554,9 +536,6 @@ public class Game {
                 exceededQuadrantLimits3500(stepsN);
                 return;
             } else {
-                // 3240 S8=INT(S1)*24+INT(S2)*3-26:IFMID$(Q$,S8,2)="  "THEN 3360
-                //int S8 = intFloor(S1) * 24 + intFloor(S2) * 3 - 26;
-                //String check = mid$(Q$, S8, 3);
                 String check = quadrantContent.get(S1, S2);
                 if (!check.equals(EMPTY_ICON)) {
                     S1 = intFloor(S1 - X1);
@@ -753,7 +732,7 @@ public class Game {
             return;
         }
         // 4265 TFK3>0 THEN 4330
-        if (K3 <= 0) {
+        if (galaxyContent.getKlingons(Q1, Q2) <= 0) {
             noEnemy4270();
             return;
         }
@@ -781,7 +760,7 @@ public class Game {
         }
         // 4450 HI=INT(X/K3) :FORI= 1T03: IFK(I,3)<=0 THEN 4670
         // 4450
-        int h1 = intFloor(X / K3);
+        int h1 = intFloor(X / galaxyContent.getKlingons(Q1, Q2));
         for (int I = 1; I <= 3; I++) {
             if (K[I][3] > 0) {
                 // 4480 H=INT((H1/FND(0)))*CRN2D1FCH>.11S*)KC+Ls23)THEN 4530
@@ -800,15 +779,13 @@ public class Game {
                     } else {
                         println("*** KLINGON DESTROYED ***");
                         // 4580 K3=K3-1:K9=K9-1:Z1=K(I,1):Z2=K(I,2):A$="   ":GOSUB 8670
-                        K3 = K3 - 1;
-                        K9 = K9 - 1;
                         insertIconInQuadrantString8670(K[I][1], K[I][2], EMPTY_ICON);
                         // 4650 K(I,3)=0:G(Q1,Q2)=G(Q1,Q2)-100:Z(Q1,Q2)=G(Q1,Q2):IF K9<=0 THEN 6370
                         K[I][3] = 0;
                         //G[Q1][Q2] = G[Q1][Q2] - 100; // Count down on Klingons in this sector
                         galaxyContent.setKlingons(Q1, Q2, galaxyContent.getKlingons(Q1, Q2) - 1); // Count down on Klingons in this sector
                         cumulativeContent.setQuadrant(Q1, Q2, galaxyContent.getQuadrant(Q1, Q2));
-                        if (K9 <= 0) {
+                        if (galaxyContent.getTotalKlingons() <= 0) {
                             victory6370();
                         }
                     }
@@ -885,9 +862,8 @@ public class Game {
         switch (quadrantContent.get(intFloor(X), intFloor(Y))) {
             case KLINGON_ICON -> {
                 println("*** KLINGON DESTROYED ***");
-                K3 = K3 - 1;
-                K9 = K9 - 1;
-                if (K9 <= 0) {
+                galaxyContent.setKlingons(Q1, Q2, galaxyContent.getKlingons(Q1, Q2) - 1);
+                if (galaxyContent.getTotalKlingons() <= 0) {
                     victory6370();
                 }
                 boolean breakOut = false;
@@ -913,7 +889,7 @@ public class Game {
                 B3 = B3 - 1;
                 B9 = B9 - 1;
                 // 5360 IFB9>0.. THEN 5400
-                if (!(B9 > 0) || K9 > currentDate - startDate - missionDays) {
+                if (!(B9 > 0) || galaxyContent.getTotalKlingons() > currentDate - startDate - missionDays) {
                     println("THAT DOES IT, CAPTAIN!! YOU ARE HEREBY RELIEVED OF COMMAND");
                     println("AND SENTENCED TO 99 STARDATES AT HARD LABOR ON CYGNUS 12!!");
                     gotoXXX6270();
@@ -928,7 +904,6 @@ public class Game {
         // 5430
         insertIconInQuadrantString8670(X, Y, EMPTY_ICON);
         // 5470 G(Q1,Q2)=K3*100..
-        galaxyContent.setKlingons(Q1, Q2, K3);
         galaxyContent.setBases(Q1, Q2, B3);
         cumulativeContent.setQuadrant(Q1, Q2, galaxyContent.getQuadrant(Q1, Q2));
         klingonsShooting6000();
@@ -1008,7 +983,7 @@ public class Game {
     private void klingonsShooting6000() {
         //5990 REM KLINGONS SHOOTING
         //6000 IFK3<=0 THEN RETURN
-        if (K3 <= 0) {
+        if (galaxyContent.getKlingons(Q1, Q2) <= 0) {
             return;
         }
         // 6010 TFDG<>QTHENPRINT'STARBASE SHIELDS PROTECT THE ENTERPRISE": RETURN
@@ -1059,7 +1034,7 @@ public class Game {
 
     private void gotoXXX6270() {
         // 6270 6276PRINT"THEREWERKOES"'KLISNGONBATTLECRUISERSLEFTAT"
-        println("THERE WERE " + K9 + " KLINGON BATTLE CRUISERS LEFT AT");
+        println("THERE WERE " + galaxyContent.getTotalKlingons() + " KLINGON BATTLE CRUISERS LEFT AT");
         println("THE END OF YOUR MISSION.");
         if (B9 == 0) {
             stop();
@@ -1166,10 +1141,10 @@ public class Game {
         // 7890 REM STATUS REPORT
         println(" STATUS REPORT ");
         X$ = "";
-        if (K9 > 1) {
+        if (galaxyContent.getTotalKlingons() > 1) {
             X$ = "S";
         }
-        println("KLINGON" + X$ + " LEFT: " + K9);
+        println("KLINGON" + X$ + " LEFT: " + galaxyContent.getTotalKlingons());
         println("MISSION MUST BE COMPLETED IN " + (0.1 * intFloor((startDate + missionDays - currentDate) * 10)) + " STARDATES");
         X$ = "S";
         if (B9 < 2) {
@@ -1187,11 +1162,11 @@ public class Game {
 
     private void calculator8070() {
         // 8060 REM TORPEDO, BASE NAVs D/D CALCULATOR
-        if (K3 <= 0) {
+        if (galaxyContent.getKlingons(Q1, Q2) <= 0) {
             noEnemy4270();
         }
         X$ = "";
-        if (K3 > 1) {
+        if (galaxyContent.getKlingons(Q1, Q2) > 1) {
             X$ = "S";
         }
         println("FROM ENTERPRISE TO KLINGON BATTLE CRUISE" + X$);
@@ -1215,7 +1190,7 @@ public class Game {
         Position pos1 = new Position(row1, col1);
         println("FINAL COORDINATES )");
         int row2 = input("ROW: ");
-        int col2= input("COLUMN: ");
+        int col2 = input("COLUMN: ");
         Position pos2 = new Position(row2, col2);
         println("DISTANCE " + pos1.distanceTo(pos2));
         println("DIRECTION " + pos1.directionTo(pos2));
@@ -1227,8 +1202,8 @@ public class Game {
             println("FROM ENTERPRISE TO STARBASE:");
             Position base = new Position(B4, B5);
             Position enterprise = new Position(S1, S2);
-            println("DISTANCE " + enterprise.distanceTo(base)) ;
-            println("DIRECTION " + enterprise.directionTo(base)) ;
+            println("DISTANCE " + enterprise.distanceTo(base));
+            println("DIRECTION " + enterprise.directionTo(base));
         } else {
             // 8510
             print("MR. SPOCK REPORTS, ‘SENSORS SHOW NO STARBASES IN THIS");
@@ -1323,7 +1298,7 @@ public class Game {
                 case 5 -> println("     PHOTON TORPEDOES   " + torpedoes);
                 case 6 -> println("     TOTAL ENERGY       " + intFloor(energy + shieldLevel));
                 case 7 -> println("     SHIELDS            " + intFloor(shieldLevel));
-                case 8 -> println("     KLINGONS REMAINING " + intFloor(K9));
+                case 8 -> println("     KLINGONS REMAINING " + galaxyContent.getTotalKlingons());
             }
         }
         println(SRS_DELIMITER);
@@ -1420,13 +1395,13 @@ public class Game {
     }
 
     private String input$(String prompt) {
-        System.out.print(prompt);
+        output.print(prompt);
         return scanner.nextLine().trim();
     }
 
     private int input(String prompt) {
         do {
-            System.out.print(prompt);
+            output.print(prompt);
             String string = scanner.nextLine().trim();
             try {
                 return Integer.parseInt(string);
@@ -1438,7 +1413,7 @@ public class Game {
 
     private float inputF(String prompt) {
         do {
-            System.out.print(prompt);
+            output.print(prompt);
             String string = scanner.nextLine();
             try {
                 return Float.parseFloat(string);
@@ -1449,11 +1424,11 @@ public class Game {
     }
 
     private void println(String s) {
-        System.out.println(s);
+        output.println(s);
     }
 
     private void print(String s) {
-        System.out.print(s);
+        output.print(s);
     }
 
     public int totalKlingons() {
@@ -1487,7 +1462,7 @@ public class Game {
         // 6540 NEXT:NEXTJ:D0 = 0:GOTO6650
         if (!docked) {
             // 6650 IM(3>@THEN C$="*RED*'":GOTO 6720
-            if (K3 > 0) {
+            if (galaxyContent.getKlingons(Q1, Q2) > 0) {
                 result = Condition.RED;
             } else {
                 // 6660 CS="GREEN"':iFE<EG*«1THENCS="YELLOW"
@@ -1519,9 +1494,25 @@ public class Game {
     public float totalEnergy() {
         return shieldLevel + energy;
     }
-    
+
     public void setQuadrantContent(QuadrantContent quadrantContent) {
         this.quadrantContent = quadrantContent;
+    }
+
+    public void setCurrentKlingons(int klingons) {
+        galaxyContent.setKlingons(Q1, Q2, klingons);
+    }
+
+    public void setCurrentBases(int bases) {
+        galaxyContent.setBases(Q1, Q2, bases);
+    }
+
+    public void setCurrentStars(int stars) {
+        galaxyContent.setStars(Q1, Q2, stars);
+    }
+
+    public int getCurrentStars() {
+        return galaxyContent.getStars(Q1, Q2);
     }
 
     public void setCurrentQuadrant(int row, int col) {

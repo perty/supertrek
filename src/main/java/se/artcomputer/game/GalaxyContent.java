@@ -38,6 +38,9 @@ public class GalaxyContent {
     public void setBases(int q1, int q2, int bases) {
         getQuadrant(q1, q2).bases = bases;
     }
+    public void setStars(int q1, int q2, int stars) {
+        getQuadrant(q1, q2).stars = stars;
+    }
 
     public int getKlingons(int q1, int q2) {
         return getQuadrant(q1, q2).klingons;

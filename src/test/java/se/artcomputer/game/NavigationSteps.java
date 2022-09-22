@@ -6,6 +6,7 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class NavigationSteps {
 
@@ -16,22 +17,33 @@ public class NavigationSteps {
     private static final float[] floatSeries1 = new float[]
             {0.5f, 0.9f, 0.8f, 0.7f, 0.01f, 0.3f, 0.7f, 0.2f};
     private Game game;
+    private GameBufferOutput messageReceiver;
 
     @Given("a quadrant at {int},{int}")
     public void aQuadrantAt(int row, int col) {
         scanner = new GameInputImpl();
         GameRandom random = new GameStaticImpl(intSeries1, floatSeries1);
-        game = new Game(scanner, random);
+        messageReceiver = new GameBufferOutput();
+        game = new Game(scanner, random, messageReceiver);
         command("");
         game.setCurrentQuadrant(row, col);
         QuadrantContent quadrantContent = new QuadrantContent();
         game.setQuadrantContent(quadrantContent);
+        game.setCurrentKlingons(0);
+        game.setCurrentBases(0);
+        game.setCurrentStars(0);
     }
 
     @And("starship is located at sector {int},{int}")
     public void starshipIsLocatedAtSector(int row, int col) {
         game.setCurrentSector(row, col);
         game.insertIconInQuadrantString8670(row, col, QuadrantContent.STARSHIP_ICON);
+    }
+
+    @And("a star is located at sector {int},{int}")
+    public void aStarIsLocatedAtSector(int row, int col) {
+        game.insertIconInQuadrantString8670(row, col, QuadrantContent.STAR_ICON);
+        game.setCurrentStars(1 + game.getCurrentStars());
     }
 
     @When("issuing command NAV {float} {float}")
@@ -49,6 +61,12 @@ public class NavigationSteps {
     public void starshipIsMovedToQuadrantQuadrantRowQuadrantCol(int row, int col) {
         Position currentQuadrant = game.currentQuadrant();
         assertEquals(new Position(row, col), currentQuadrant, "Wrong quadrant");
+    }
+
+    @And("there is a message containing {string}")
+    public void thereIsAMessageContaining(String message) {
+        String messages = messageReceiver.getMessages();
+        assertTrue(messages.contains(message), "Message not found in " + messages);
     }
 
     private String fromFloat(float value) {

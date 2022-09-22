@@ -14,11 +14,13 @@ import static se.artcomputer.game.GameState.STOPPED;
 class GameTest {
 
     private GameInputImpl scanner;
+    private GameSystemOutput output;
     private Game game;
 
     @BeforeEach
     void setUp() {
         scanner = new GameInputImpl();
+        output = new GameSystemOutput();
     }
 
     /**
@@ -26,7 +28,7 @@ class GameTest {
      */
     @Test
     void scenario1337() {
-        game = new Game(scanner, new GameRandomImpl(1337));
+        game = new Game(scanner, new GameRandomImpl(1337), output);
         command("");
         assertEquals(RUNNING, game.gameState);
         int klingons = game.totalKlingons();
@@ -57,7 +59,7 @@ class GameTest {
      */
     @Test
     void scenario123456789() {
-        game = new Game(scanner, new GameRandomImpl(123456789L));
+        game = new Game(scanner, new GameRandomImpl(123456789L),  output);
         command("");
         command("LRS");
         command("NAV", "3", "1");
@@ -80,7 +82,7 @@ class GameTest {
                 new float[]
                         {0.5f, 0.9f, 0.8f, 0.7f, 0.01f, 0.3f, 0.7f, 0.2f}
         );
-        game = new Game(scanner, random);
+        game = new Game(scanner, random, output);
         command("");
         command("LRS");
         command("SHE", "1000");
@@ -163,7 +165,7 @@ class GameTest {
      */
     @Test
     void scenario471108() {
-        game = new Game(scanner, new GameRandomImpl(471108));
+        game = new Game(scanner, new GameRandomImpl(471108), output);
         command("");
         assertEquals(new Position(4, 8), game.currentQuadrant());
         command("SHE", "1000");
@@ -222,14 +224,14 @@ class GameTest {
                 new float[]
                         {0.69F, 0.449F, 0.123F, 0.77F, 0.3F, 0.99F, 0.75F, 0.019F, 0.63F, 0.315F, 0.38F, 0.53F, 0.096F, 0.89F, 0.29F, 0.97F, 0.79F, 0.44F, 0.44F, 0.19F, 0.49F, 0.44F, 0.22F, 0.79F, 0.53F, 0.37F, 0.42F, 0.17F, 0.85F, 0.186F, 0.398F, 0.896F, 0.1039F, 0.707F, 0.211F, 0.077F, 0.438F, 0.655F, 0.129F, 0.672F, 0.174F, 0.289F, 0.80F, 0.F, 0.036F, 0.43F, 0.54F, 0.51F, 0.802F, 0.189F, 0.843F, 0.272F, 0.55F, 0.2F, 0.333F, 0.067F, 0.324F, 0.396F, 0.311F, 0.69F, 0.252F, 0.8F, 0.43F, 0.195F, 0.82F, 0.328F, 0.199F, 0.120F, 0.261F, 0.451F, 0.5F, 0.498F, 0.01212F, 0.57F, 0.61F, 0.522F, 0.808F, 0.284F, 0.513F, 0.074F, 0.92F, 0.62F, 0.903F, 0.785F, 0.692F, 0.211F, 0.203F, 0.76F, 0.16F, 0.84F, 0.61F, 0.0701F, 0.62F, 0.903F, 0.62F, 0.479F, 0.209F, 0.7F, 0.143F, 0.698F, 0.8F, 0.525F, 0.97F, 0.234F, 0.0832F, 0.960F, 0.65F, 0.42F, 0.121F, 0.458F, 0.44F, 0.355F, 0.443F, 0.38F, 0.80F, 0.147F, 0.0554F, 0.464F, 0.45F, 0.96F, 0.51F, 0.64F, 0.73F, 0.6F, 0.300F, 0.F, 0.289F, 0.F, 0.195F, 0.31F, 0.47F, 0.7F, 0.271F, 0.296F, 0.574F, 0.994F, 0.86F, 0.82F, 0.00151F, 0.66F, 0.518F, 0.52F, 0.14F, 0.58F, 0.65F, 0.233F, 0.73F, 0.251F, 0.216F, 0.047F, 0.463F, 0.933F, 0.304F, 0.045F, 0.736F, 0.904F, 0.715F, 0.153F, 0.88F, 0.748F, 0.59F, 0.336F, 0.53F, 0.389F, 0.56F, 0.99F, 0.85F, 0.52F, 0.104F, 0.1018F, 0.57F, 0.155F, 0.59F, 0.164F, 0.475F, 0.114F, 0.922F, 0.169F, 0.059F, 0.134F, 0.756F, 0.503F, 0.914F, 0.94F, 0.60F, 0.515F, 0.472F, 0.81F, 0.177F, 0.12F, 0.296F, 0.228F, 0.316F, 0.68F, 0.839F, 0.62F, 0.86F, 0.972F, 0.206F, 0.78F, 0.709F, 0.141F, 0.0360F, 0.83F, 0.28F, 0.249F, 0.178F, 0.197F, 0.35F, 0.210F, 0.278F, 0.390F, 0.73F, 0.386F, 0.161F, 0.721F, 0.0988F, 0.239F, 0.82F, 0.292F, 0.628F, 0.307F, 0.52F, 0.188F, 0.213F, 0.56F, 0.0440F, 0.79F, 0.350F, 0.834F, 0.392F, 0.658F, 0.0286F, 0.547F, 0.97F, 0.691F, 0.736F, 0.818F, 0.65F, 0.439F, 0.716F, 0.938F, 0.379F, 0.655F, 0.88F, 0.74F, 0.64F, 0.7F, 0.388F, 0.59F, 0.80F, 0.584F, 0.639F, 0.5F, 0.381F, 0.58F, 0.168F, 0.756F, 0.490F, 0.392F, 0.525F, 0.074F, 0.30F, 0.88F, 0.87F, 0.86F, 0.27F, 0.7687722F}
         );
-        game = new Game(scanner, random);
+        game = new Game(scanner, random, output);
         command("");
         assertEquals(3000, game.totalEnergy());
         command("LRS");
         command("NAV", "0", "1");  // Incorrect
         command("NAV", "5", "1");
         assertEquals(RED, game.condition());
-        command("NAV", "4", "0.1", "AYE"); // Die and restart'
+        command("NAV", "4", "0.1", "AYE"); // Die and restart
         command("");
         assertEquals(0, game.shields(), "Restore shields");
         assertEquals(10, game.torpedoes(), "Restore torpedoes");
@@ -241,7 +243,7 @@ class GameTest {
      */
     @Test
     void resign() {
-        game = new Game(scanner, new GameRandomImpl(1337));
+        game = new Game(scanner, new GameRandomImpl(1337), output);
         command("");
         command("XXX", "no");
     }
@@ -256,7 +258,7 @@ class GameTest {
                 new float[]
                         {0.5f, 0.9f, 0.8f, 0.7f, 0.01f, 0.3f, 0.7f, 0.2f}
         );
-        game = new Game(scanner, random);
+        game = new Game(scanner, random, output);
         command("");
         command("LRS");
         command("COM", "2");
@@ -416,7 +418,7 @@ class GameTest {
                 new float[]
                         {0.5f, 0.9f, 0.8f, 0.7f, 0.01f, 0.3f, 0.7f, 0.2f}
         );
-        game = new Game(scanner, random);
+        game = new Game(scanner, random, output);
         command("");
         command("SHE", "1000");
         assertEquals(new Position(6, 2), game.currentQuadrant());

@@ -49,7 +49,13 @@ Feature: Navigation
       | 3.0    | 2    | 1          | 1          | 2            | 4            |
       | 3.0    | 2.5  | 5          | 1          | 1            | 4            |
 
-
+  Scenario: Crashing into a star while moving
+    Given a quadrant at 3,5
+    And starship is located at sector 3,5
+    And a star is located at sector 3,7
+    When issuing command NAV 1.0 1.0
+    Then starship is moved to sector 3,6
+    And there is a message containing "BAD NAVIGATION"
 
 
 
