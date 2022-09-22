@@ -42,7 +42,13 @@ public class NavigationSteps {
     @Then("starship is moved to sector {int},{int}")
     public void starshipIsMovedSector(int row, int col) {
         Position currentSector = game.getCurrentSector();
-        assertEquals(new Position(row, col), currentSector);
+        assertEquals(new Position(row, col), currentSector, "Wrong sector");
+    }
+
+    @And("starship is moved to quadrant {int},{int}")
+    public void starshipIsMovedToQuadrantQuadrantRowQuadrantCol(int row, int col) {
+        Position currentQuadrant = game.currentQuadrant();
+        assertEquals(new Position(row, col), currentQuadrant, "Wrong quadrant");
     }
 
     private String fromFloat(float value) {

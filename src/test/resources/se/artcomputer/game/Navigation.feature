@@ -26,3 +26,31 @@ Feature: Navigation
     Examples:
       | start row | start col | course | warp | end row | end col |
       | 1         | 1         | 1.0    | 0.5  | 1       | 5       |
+      | 8         | 1         | 2.0    | 0.5  | 4       | 5       |
+      | 8         | 1         | 3.0    | 0.5  | 4       | 1       |
+      | 8         | 8         | 4.0    | 0.5  | 4       | 4       |
+      | 8         | 8         | 5.0    | 0.5  | 8       | 4       |
+      | 1         | 8         | 6.0    | 0.5  | 5       | 4       |
+      | 1         | 8         | 7.0    | 0.5  | 5       | 8       |
+      | 1         | 1         | 8.0    | 0.5  | 5       | 5       |
+
+  Scenario Outline: Moving across quadrant boundaries
+    Given a quadrant at 4,4
+    And starship is located at sector 1,1
+    When issuing command NAV <course> <warp>
+    Then starship is moved to sector <sector row>,<sector col>
+    And starship is moved to quadrant <quadrant row>,<quadrant col>
+
+    Examples:
+      | course | warp | sector row | sector col | quadrant row | quadrant col |
+      | 1.0    | 1    | 1          | 1          | 4            | 5            |
+      | 5.0    | 0.5  | 1          | 5          | 4            | 3            |
+      | 3.0    | 0.5  | 5          | 1          | 3            | 4            |
+      | 3.0    | 2    | 1          | 1          | 2            | 4            |
+      | 3.0    | 2.5  | 5          | 1          | 1            | 4            |
+
+
+
+
+
+
