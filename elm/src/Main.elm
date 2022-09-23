@@ -5,8 +5,7 @@ import Browser
 import Browser.Events exposing (onKeyUp)
 import Game
 import Html exposing (Html, div, text, textarea)
-import Html.Attributes exposing (cols, id, readonly, rows, style)
-import Html.Events
+import Html.Attributes exposing (cols, readonly, rows, style)
 import Json.Decode as Decode
 
 
@@ -130,8 +129,6 @@ view model =
             , style "border-radius" "15px"
             , style "font-family" "monospace"
             , style "margin" "25px"
-            , id "terminal"
-            , Html.Events.on "keyup" keyDecoder
             ]
             ((Array.map (\s -> text s) model.gameModel.terminalLines |> Array.toList) ++ [ text model.inputString ])
         ]

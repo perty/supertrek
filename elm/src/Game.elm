@@ -38,12 +38,14 @@ type GameState
 
 type Msg
     = Enter String
-    | InitPosition ToPosition Position
+    | InitQuadrantPosition Position
+    | InitSectorPosition Position
     | InitFloat FloatField Float
     | InitQuadrant (List Float)
     | InitKlingon Cell
     | InitStar Position
     | InitBase Position
+    | ClearQuadrant Position
 
 
 type alias Damage =
@@ -65,11 +67,6 @@ type Cell
 type alias QuadrantContent =
     { content : Matrix Cell
     }
-
-
-type ToPosition
-    = QuadrantPosition
-    | SectorPosition
 
 
 type FloatField
@@ -114,8 +111,8 @@ init =
       , route = -1
       }
     , Cmd.batch
-        [ Random.generate (InitPosition QuadrantPosition) randomPosition
-        , Random.generate (InitPosition SectorPosition) randomPosition
+        [ Random.generate InitQuadrantPosition randomPosition
+        , Random.generate InitSectorPosition randomPosition
         , Random.generate (InitFloat CurrentDate) randomFloat
         , Random.generate (InitFloat MissionDays) randomFloat
         , Random.generate InitQuadrant randomQuadrant
@@ -216,18 +213,16 @@ update msg model =
             in
             parseCommand commandAdded command
 
-        InitPosition toPosition pos ->
-            case toPosition of
-                QuadrantPosition ->
-                    ( { model | quadrant = pos }, Cmd.none )
+        InitQuadrantPosition pos ->
+            ( { model | quadrant = pos }, Cmd.none )
 
-                SectorPosition ->
-                    ( { model
-                        | sector = pos
-                        , quadrantContent = insertIconInQuadrant model.quadrantContent pos StarshipCell
-                      }
-                    , Cmd.none
-                    )
+        InitSectorPosition pos ->
+            ( { model
+                | sector = pos
+                , quadrantContent = insertIconInQuadrant model.quadrantContent pos StarshipCell
+              }
+            , Cmd.none
+            )
 
         InitFloat floatField value ->
             case floatField of
@@ -263,6 +258,15 @@ update msg model =
                 ( { model | galaxy = newGalaxy, galaxySetup = model.galaxySetup + 1 }
                 , Random.generate InitQuadrant randomQuadrant
                 )
+
+        ClearQuadrant pos ->
+            ( { model
+                | galaxy = setQuadrant model.galaxy pos (Quadrant 0 0 0)
+                , quadrantContent = initQuadrant
+                , quadrant = pos
+              }
+            , Cmd.none
+            )
 
         InitStar pos ->
             if not <| checkForIcon model.quadrantContent pos EmptyCell then
@@ -594,8 +598,7 @@ moveStarShip stepsN model =
                 cFaktor iRoute 2 + (cFaktor (iRoute + 1) 2 - cFaktor iRoute 2) * (model.route - Basics.toFloat iRoute)
 
             newSector =
-                Debug.log "newSector" <|
-                    Position (model.sector.row + Basics.floor x1) (model.sector.col + Basics.floor x2)
+                Position (model.sector.row + Basics.floor x1) (model.sector.col + Basics.floor x2)
         in
         if newSector.row > 8 || newSector.col > 8 || newSector.row < 1 || newSector.col < 1 then
             exceededQuadrantLimits newSector model
@@ -811,10 +814,6 @@ quadrantName quadrant =
 
 shortRangeSensors : Model -> Model
 shortRangeSensors model =
-    let
-        _ =
-            Debug.log "srs" model.quadrant
-    in
     if model.damage.shortRangeSensors < 0 then
         { model
             | terminalLines =
