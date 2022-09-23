@@ -20,7 +20,7 @@ main =
 navigation : Spec App.Model App.Msg
 navigation =
     describe "Feature: Navigation"
-        [ Spec.scenario "Crashing into a star while moving"
+        ([ Spec.scenario "Crashing into a star while moving"
             (Spec.given
                 (Setup.init (App.init ())
                     |> Setup.withView App.view
@@ -50,7 +50,61 @@ navigation =
                             )
                     )
             )
-        ]
+         ]
+            ++ List.map outline examples
+        )
+
+
+outline { startRow, startCol, course, warp, endRow, endCol } =
+    Spec.scenario "Moving within the quadrant"
+        (Spec.given
+            (Setup.init (App.init ())
+                |> Setup.withView App.view
+                |> Setup.withUpdate App.update
+            )
+            |> Spec.when "a quadrant at 2,4"
+                [ send (Game.Enter "")
+                , send (Game.ClearQuadrant (Game.Position 2 4))
+                ]
+            |> Spec.when "starship is located at sector <start row>,<start col>"
+                [ send (Game.InitSectorPosition (Game.Position startRow startCol)) ]
+            |> Spec.when "issuing command NAV <course> <warp>"
+                [ send (Game.Enter "NAV")
+                , send (Game.Enter course)
+                , send (Game.Enter warp)
+                ]
+            |> it "starship is moved to sector <end row>,<end col>"
+                (Observer.observeModel identity
+                    |> expect
+                        (Claim.satisfying
+                            [ \m -> equals endRow m.gameModel.sector.row
+                            , \m -> equals endCol m.gameModel.sector.col
+                            ]
+                        )
+                )
+        )
+
+
+type alias Example =
+    { startRow : Int
+    , startCol : Int
+    , course : String
+    , warp : String
+    , endRow : Int
+    , endCol : Int
+    }
+
+
+examples =
+    [ Example 1 1 "1.0" "0.5" 1 5
+    , Example 8 1 "2.0" "0.5" 4 5
+    , Example 8 1 "3.0" "0.5" 4 1
+    , Example 8 8 "4.0" "0.5" 4 4
+    , Example 8 8 "5.0" "0.5" 8 4
+    , Example 1 8 "6.0" "0.5" 5 4
+    , Example 1 8 "7.0" "0.5" 5 8
+    , Example 1 1 "8.0" "0.5" 5 5
+    ]
 
 
 equals : a -> Claim a
